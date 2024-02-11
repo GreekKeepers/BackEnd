@@ -1,0 +1,70 @@
+[2m2023-12-15T02:03:00.213912Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:00.455163Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200330)
+[2m2023-12-15T02:03:02.141065Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:02.200986Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142588)
+[2m2023-12-15T02:03:04.601829Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:04.701918Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363277)
+[2m2023-12-15T02:03:05.700188Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:05.937710Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200353)
+[2m2023-12-15T02:03:07.270250Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:07.332477Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142591)
+[2m2023-12-15T02:03:09.793999Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:09.883463Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363278)
+[2m2023-12-15T02:03:11.182513Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:11.423215Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200374)
+[2m2023-12-15T02:03:12.414673Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:12.475957Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142593)
+[2m2023-12-15T02:03:14.974254Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:15.062514Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363280)
+[2m2023-12-15T02:03:16.663821Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:16.902617Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200395)
+[2m2023-12-15T02:03:17.544906Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:17.621258Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142595)
+[2m2023-12-15T02:03:20.157363Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:20.246525Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363282)
+[2m2023-12-15T02:03:22.140281Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:22.379923Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200421)
+[2m2023-12-15T02:03:22.690451Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:22.754691Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142598)
+[2m2023-12-15T02:03:25.337321Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:25.426581Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363283)
+[2m2023-12-15T02:03:27.621100Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:27.823887Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:27.858042Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200436)
+[2m2023-12-15T02:03:27.899014Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142600)
+[2m2023-12-15T02:03:30.519580Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:30.608851Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363285)
+[2m2023-12-15T02:03:32.969262Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:33.030357Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142603)
+[2m2023-12-15T02:03:33.098056Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:33.336834Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200456)
+[2m2023-12-15T02:03:35.701959Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:35.791148Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363287)
+[2m2023-12-15T02:03:38.099849Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:38.160844Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142605)
+[2m2023-12-15T02:03:38.580356Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:38.818177Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200475)
+[2m2023-12-15T02:03:40.882953Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:40.971970Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363289)
+[2m2023-12-15T02:03:43.232124Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:43.293256Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142607)
+[2m2023-12-15T02:03:44.070268Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:44.308742Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200493)
+[2m2023-12-15T02:03:46.063184Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:46.150892Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363290)
+[2m2023-12-15T02:03:48.361484Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:48.422515Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142610)
+[2m2023-12-15T02:03:49.553331Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:49.791129Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200510)
+[2m2023-12-15T02:03:51.242372Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:51.331438Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363292)
+[2m2023-12-15T02:03:53.491605Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:53.552796Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142612)
+[2m2023-12-15T02:03:55.035946Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T02:03:55.274281Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160200530)
+[2m2023-12-15T02:03:56.423323Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T02:03:56.512480Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34363294)
+[2m2023-12-15T02:03:58.621198Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T02:03:58.682330Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51142615)
+[2m2023-12-15T02:03:58.753860Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m "DRAX" price: 6.279556409943609e-5
+[2m2023-12-15T02:03:58.757951Z[0m [34mDEBUG[0m tokio-runtime-worker [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"INSERT INTO TokenPrice(token_name, price) …" [3mdb.statement[0m[2m=[0m"\n\nINSERT INTO\n  TokenPrice(token_name, price)\nVALUES\n  ($1, $2) ON CONFLICT(token_name) DO\nUPDATE\nSET\n  price = excluded.price\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m1.882502ms

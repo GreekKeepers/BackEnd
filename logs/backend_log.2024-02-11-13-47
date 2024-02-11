@@ -1,0 +1,1 @@
+[2m2024-02-11T13:47:04.460357Z[0m [34mDEBUG[0m tokio-runtime-worker [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM Users …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  Users\nWHERE\n  login = $1\n  AND password = $2\nLIMIT\n  1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.84084ms

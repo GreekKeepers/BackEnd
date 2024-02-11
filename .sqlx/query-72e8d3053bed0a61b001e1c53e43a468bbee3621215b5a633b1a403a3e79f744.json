@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT Coin.name, Amount.amount \n            FROM Amount\n            INNER JOIN Coin ON Amount.coin_id = Coin.id\n            INNER JOIN Users ON Amount.user_id = Users.id\n            WHERE Users.id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "amount",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "72e8d3053bed0a61b001e1c53e43a468bbee3621215b5a633b1a403a3e79f744"
+}

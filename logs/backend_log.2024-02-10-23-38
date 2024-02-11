@@ -1,0 +1,4 @@
+[2m2024-02-10T23:38:29.943397Z[0m [34mDEBUG[0m tokio-runtime-worker [2mwarp::filters::body[0m[2m:[0m request json body error: missing field `username` at line 1 column 172
+[2m2024-02-10T23:38:29.943439Z[0m [31mERROR[0m tokio-runtime-worker [2mbackend::rejection_handler[0m[2m:[0m Unhandled error: Rejection(BodyDeserializeError { cause: Error("missing field `username`", line: 1, column: 172) })
+[2m2024-02-10T23:38:30.004306Z[0m [34mDEBUG[0m tokio-runtime-worker [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM Users …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  Users\nWHERE\n  username = $1\n  AND password = $2\nLIMIT\n  1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m2.926446ms
+[2m2024-02-10T23:38:30.004356Z[0m [31mERROR[0m tokio-runtime-worker [2mbackend::rejection_handler[0m[2m:[0m Error: WrongLoginPassword

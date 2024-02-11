@@ -1,0 +1,6 @@
+[2m2024-02-10T23:37:45.145704Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m Starting rest api
+[2m2024-02-10T23:37:45.145738Z[0m [34mDEBUG[0m main [2mbackend[0m[2m:[0m Connecting to DB with settings DatabaseSettings { username: "mgwdb", password: "mgwdb", host: "127.0.0.1", port: 5433, database_name: "mgwdb" }
+[2m2024-02-10T23:37:45.145749Z[0m [32m INFO[0m main [2mbackend::db[0m[2m:[0m Connecting to database: postgres://mgwdb:mgwdb@127.0.0.1:5433/mgwdb
+[2m2024-02-10T23:37:45.145987Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m The rest api is starting on the 0.0.0.0:8282
+[2m2024-02-10T23:37:45.146042Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m Server started, waiting for CTRL+C
+[2m2024-02-10T23:37:45.146141Z[0m [32m INFO[0m main [1mServer::run[0m[1m{[0m[3maddr[0m[2m=[0m0.0.0.0:8282[1m}[0m[2m:[0m [2mwarp::server[0m[2m:[0m listening on http://0.0.0.0:8282

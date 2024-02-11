@@ -1,0 +1,104 @@
+[2m2023-12-15T00:49:08.584213Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m Starting rest api
+[2m2023-12-15T00:49:08.584253Z[0m [34mDEBUG[0m main [2mbackend[0m[2m:[0m Connecting to DB with settings DatabaseSettings { username: "bicas", password: "bicas", host: "127.0.0.1", port: 5432, database_name: "bicas" }
+[2m2023-12-15T00:49:08.584271Z[0m [32m INFO[0m main [2mbackend::db[0m[2m:[0m Connecting to database: postgres://bicas:bicas@127.0.0.1:5432/bicas
+[2m2023-12-15T00:49:08.584516Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m The rest api is starting on the 0.0.0.0:8484
+[2m2023-12-15T00:49:08.591083Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m Staring networks handlers
+[2m2023-12-15T00:49:08.635929Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT network_id AS \"network_id!\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  network_id AS \"network_id!\",\n  network_name AS \"network_name!\",\n  short_name AS \"short_name!\",\n  currency_name AS \"currency_name!\",\n  currency_symbol AS \"currency_symbol!\",\n  decimals as \"decimals!\"\nFROM\n  NetworkInfo\n" [3mrows_affected[0m[2m=[0m3 [3mrows_returned[0m[2m=[0m3 [3melapsed[0m[2m=[0m2.920264ms
+[2m2023-12-15T00:49:08.635983Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Staring games handlers on network: `56`
+[2m2023-12-15T00:49:08.678931Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT id as \"id!\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  id as \"id!\",\n  network_id as \"network_id!\",\n  url as \"url!\"\nFROM\n  RpcUrl\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.714707ms
+[2m2023-12-15T00:49:08.681894Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM GameInfo …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  GameInfo\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m4 [3mrows_returned[0m[2m=[0m4 [3melapsed[0m[2m=[0m2.236175ms
+[2m2023-12-15T00:49:08.681976Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `9`
+[2m2023-12-15T00:49:08.682052Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `5`
+[2m2023-12-15T00:49:08.682074Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `1`
+[2m2023-12-15T00:49:08.682095Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `2`
+[2m2023-12-15T00:49:08.683318Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM LastBlock …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  LastBlock\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m739.778µs
+[2m2023-12-15T00:49:08.683356Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Staring games handlers on network: `42161`
+[2m2023-12-15T00:49:08.684903Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT id as \"id!\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  id as \"id!\",\n  network_id as \"network_id!\",\n  url as \"url!\"\nFROM\n  RpcUrl\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m709.059µs
+[2m2023-12-15T00:49:08.688199Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM GameInfo …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  GameInfo\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m5 [3mrows_returned[0m[2m=[0m5 [3melapsed[0m[2m=[0m2.677355ms
+[2m2023-12-15T00:49:08.688240Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `7`
+[2m2023-12-15T00:49:08.688265Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `8`
+[2m2023-12-15T00:49:08.688280Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `6`
+[2m2023-12-15T00:49:08.688294Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `3`
+[2m2023-12-15T00:49:08.688308Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `4`
+[2m2023-12-15T00:49:08.689454Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM LastBlock …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  LastBlock\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m676.988µs
+[2m2023-12-15T00:49:08.689491Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Staring games handlers on network: `137`
+[2m2023-12-15T00:49:08.690414Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT id as \"id!\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  id as \"id!\",\n  network_id as \"network_id!\",\n  url as \"url!\"\nFROM\n  RpcUrl\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m135.9µs
+[2m2023-12-15T00:49:08.691340Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM GameInfo …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  GameInfo\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m5 [3mrows_returned[0m[2m=[0m5 [3melapsed[0m[2m=[0m374.469µs
+[2m2023-12-15T00:49:08.691382Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `10`
+[2m2023-12-15T00:49:08.691411Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `12`
+[2m2023-12-15T00:49:08.691430Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `15`
+[2m2023-12-15T00:49:08.691456Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `13`
+[2m2023-12-15T00:49:08.691486Z[0m [34mDEBUG[0m main [2mbackend::network_handler[0m[2m:[0m Producing data for game `14`
+[2m2023-12-15T00:49:08.692234Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM LastBlock …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  LastBlock\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m137.399µs
+[2m2023-12-15T00:49:08.694938Z[0m [34mDEBUG[0m main [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT DISTINCT name, contract_address, …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  DISTINCT name,\n  contract_address,\n  id,\n  network_id\nFROM\n  Token\nWHERE\n  network_id = $1\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.560547ms
+[2m2023-12-15T00:49:08.695088Z[0m [32m INFO[0m main [2mbackend[0m[2m:[0m Server started, waiting for CTRL+C
+[2m2023-12-15T00:49:08.695256Z[0m [32m INFO[0m main [1mServer::run[0m[1m{[0m[3maddr[0m[2m=[0m0.0.0.0:8484[1m}[0m[2m:[0m [2mwarp::server[0m[2m:[0m listening on http://0.0.0.0:8484
+[2m2023-12-15T00:49:08.929314Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Starting listening to rpc: Http { client: Client { accepts: Accepts, proxies: [Proxy(System({}), None)], referer: true, default_headers: {"accept": "*/*", "user-agent": "web3.rs"} }, inner: Inner { url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("polygon.llamarpc.com")), port: None, path: "/", query: None, fragment: None }, id: 0 } }
+[2m2023-12-15T00:49:08.940769Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Starting listening to rpc: Http { client: Client { accepts: Accepts, proxies: [Proxy(System({}), None)], referer: true, default_headers: {"accept": "*/*", "user-agent": "web3.rs"} }, inner: Inner { url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("arb1.arbitrum.io")), port: None, path: "/rpc", query: None, fragment: None }, id: 0 } }
+[2m2023-12-15T00:49:08.946502Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Starting listening to rpc: Http { client: Client { accepts: Accepts, proxies: [Proxy(System({}), None)], referer: true, default_headers: {"accept": "*/*", "user-agent": "web3.rs"} }, inner: Inner { url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("bsc-mainnet.nodereal.io")), port: None, path: "/v1/64a9df0874fb4a93b9d0a3849de012d3", query: None, fragment: None }, id: 0 } }
+[2m2023-12-15T00:49:08.947813Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Starting listening to rpc: Http { client: Client { accepts: Accepts, proxies: [Proxy(System({}), None)], referer: true, default_headers: {"accept": "*/*", "user-agent": "web3.rs"} }, inner: Inner { url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("bsc-dataseed1.binance.org")), port: None, path: "/", query: None, fragment: None }, id: 0 } }
+[2m2023-12-15T00:49:09.297259Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160184961)
+[2m2023-12-15T00:49:09.298025Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361799)
+[2m2023-12-15T00:49:09.388251Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:09.416360Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m "DRAX" price: 6.278144381107922e-5
+[2m2023-12-15T00:49:09.421937Z[0m [34mDEBUG[0m tokio-runtime-worker [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"INSERT INTO TokenPrice(token_name, price) …" [3mdb.statement[0m[2m=[0m"\n\nINSERT INTO\n  TokenPrice(token_name, price)\nVALUES\n  ($1, $2) ON CONFLICT(token_name) DO\nUPDATE\nSET\n  price = excluded.price\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m3.150654ms
+[2m2023-12-15T00:49:09.478518Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361799)
+[2m2023-12-15T00:49:09.536887Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:09.682604Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140676)
+[2m2023-12-15T00:49:09.767771Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:09.778172Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160184962)
+[2m2023-12-15T00:49:09.827625Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140676)
+[2m2023-12-15T00:49:14.569529Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:14.657700Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361801)
+[2m2023-12-15T00:49:15.029586Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:15.063506Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:15.274149Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160184973)
+[2m2023-12-15T00:49:15.281052Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140679)
+[2m2023-12-15T00:49:19.747648Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:19.834909Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361802)
+[2m2023-12-15T00:49:20.349222Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:20.409545Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140681)
+[2m2023-12-15T00:49:20.516627Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:20.763948Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160184994)
+[2m2023-12-15T00:49:24.924774Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:25.012005Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361804)
+[2m2023-12-15T00:49:25.477693Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:25.537891Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140684)
+[2m2023-12-15T00:49:26.005348Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:26.243861Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185010)
+[2m2023-12-15T00:49:30.103028Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:30.190893Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361806)
+[2m2023-12-15T00:49:30.606003Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:30.666154Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140686)
+[2m2023-12-15T00:49:31.484168Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:31.722940Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185032)
+[2m2023-12-15T00:49:35.281966Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:35.369346Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361807)
+[2m2023-12-15T00:49:35.733537Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:35.792731Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140687)
+[2m2023-12-15T00:49:36.971922Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:37.220716Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185046)
+[2m2023-12-15T00:49:40.459232Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:40.547412Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361809)
+[2m2023-12-15T00:49:40.859806Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:40.919861Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140688)
+[2m2023-12-15T00:49:42.469744Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:42.706452Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185063)
+[2m2023-12-15T00:49:45.636267Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:45.723355Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361811)
+[2m2023-12-15T00:49:45.987064Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:46.046326Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140690)
+[2m2023-12-15T00:49:47.956970Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:48.202568Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185084)
+[2m2023-12-15T00:49:50.814620Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:50.901775Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361813)
+[2m2023-12-15T00:49:51.113455Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:51.172761Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140691)
+[2m2023-12-15T00:49:53.446637Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:53.684211Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185102)
+[2m2023-12-15T00:49:55.991525Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `56` got 0 logs
+[2m2023-12-15T00:49:56.079752Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 56 Latest block id Some(34361814)
+[2m2023-12-15T00:49:56.240692Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `137` got 0 logs
+[2m2023-12-15T00:49:56.299941Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 137 Latest block id Some(51140692)
+[2m2023-12-15T00:49:58.928428Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network `42161` got 0 logs
+[2m2023-12-15T00:49:59.165056Z[0m [34mDEBUG[0m tokio-runtime-worker [2mbackend::network_handler[0m[2m:[0m Network 42161 Latest block id Some(160185120)

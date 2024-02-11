@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Bet(\n                relative_id,\n                amount,\n                profit,\n                bet_info,\n                game_id,\n                user_id,\n                coin_id,\n                userseed_id,\n                serverseed_id\n            ) VALUES (\n                (SELECT MAX(relative_id)+1 FROM Bet WHERE Bet.userseed_id = $1 AND Bet.serverseed_id=$2),\n                $3,\n                $4,\n                $5,\n                $6,\n                $7,\n                $8,\n                $9,\n                $10\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Numeric",
+        "Numeric",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8b3b5dff2ac6ed745387606fd9a9508f993f3629d29fe710fddc93d0645d8a37"
+}
