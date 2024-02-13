@@ -53,7 +53,7 @@ pub mod db_models {
         }
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct User {
         pub id: i64,
         #[serde(with = "ts_seconds")]
@@ -64,27 +64,27 @@ pub mod db_models {
         pub password: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct Coin {
         pub id: i64,
         pub name: String,
         pub price: Decimal,
     }
 
-    #[derive(Deserialize, Serialize, Clone)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct Amount {
         pub name: String,
         pub amount: Decimal,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct Game {
         pub id: i64,
         pub name: String,
         pub parameters: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct UserSeed {
         pub id: i64,
         pub relative_id: i64,
@@ -92,7 +92,7 @@ pub mod db_models {
         pub user_seed: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct ServerSeed {
         pub id: i64,
         pub relative_id: i64,
@@ -102,7 +102,7 @@ pub mod db_models {
         pub revealed: bool,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct Bet {
         pub id: i64,
         pub relative_id: i64,

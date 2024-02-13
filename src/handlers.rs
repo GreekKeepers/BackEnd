@@ -710,6 +710,21 @@ pub mod user {
         )))
     }
 
+    /// Get user coins amounts
+    ///
+    ///
+    #[utoipa::path(
+        tag="user",
+        get,
+        path = "/api/user/amounts/{user_id}",
+        responses(
+            (status = 200, description = "Coins amounts", body = Amounts),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("user_id" = i64, Path, description = "User id")
+        )
+    )]
     pub async fn get_amounts(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
         let amounts = db
             .fetch_amounts(id)
@@ -721,6 +736,19 @@ pub mod user {
         })))
     }
 
+    /// Change user's username
+    ///
+    /// requires user being logined
+    #[utoipa::path(
+        tag="user",
+        patch,
+        path = "/api/user/username",
+        request_body = ChangeNickname,
+        responses(
+            (status = 200, description = "Username was changed", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
     pub async fn change_username(
         data: ChangeNickname,
         id: i64,
@@ -733,6 +761,21 @@ pub mod user {
         Ok(gen_info_response("Username was changed"))
     }
 
+    /// Get user info
+    ///
+    ///
+    #[utoipa::path(
+        tag="user",
+        get,
+        path = "/api/user/{user_id}",
+        responses(
+            (status = 200, description = "Coins amounts", body = UserStripped),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("user_id" = i64, Path, description = "User id")
+        )
+    )]
     pub async fn get_user(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
         let user = db
             .fetch_user(id)

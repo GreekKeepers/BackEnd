@@ -1,5 +1,6 @@
 use std::{io, sync::Arc};
 
+use crate::api_documentation::{serve_swagger, ApiDoc};
 use crate::communication::*;
 //use api_documentation::{serve_swagger, ApiDoc};
 use config::DatabaseSettings;
@@ -85,17 +86,17 @@ async fn main() {
     //     ws_data_feed.clone(),
     // ));
 
-    // api UI
-    // let api_config = Arc::new(Config::from("/api/api-doc.json"));
-    // let api_doc = warp::path("api-doc.json")
-    //     .and(warp::get())
-    //     .map(|| warp::reply::json(&ApiDoc::openapi()));
-    // let swagger_ui = warp::path("swagger-ui")
-    //     .and(warp::get())
-    //     .and(warp::path::full())
-    //     .and(warp::path::tail())
-    //     .and(warp::any().map(move || api_config.clone()))
-    //     .and_then(serve_swagger);
+    //api UI
+    let api_config = Arc::new(Config::from("/api/api-doc.json"));
+    let api_doc = warp::path("api-doc.json")
+        .and(warp::get())
+        .map(|| warp::reply::json(&ApiDoc::openapi()));
+    let swagger_ui = warp::path("swagger-ui")
+        .and(warp::get())
+        .and(warp::path::full())
+        .and(warp::path::tail())
+        .and(warp::any().map(move || api_config.clone()))
+        .and_then(serve_swagger);
 
     let cors = warp::cors()
         // .allow_origin("http://localhost:3000/")
@@ -111,9 +112,9 @@ async fn main() {
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
         _ = warp::serve(
-            filters::init_filters(db).recover(handle_rejection)
-            // filters::init_filters(db, ws_data_feed).or(api_doc)
-            // .or(swagger_ui).recover(handle_rejection).with(cors),
+            //filters::init_filters(db).recover(handle_rejection)
+            filters::init_filters(db).or(api_doc)
+            .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},
         _ = signal::ctrl_c() => {
