@@ -1,9 +1,9 @@
 use crate::{
     config::DatabaseSettings,
-    models::db_models::{Amount, Coin, User},
+    models::db_models::{Amount, Coin, Invoice, User},
 };
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::{postgres::PgPoolOptions, types::BigDecimal, PgPool};
 use tracing::info;
@@ -37,6 +37,54 @@ impl DB {
         )
         .fetch_optional(&self.db_pool)
         .await
+    }
+
+    pub async fn add_invoice(
+        &self,
+        id: &str,
+        merchant_id: &str,
+        order_id: &str,
+        status: i32,
+        pay_url: String,
+        user_id: i64,
+        amount: BigDecimal,
+        currency: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Invoice(
+                id,
+                merchant_id,
+                order_id,
+                status,
+                pay_url,
+                user_id,
+                amount,
+                currency
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8
+            )
+            "#,
+            id,
+            merchant_id,
+            order_id,
+            status,
+            pay_url,
+            user_id,
+            amount,
+            currency
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn fetch_coins(&self) -> Result<Vec<Coin>, sqlx::Error> {

@@ -11,13 +11,14 @@ use crate::errors::ApiError;
 //     GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals, RefClicks,
 //     Withdrawal,
 // };
-use crate::models::json_requests::{self, Login, RegisterUser};
+use crate::models::json_requests::{self, CreateInvoice, Login, RegisterUser};
 // #[allow(unused_imports)]
 // use crate::models::json_requests::{
 //     AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ChangePasswordRequest, ConnectWallet,
 //     DeletePartnerContacts, Login, RegisterPartner, SetNickname, SubmitError, SubmitQuestion,
 // };
 // #[allow(unused_imports)]
+use crate::models::db_models::Invoice;
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 // pub use abi::*;
 // pub use bets::*;
@@ -29,6 +30,7 @@ use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseB
 // pub use network::*;
 // pub use nickname::*;
 // pub use partner::*;
+pub use invoice::*;
 pub use user::*;
 // pub use rpcs::*;
 use serde::Serialize;
@@ -40,10 +42,19 @@ use warp::http::StatusCode;
 // use warp::ws::{Message, WebSocket};
 use std::time::{SystemTime, UNIX_EPOCH};
 use warp::Reply;
-use warp::{reject, reply::Response as WarpResponse};
+use warp::{http::Response as HttpResponse, reject, reply::Response as WarpResponse};
 
 fn get_response_status_json<T: Serialize>(status_code: StatusCode, message: T) -> impl warp::Reply {
     warp::reply::with_status(warp::reply::json(&message), status_code)
+}
+
+fn get_pgn_response(image: Vec<u8>) -> WarpResponse {
+    HttpResponse::builder()
+        .status(200)
+        .header("Content-Type", "image/png")
+        .body(image)
+        .unwrap()
+        .into_response()
 }
 
 pub fn gen_info_response(info: &str) -> WarpResponse {
@@ -605,6 +616,59 @@ pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
 //     }
 // }
 
+pub mod invoice {
+    use self::json_requests::QrRequest;
+    use qrcode_generator::QrCodeEcc;
+
+    use super::*;
+    /// Create a new invoice
+    ///
+    /// Creates a new invoice
+    #[utoipa::path(
+        tag="invoice",
+        post,
+        path = "/api/invoice/create",
+        request_body = RegisterUser,
+        responses(
+            (status = 200, description = "User account was created", body = Invoice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn create_invoice(
+        data: CreateInvoice,
+        id: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        Ok(gen_arbitrary_response(ResponseBody::Invoice(
+            Default::default(),
+        )))
+    }
+
+    /// Generate qr code
+    ///
+    /// Generates qr code from the specified data
+    #[utoipa::path(
+        tag="invoice",
+        get,
+        path = "/api/invoice/qr",
+        request_body = QrRequest,
+        responses(
+            (status = 200, description = "User account was created", body = Invoice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn generate_qr(
+        data: QrRequest,
+        id: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        Ok(get_pgn_response(
+            qrcode_generator::to_png_to_vec(&data.data, QrCodeEcc::Low, 1024)
+                .map_err(|_| ApiError::QrGenerationError(data.data))?,
+        ))
+    }
+}
+
 pub mod user {
     use crate::jwt;
     use crate::models::json_responses::{Amounts, UserStripped};
@@ -623,7 +687,7 @@ pub mod user {
     ///
     /// Registers new user account
     #[utoipa::path(
-        tag="partner",
+        tag="user",
         post,
         path = "/api/user/register",
         request_body = RegisterUser,
@@ -666,7 +730,7 @@ pub mod user {
     ///
     /// Logins user with provided login/password
     #[utoipa::path(
-        tag="partner",
+        tag="user",
         post,
         path = "/api/user/login",
         request_body = Login,

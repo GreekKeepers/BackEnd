@@ -4,10 +4,10 @@ import requests
 
 def main():
     res = requests.post(
-        "http://127.0.0.1:8282/user/register",
+        "https://game.greekkeepers.io/api/user/register",
         json={
             "username": "YeahNotSewerSide",
-            "password": "password",
+            "password": "qw78as45QW&*AS$%!@#",
         },
     )
     print(res.content)

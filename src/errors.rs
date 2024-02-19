@@ -43,6 +43,12 @@ pub enum ApiError {
 
     #[error("User Doesn't exist")]
     UserDoesntExist,
+
+    #[error("The endpoint is not yet implemented")]
+    NotImplemented,
+
+    #[error("Error generating qr code for data `{0}`")]
+    QrGenerationError(String),
 }
 
 impl reject::Reject for ApiError {}

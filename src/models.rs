@@ -119,11 +119,25 @@ pub mod db_models {
         pub userseed_id: i64,
         pub serverseed_id: i64,
     }
+
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Default)]
+    pub struct Invoice {
+        pub id: String,
+        pub merchant_id: String,
+        pub order_id: String,
+        #[serde(with = "ts_seconds")]
+        pub create_date: DateTime<Utc>,
+        pub status: i32,
+        pub pay_url: String,
+        pub user_id: i64,
+        pub amount: Decimal,
+        pub currency: String,
+    }
 }
 
 pub mod json_responses {
 
-    use self::db_models::{Amount, User};
+    use self::db_models::{Amount, Invoice, User};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -165,6 +179,7 @@ pub mod json_responses {
         InfoText(InfoText),
         Amounts(Amounts),
         User(UserStripped),
+        Invoice(Invoice),
         // Networks(Networks),
         // Rpcs(Rpcs),
         // BlockExplorers(BlockExplorers),
@@ -443,6 +458,8 @@ pub mod json_responses {
 }
 
 pub mod json_requests {
+    use serde_repr::{Deserialize_repr, Serialize_repr};
+
     use super::*;
 
     // #[derive(Deserialize, Serialize, ToSchema)]
@@ -451,6 +468,28 @@ pub mod json_requests {
     //     pub nickname: String,
     //     pub signature: String,
     // }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct QrRequest {
+        pub data: String,
+    }
+
+    #[derive(Serialize_repr, Deserialize_repr)]
+    #[repr(u32)]
+    pub enum InvoiceAmount {
+        Ten = 10,
+        Fifty = 50,
+        Hundred = 100,
+        FiveHundred = 500,
+        Thousand = 1000,
+        TwoThousand = 2000,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct CreateInvoice {
+        pub amount: InvoiceAmount,
+        pub currency: String,
+    }
 
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct ChangeNickname {

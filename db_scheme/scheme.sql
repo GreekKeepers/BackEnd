@@ -73,3 +73,14 @@ CREATE TABLE IF NOT EXISTS Bet(
 CREATE UNIQUE INDEX bet_unique_idx ON Bet(userseed_id, serverseed_id, relative_id);
 
 
+CREATE TABLE IF NOT EXISTS Invoice(
+    id TEXT NOT NULL PRIMARY KEY,
+    merchant_id TEXT NOT NULL,
+    order_id TEXT NOT NULL UNIQUE,
+    create_date TIMESTAMP DEFAULT NOW(),
+    status INTEGER NOT NULL,
+    pay_url TEXT NOT NULL,
+    user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    amount NUMERIC(1000, 4),
+    currency TEXT NOT NULL
+);

@@ -167,6 +167,16 @@ fn json_body_change_username(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_create_invoice(
+) -> impl Filter<Extract = (json_requests::CreateInvoice,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_generate_qr_code(
+) -> impl Filter<Extract = (json_requests::QrRequest,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 // fn json_body_add_partner_contacts(
 // ) -> impl Filter<Extract = (json_requests::AddPartnerContacts,), Error = warp::Rejection> + Clone {
 //     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -920,6 +930,34 @@ pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     )
 }
 
+pub fn create_invoice(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("create")
+        .and(warp::post())
+        .and(json_body_create_invoice())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::create_invoice)
+}
+
+pub fn generate_qr(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("qr")
+        .and(warp::get())
+        .and(json_body_generate_qr_code())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::generate_qr)
+}
+
+pub fn invoice(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("invoice").and(create_invoice(db.clone()).or(generate_qr(db)))
+}
+
 pub fn init_filters(
     db: DB,
     //bet_sender: WsDataFeedSender,
@@ -941,5 +979,5 @@ pub fn init_filters(
     //         .map(|ws: warp::ws::Ws, db, ch| {
     //             ws.on_upgrade(move |socket| handlers::websockets_handler(socket, db, ch))
     //         }))
-    user(db)
+    user(db.clone()).or(invoice(db))
 }
