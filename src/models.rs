@@ -474,7 +474,7 @@ pub mod json_requests {
         pub data: String,
     }
 
-    #[derive(Serialize_repr, Deserialize_repr)]
+    #[derive(Serialize_repr, Deserialize_repr, ToSchema)]
     #[repr(u32)]
     pub enum InvoiceAmount {
         Ten = 10,

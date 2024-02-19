@@ -26,6 +26,8 @@ use warp::{
             handlers::get_amounts,
             handlers::login_user,
             handlers::register_user,
+            handlers::create_invoice,
+            handlers::generate_qr
         ),
         components(schemas(
             //json_requests::User,
@@ -40,6 +42,9 @@ use warp::{
             json_requests::WithdrawRequest,
             json_requests::ChangePasswordRequest,
             json_requests::SubmitQuestion,
+            json_requests::QrRequest,
+            json_requests::InvoiceAmount,
+            json_requests::CreateInvoice,
 
             json_responses::JsonResponse,
             json_responses::ResponseBody,
@@ -54,6 +59,7 @@ use warp::{
             db_models::UserSeed,
             db_models::ServerSeed,
             db_models::Bet,
+            db_models::Invoice,
 
             LeaderboardType
 
