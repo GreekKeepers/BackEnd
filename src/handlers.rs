@@ -628,7 +628,7 @@ pub mod invoice {
         tag="invoice",
         post,
         path = "/api/invoice/create",
-        request_body = RegisterUser,
+        request_body = CreateInvoice,
         responses(
             (status = 200, description = "User account was created", body = Invoice),
             (status = 500, description = "Internal server error", body = ErrorText),
