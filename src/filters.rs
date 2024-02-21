@@ -11,6 +11,7 @@ use crate::tools;
 use base64::{engine::general_purpose, Engine as _};
 use http::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::str;
+use thedex::TheDex;
 use tracing::debug;
 use warp::filters::header::headers_cloned;
 use warp::reject;
@@ -18,6 +19,12 @@ use warp::Filter;
 
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
+}
+
+fn with_thedex(
+    dex: TheDex,
+) -> impl Filter<Extract = (TheDex,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || dex.clone())
 }
 
 // fn with_channel(
@@ -932,12 +939,14 @@ pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 
 pub fn create_invoice(
     db: DB,
+    dex: TheDex,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path!("create")
         .and(warp::post())
         .and(json_body_create_invoice())
         .and(with_auth(db.clone()))
         .and(with_db(db.clone()))
+        .and(with_thedex(dex))
         .and_then(handlers::create_invoice)
 }
 
@@ -954,13 +963,14 @@ pub fn generate_qr(
 
 pub fn invoice(
     db: DB,
+    dex: TheDex,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("invoice").and(create_invoice(db.clone()).or(generate_qr(db)))
+    warp::path("invoice").and(create_invoice(db.clone(), dex).or(generate_qr(db)))
 }
 
 pub fn init_filters(
     db: DB,
-    //bet_sender: WsDataFeedSender,
+    dex: TheDex, //bet_sender: WsDataFeedSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     // network(db.clone())
     //     .or(rpc(db.clone()))
@@ -979,5 +989,5 @@ pub fn init_filters(
     //         .map(|ws: warp::ws::Ws, db, ch| {
     //             ws.on_upgrade(move |socket| handlers::websockets_handler(socket, db, ch))
     //         }))
-    user(db.clone()).or(invoice(db))
+    user(db.clone()).or(invoice(db, dex))
 }

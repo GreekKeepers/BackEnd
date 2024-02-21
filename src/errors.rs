@@ -1,5 +1,18 @@
+use std::net::IpAddr;
+
+use crate::communication::ChannelType;
+use thedex::errors::Error as TheDexError;
 use thiserror::Error;
 use warp::reject;
+
+#[derive(Error, Debug)]
+pub enum ManagerError {
+    #[error("Channel `{0:?}` not present")]
+    ChannelIsNotPresent(ChannelType),
+
+    #[error("Feed for an address `{0:?}` not registered")]
+    FeedDoesntExist(IpAddr),
+}
 
 #[derive(Error, Debug)]
 pub enum ApiError {
@@ -49,6 +62,9 @@ pub enum ApiError {
 
     #[error("Error generating qr code for data `{0}`")]
     QrGenerationError(String),
+
+    #[error("Error creating invoice: {0}")]
+    CreateInvoiceError(TheDexError),
 }
 
 impl reject::Reject for ApiError {}

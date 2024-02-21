@@ -1,3 +1,4 @@
+use std::sync::atomic::AtomicBool;
 use std::{io, sync::Arc};
 
 use crate::api_documentation::{serve_swagger, ApiDoc};
@@ -7,6 +8,7 @@ use config::DatabaseSettings;
 use db::DB;
 use rejection_handler::handle_rejection;
 use std::env;
+use thedex::TheDex;
 use tokio::signal;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::{fmt, prelude::__tracing_subscriber_SubscriberExt, EnvFilter};
@@ -109,11 +111,20 @@ async fn main() {
             HeaderName::from_static("accept"),
         ]);
 
+    let dex = TheDex::new(String::from(""), String::from(""));
+
+    let run = Arc::new(AtomicBool::new(true));
+    let (ws_manager_tx, ws_manager_rx) = unbounded_channel::<WsManagerEvent>();
+    let ws_manager = Manager::new(ws_manager_rx);
+
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
+        r = ws_manager.run(run.clone()) => {
+            warn!("WS Manager stopped: `{:?}`", r);
+        }
         _ = warp::serve(
             //filters::init_filters(db).recover(handle_rejection)
-            filters::init_filters(db).or(api_doc)
+            filters::init_filters(db, dex).or(api_doc)
             .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},

@@ -137,7 +137,9 @@ pub mod db_models {
 
 pub mod json_responses {
 
-    use self::db_models::{Amount, Invoice, User};
+    use crate::WsData;
+
+    use self::db_models::{Amount, Bet, Invoice, ServerSeed, User};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -187,7 +189,9 @@ pub mod json_responses {
         // Game(Game),
         // Nickname(Nickname),
         // Player(Player),
-        // Bets(Bets),
+        Bets(Bets),
+        Bet(Bet),
+        ServerSeedHidden { seed: String },
         // Abi(GameAbi),
         // Totals(Totals),
         // LatestGames(LatestGames),
@@ -205,6 +209,24 @@ pub mod json_responses {
         AccessToken(AccessToken),
         // PlayersTotals(PlayersTotals),
         // Withdrawals(Vec<Withdrawal>),
+    }
+
+    impl From<WsData> for ResponseBody {
+        fn from(value: WsData) -> Self {
+            match value {
+                WsData::NewBet(bet) => ResponseBody::Bet(bet),
+                WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden { seed },
+            }
+        }
+    }
+
+    impl From<&WsData> for ResponseBody {
+        fn from(value: &WsData) -> Self {
+            match value {
+                WsData::NewBet(bet) => ResponseBody::Bet(bet.clone()),
+                WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden { seed: seed.clone() },
+            }
+        }
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -451,13 +473,14 @@ pub mod json_responses {
     //     //pub player_hand: Option<[Card; 5]>,
     // }
 
-    // #[derive(Deserialize, Serialize, ToSchema)]
-    // pub struct Bets {
-    //     pub bets: Vec<BetInfo>,
-    // }
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct Bets {
+        pub bets: Vec<Bet>,
+    }
 }
 
 pub mod json_requests {
+    use rust_decimal::Decimal;
     use serde_repr::{Deserialize_repr, Serialize_repr};
 
     use super::*;
@@ -474,7 +497,7 @@ pub mod json_requests {
         pub data: String,
     }
 
-    #[derive(Serialize_repr, Deserialize_repr, ToSchema)]
+    #[derive(Serialize_repr, Deserialize_repr, ToSchema, Clone)]
     #[repr(u32)]
     pub enum InvoiceAmount {
         Ten = 10,
@@ -485,7 +508,7 @@ pub mod json_requests {
         TwoThousand = 2000,
     }
 
-    #[derive(Deserialize, Serialize, ToSchema)]
+    #[derive(Deserialize, Serialize, ToSchema, Clone)]
     pub struct CreateInvoice {
         pub amount: InvoiceAmount,
         pub currency: String,
@@ -522,11 +545,27 @@ pub mod json_requests {
     #[derive(Deserialize, Serialize, ToSchema)]
     #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
-        Subscribe { payload: Vec<String> },
-        Unsubscribe { payload: Vec<String> },
-        SubscribeAll,
-        UnsubscribeAll,
+        Auth {
+            token: String,
+        },
+        SubscribeBets {
+            payload: Vec<i64>,
+        },
+        UnsubscribeBets {
+            payload: Vec<i64>,
+        },
+        SubscribeAllBets,
+        UnsubscribeAllBets,
         Ping,
+        NewClientSeed {
+            seed: String,
+        },
+        NewServerSeed,
+        MakeBet {
+            game_id: i64,
+            amount: Decimal,
+            difficulty: u64,
+        },
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

@@ -616,9 +616,183 @@ pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
 //     }
 // }
 
+pub mod game {
+    use std::{
+        sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        },
+        time::Duration,
+    };
+
+    use crate::{config::PASSWORD_SALT, tools, WsData, WsDataFeedReceiver, WsEventSender};
+
+    use self::json_requests::WebsocketsIncommingMessage;
+
+    use super::*;
+    use crate::jwt::Payload;
+    use base64::{engine::general_purpose, Engine};
+    use futures::{
+        stream::{self, SplitStream},
+        SinkExt, StreamExt,
+    };
+    use tokio::{sync::mpsc::unbounded_channel, time::sleep};
+    use tracing::{debug, error};
+    use warp::filters::ws::{Message, WebSocket};
+
+    pub async fn websockets_reader(
+        mut socket: SplitStream<WebSocket>,
+        event_propagation: WsEventSender,
+        _db: DB,
+        run: Arc<AtomicBool>,
+    ) {
+        while run.load(Ordering::Relaxed) {
+            let message = socket.next().await;
+            match message {
+                Some(m) => match m {
+                    Ok(message) => {
+                        if let Ok(message) = message.to_str() {
+                            let message: WebsocketsIncommingMessage =
+                                match serde_json::from_str(message) {
+                                    Ok(m) => m,
+                                    Err(e) => {
+                                        error!(
+                                            "Error parsing message `{}` | Error: {:?}",
+                                            message, e
+                                        );
+                                        continue;
+                                    }
+                                };
+
+                            if let Err(e) = event_propagation.send(message) {
+                                error!("Error propagating message {:?}", e);
+                                break;
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("Error on a websocket: {:?}", e);
+                        break;
+                    }
+                },
+                None => {
+                    break;
+                }
+            }
+        }
+    }
+
+    async fn auth(db: &DB, token: &str) -> Result<i64, ApiError> {
+        let parts = token.split('.').collect::<Vec<&str>>();
+        if parts.len() != 3 {
+            return Err(ApiError::MalformedToken);
+        }
+        let decoded = serde_json::from_str::<Payload>(
+            std::str::from_utf8(
+                &general_purpose::STANDARD_NO_PAD
+                    .decode(parts[1])
+                    .map_err(|_| ApiError::MalformedToken)?,
+            )
+            .map_err(|_| ApiError::MalformedToken)?,
+        )
+        .map_err(|_| ApiError::MalformedToken)?;
+
+        let user = db
+            .fetch_user(decoded.sub)
+            .await
+            .map_err(|e| ApiError::DbError(e))?
+            .ok_or(ApiError::ArbitraryError(
+                "Wrong username or password".into(),
+            ))?;
+        let _token_serialized = tools::serialize_token(
+            &token,
+            &format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat),
+        )
+        .map_err(|_| ApiError::MalformedToken)?;
+
+        Ok(user.id)
+    }
+
+    pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: WsDataFeedReceiver) {
+        debug!("New connection {:?}", &socket);
+        let (mut ws_tx, ws_rx) = socket.split();
+
+        let (reader_tx, mut reader_rx) = unbounded_channel();
+
+        let run = Arc::new(AtomicBool::new(true));
+        tokio::spawn(websockets_reader(ws_rx, reader_tx, db.clone(), run.clone()));
+
+        let mut events = Vec::<WsData>::with_capacity(10);
+
+        let mut user_id: Option<i64> = None;
+
+        while run.load(Ordering::Relaxed) {
+            tokio::select! {
+                    events_amount = channel.recv_many(&mut events, 10) => {
+                        if events_amount > 0{
+
+                            let mut stream = stream::iter(events.iter().map(|e| e.into()).map(|r:ResponseBody| Message::text(serde_json::to_string(&r).unwrap())).map(Ok));
+                            if let Err(e) = ws_tx.send_all(&mut stream).await{
+                                error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                break;
+                            }
+
+                            events.clear();
+                        }else{
+                            break;
+                        }
+                    }
+                    _ = sleep(Duration::from_millis(5000)) => {
+                        ws_tx
+                            .send(Message::text(serde_json::to_string(&WebsocketsIncommingMessage::Ping).unwrap()))
+                            .await
+                            .unwrap();
+                    }
+
+                    msg = reader_rx.recv() => {
+                        match msg{
+                            Some(msg) => {
+                                match msg{
+                                    WebsocketsIncommingMessage::Auth { token } => {
+                                        if user_id.is_none(){
+                                            match auth(&db, &token).await{
+                                                Ok(id) => {
+                                                    user_id.replace(id);
+                                                    if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::InfoText(InfoText { message: "Logined successfully".into() })).unwrap())).await{
+                                                        error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                                        break;
+                                                    }
+                                                },
+                                                Err(_) => break
+                                            }
+                                        }
+                                    },
+                                    WebsocketsIncommingMessage::SubscribeBets { payload } => todo!(),
+                                    WebsocketsIncommingMessage::UnsubscribeBets { payload } => todo!(),
+                                    WebsocketsIncommingMessage::SubscribeAllBets => todo!(),
+                                    WebsocketsIncommingMessage::UnsubscribeAllBets => todo!(),
+                                    WebsocketsIncommingMessage::Ping => todo!(),
+                                    WebsocketsIncommingMessage::NewClientSeed { seed } => todo!(),
+                                    WebsocketsIncommingMessage::NewServerSeed => todo!(),
+                                    WebsocketsIncommingMessage::MakeBet { game_id, amount, difficulty } => todo!(),
+                                }
+                            },
+                            None => {
+                                break;
+                            },
+                        }
+                    }
+            }
+        }
+    }
+}
+
 pub mod invoice {
     use self::json_requests::QrRequest;
+    use crate::tools::blake_hash;
     use qrcode_generator::QrCodeEcc;
+    use rust_decimal::{prelude::FromPrimitive, Decimal};
+    use thedex::{models::CreateInvoice as CreateInvoiceRequest, TheDex};
 
     use super::*;
     /// Create a new invoice
@@ -638,7 +812,42 @@ pub mod invoice {
         data: CreateInvoice,
         id: i64,
         db: DB,
+        dex: TheDex,
     ) -> Result<WarpResponse, warp::Rejection> {
+        // let order_id = blake_hash(&format!(
+        //     "{}{}{}{}",
+        //     id,
+        //     data.amount.clone() as u32,
+        //     data.currency,
+        //     chrono::offset::Utc::now().timestamp_millis()
+        // ));
+        // let result = dex
+        //     .create_invoice(
+        //         CreateInvoiceRequest {
+        //             amount: Decimal::from_u32(data.amount.clone() as u32).unwrap(),
+        //             currency: data.currency,
+        //             merchant_id: String::new(),
+        //             order_id: Some(order_id),
+        //             email: None,
+        //             client_id: Some(id.to_string()),
+        //             title: Some(format!("Bying for ${}", data.amount as u32)),
+        //             description: None,
+        //             recalculation: Some(true),
+        //             needs_email_confirmation: Some(false),
+        //             success_url: Some(String::from(
+        //                 "https://game.greekkeepers.io/api/invoice/success",
+        //             )),
+        //             failure_url: Some(String::from(
+        //                 "https://game.greekkeepers.io/api/invoice/failure",
+        //             )),
+        //             callback_url: Some(String::from(
+        //                 "https://game.greekkeepers.io/api/invoice/callback",
+        //             )),
+        //         },
+        //         chrono::offset::Utc::now().timestamp_millis() as u64,
+        //     )
+        //     .await
+        //     .map_err(ApiError::CreateInvoiceError)?;
         Ok(gen_arbitrary_response(ResponseBody::Invoice(
             Default::default(),
         )))
