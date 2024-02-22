@@ -30,6 +30,7 @@ use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseB
 // pub use network::*;
 // pub use nickname::*;
 // pub use partner::*;
+pub use game::*;
 pub use invoice::*;
 pub use user::*;
 // pub use rpcs::*;
@@ -618,6 +619,7 @@ pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
 
 pub mod game {
     use std::{
+        net::SocketAddr,
         sync::{
             atomic::{AtomicBool, Ordering},
             Arc,
@@ -625,12 +627,16 @@ pub mod game {
         time::Duration,
     };
 
-    use crate::{config::PASSWORD_SALT, tools, WsData, WsDataFeedReceiver, WsEventSender};
+    use crate::{
+        config::PASSWORD_SALT, models::db_models::Bet, tools, ChannelType, WsData,
+        WsDataFeedReceiver, WsEventSender, WsManagerEvent, WsManagerEventSender,
+    };
 
     use self::json_requests::WebsocketsIncommingMessage;
 
     use super::*;
     use crate::jwt::Payload;
+    use crate::tools::blake_hash;
     use base64::{engine::general_purpose, Engine};
     use futures::{
         stream::{self, SplitStream},
@@ -713,7 +719,20 @@ pub mod game {
         Ok(user.id)
     }
 
-    pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: WsDataFeedReceiver) {
+    pub async fn websockets_handler(
+        socket: WebSocket,
+        address: SocketAddr,
+        db: DB,
+        manager_writer: WsManagerEventSender,
+    ) {
+        let (data_feed_tx, mut data_feed) = unbounded_channel();
+
+        manager_writer
+            .send(WsManagerEvent::SubscribeFeed {
+                id: address.ip(),
+                feed: data_feed_tx,
+            })
+            .unwrap();
         debug!("New connection {:?}", &socket);
         let (mut ws_tx, ws_rx) = socket.split();
 
@@ -728,18 +747,17 @@ pub mod game {
 
         while run.load(Ordering::Relaxed) {
             tokio::select! {
-                    events_amount = channel.recv_many(&mut events, 10) => {
-                        if events_amount > 0{
-
-                            let mut stream = stream::iter(events.iter().map(|e| e.into()).map(|r:ResponseBody| Message::text(serde_json::to_string(&r).unwrap())).map(Ok));
-                            if let Err(e) = ws_tx.send_all(&mut stream).await{
-                                error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
-                                break;
-                            }
-
-                            events.clear();
-                        }else{
+                    events_amount = data_feed.recv_many(&mut events, 10) => {
+                        if events_amount == 0{
                             break;
+
+                        }else{
+                            for event in events.iter() {
+                                let e: ResponseBody = event.into();
+                                ws_tx.start_send_unpin(Message::text(serde_json::to_string(&e).unwrap())).unwrap();
+                            }
+                            events.clear();
+                            ws_tx.flush().await;
                         }
                     }
                     _ = sleep(Duration::from_millis(5000)) => {
@@ -747,6 +765,7 @@ pub mod game {
                             .send(Message::text(serde_json::to_string(&WebsocketsIncommingMessage::Ping).unwrap()))
                             .await
                             .unwrap();
+
                     }
 
                     msg = reader_rx.recv() => {
@@ -767,23 +786,88 @@ pub mod game {
                                             }
                                         }
                                     },
-                                    WebsocketsIncommingMessage::SubscribeBets { payload } => todo!(),
-                                    WebsocketsIncommingMessage::UnsubscribeBets { payload } => todo!(),
-                                    WebsocketsIncommingMessage::SubscribeAllBets => todo!(),
-                                    WebsocketsIncommingMessage::UnsubscribeAllBets => todo!(),
-                                    WebsocketsIncommingMessage::Ping => todo!(),
-                                    WebsocketsIncommingMessage::NewClientSeed { seed } => todo!(),
-                                    WebsocketsIncommingMessage::NewServerSeed => todo!(),
-                                    WebsocketsIncommingMessage::MakeBet { game_id, amount, difficulty } => todo!(),
+                                    WebsocketsIncommingMessage::SubscribeBets { payload } => {
+                                        for id in payload{
+                                            if let Err(_) = manager_writer.send(WsManagerEvent::SubscribeChannel { id: address.ip(), channel: ChannelType::Bets(id) }){
+                                                break;
+                                            }
+                                        }
+                                    },
+                                    WebsocketsIncommingMessage::UnsubscribeBets { payload } => {
+                                        for id in payload{
+                                            if let Err(_) = manager_writer.send(WsManagerEvent::UnsubscribeChannel { id: address.ip(), channel: ChannelType::Bets(id) }){
+                                                break;
+                                            }
+                                        }
+                                    },
+                                    WebsocketsIncommingMessage::SubscribeAllBets => {},
+                                    WebsocketsIncommingMessage::UnsubscribeAllBets => {},
+                                    WebsocketsIncommingMessage::Ping => {
+                                        if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&WebsocketsIncommingMessage::Ping).unwrap())).await{
+                                            error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                            break;
+                                        }
+                                    },
+                                    WebsocketsIncommingMessage::NewClientSeed { seed } => {
+                                        if let Some(user_id) = user_id {
+                                            if let Err(e) = db.new_user_seed(user_id, &seed).await {
+                                                if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ErrorText(ErrorText { error: format!("{:?}",e) })).unwrap())).await{
+                                                    error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                    },
+                                    WebsocketsIncommingMessage::NewServerSeed => {
+                                        if let Some(user_id) = user_id {
+                                            let seed_hex = blake_hash(&format!("{}{}{}",user_id,chrono::offset::Utc::now(),*PASSWORD_SALT));
+                                            let mut seed_hex_chars = seed_hex.chars();
+                                            seed_hex_chars.next();
+                                            seed_hex_chars.next();
+                                            let seed = seed_hex_chars.as_str();
+                                            let _ = db.reveal_last_seed(user_id).await;
+                                            if let Err(e) = db.new_server_seed(user_id, seed).await{
+                                                if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ErrorText(ErrorText { error: format!("{:?}",e) })).unwrap())).await{
+                                                    error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                                    break;
+                                                }
+                                            }
+                                            let seed_hex = blake_hash(seed);
+                                            let mut seed_hex_chars = seed_hex.chars();
+                                            seed_hex_chars.next();
+                                            seed_hex_chars.next();
+                                            let seed = seed_hex_chars.as_str();
+                                            if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ServerSeedHidden { seed: seed.into() }).unwrap())).await{
+                                                error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                                break;
+                                            }
+                                        }
+                                    },
+                                    WebsocketsIncommingMessage::MakeBet { game_id, amount, difficulty } => {
+                                        if let Some(user_id) = user_id{
+                                            manager_writer.send(WsManagerEvent::PropagateBet(Bet{
+                                                amount,
+                                                profit: amount,
+                                                user_id,
+                                                ..Default::default()
+                                            })).unwrap();
+                                        }
+                                    },
                                 }
                             },
                             None => {
                                 break;
                             },
                         }
+
                     }
             }
         }
+
+        manager_writer
+            .send(WsManagerEvent::UnsubscribeFeed(address.ip()))
+            .unwrap();
     }
 }
 

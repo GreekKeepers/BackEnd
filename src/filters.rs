@@ -8,13 +8,19 @@ use crate::jwt;
 use crate::jwt::Payload;
 use crate::models::{db_models::TimeBoundaries, json_requests, LeaderboardType};
 use crate::tools;
+use crate::WsDataFeedReceiver;
+use crate::WsManagerEventSender;
 use base64::{engine::general_purpose, Engine as _};
+use futures::FutureExt;
+use futures::StreamExt;
 use http::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use std::net::SocketAddr;
 use std::str;
 use thedex::TheDex;
 use tracing::debug;
 use warp::filters::header::headers_cloned;
 use warp::reject;
+use warp::reject::Rejection;
 use warp::Filter;
 
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
@@ -27,11 +33,11 @@ fn with_thedex(
     warp::any().map(move || dex.clone())
 }
 
-// fn with_channel(
-//     ch: WsDataFeedSender,
-// ) -> impl Filter<Extract = (WsDataFeedReceiver,), Error = std::convert::Infallible> + Clone {
-//     warp::any().map(move || ch.subscribe())
-// }
+fn with_manager_channel(
+    ch: WsManagerEventSender,
+) -> impl Filter<Extract = (WsManagerEventSender,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || ch.clone())
+}
 
 // async fn with_signature_nickname<'a>(
 //     credentials: json_requests::SetNickname,
@@ -971,6 +977,7 @@ pub fn invoice(
 pub fn init_filters(
     db: DB,
     dex: TheDex, //bet_sender: WsDataFeedSender,
+    manager_channel: WsManagerEventSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     // network(db.clone())
     //     .or(rpc(db.clone()))
@@ -989,5 +996,18 @@ pub fn init_filters(
     //         .map(|ws: warp::ws::Ws, db, ch| {
     //             ws.on_upgrade(move |socket| handlers::websockets_handler(socket, db, ch))
     //         }))
-    user(db.clone()).or(invoice(db, dex))
+    user(db.clone())
+        .or(invoice(db.clone(), dex))
+        .or(warp::path!("updates")
+            .and(warp::ws())
+            .and(with_db(db))
+            .and(with_manager_channel(manager_channel.clone()))
+            .and(warp::header::header::<SocketAddr>("X-Forwarded-For"))
+            .map(
+                |ws: warp::ws::Ws, db, channel: WsManagerEventSender, addr| {
+                    ws.on_upgrade(move |socket| {
+                        handlers::websockets_handler(socket, addr, db, channel.clone())
+                    })
+                },
+            ))
 }

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO ServerSeed(\n                user_id,\n                server_seed,\n                revealed\n            ) VALUES (\n                $1,\n                $2,\n                False\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Bpchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b3e6c2e5f84a3c0f281afd21cb010db8e2717e6f5c9bccc44ef6d38c91e47b80"
+}

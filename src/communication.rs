@@ -68,6 +68,7 @@ pub type WsDataFeedSender = UnboundedSender<WsData>;
 pub type WsEventReceiver = UnboundedReceiver<WebsocketsIncommingMessage>;
 pub type WsEventSender = UnboundedSender<WebsocketsIncommingMessage>;
 
+#[derive(Debug)]
 pub enum WsManagerEvent {
     SubscribeFeed { id: IpAddr, feed: WsDataFeedSender },
     UnsubscribeFeed(IpAddr),
@@ -118,11 +119,15 @@ impl Manager {
     }
 
     fn process_event(&mut self, event: &WsManagerEvent) -> Result<(), ManagerError> {
+        debug!("Got event: {:?}", event);
         match event {
             WsManagerEvent::SubscribeFeed { id, feed } => {
                 match self.feeds.insert(*id, feed.clone()) {
                     Some(_) => {
                         //debug!("Channel for ip `{:?}` got removed", id);
+                        self.subscriptions.iter_mut().for_each(|(_, ids)| {
+                            ids.remove(id);
+                        });
                     }
                     None => {}
                 }

@@ -222,6 +222,63 @@ impl DB {
         Ok(())
     }
 
+    pub async fn new_user_seed(&self, user_id: i64, seed: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO UserSeed(
+                user_id,
+                user_seed
+            ) VALUES (
+                $1,
+                $2
+            )
+            "#,
+            user_id,
+            seed
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn new_server_seed(&self, user_id: i64, seed: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO ServerSeed(
+                user_id,
+                server_seed,
+                revealed
+            ) VALUES (
+                $1,
+                $2,
+                False
+            )
+            "#,
+            user_id,
+            seed
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn reveal_last_seed(&self, user_id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE ServerSeed
+            SET revealed = True
+            WHERE user_id = $1 AND revealed = False
+            "#,
+            user_id,
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn place_bet(
         &self,
         amount: BigDecimal,
@@ -236,7 +293,6 @@ impl DB {
         sqlx::query!(
             r#"
             INSERT INTO Bet(
-                relative_id,
                 amount,
                 profit,
                 bet_info,
@@ -246,19 +302,16 @@ impl DB {
                 userseed_id,
                 serverseed_id
             ) VALUES (
-                (SELECT MAX(relative_id)+1 FROM Bet WHERE Bet.userseed_id = $1 AND Bet.serverseed_id=$2),
+                $1,
+                $2,
                 $3,
                 $4,
                 $5,
                 $6,
                 $7,
-                $8,
-                $9,
-                $10
+                $8
             )
             "#,
-            userseed_id,
-            serverseed_id,
             amount,
             profit,
             bet_info,

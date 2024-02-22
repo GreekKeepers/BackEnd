@@ -124,7 +124,7 @@ async fn main() {
         }
         _ = warp::serve(
             //filters::init_filters(db).recover(handle_rejection)
-            filters::init_filters(db, dex).or(api_doc)
+            filters::init_filters(db, dex, ws_manager_tx).or(api_doc)
             .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},

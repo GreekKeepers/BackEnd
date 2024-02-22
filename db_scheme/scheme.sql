@@ -39,15 +39,17 @@ CREATE TABLE IF NOT EXISTS Game(
 
 CREATE TABLE IF NOT EXISTS UserSeed(
     id BIGSERIAL PRIMARY KEY,
-    relative_id BIGINT NOT NULL,
+    --relative_id BIGINT NOT NULL,
     user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
 
     user_seed char(32) NOT NULL
 );
 
+CREATE UNIQUE INDEX user_seed_unique_idx ON UserSeed(user_id, user_seed);
+
 CREATE TABLE IF NOT EXISTS ServerSeed(
     id BIGSERIAL PRIMARY KEY,
-    relative_id BIGINT NOT NULL,
+    --relative_id BIGINT NOT NULL,
     user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
 
     server_seed char(128) NOT NULL,
@@ -56,7 +58,7 @@ CREATE TABLE IF NOT EXISTS ServerSeed(
 
 CREATE TABLE IF NOT EXISTS Bet(
     id BIGSERIAL PRIMARY KEY,
-    relative_id BIGINT,
+    --relative_id BIGINT,
     timestamp TIMESTAMP DEFAULT NOW(),
     amount NUMERIC(1000, 4),
     profit NUMERIC(1000, 4),
@@ -70,7 +72,7 @@ CREATE TABLE IF NOT EXISTS Bet(
     serverseed_id BIGSERIAL NOT NULL REFERENCES ServerSeed(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX bet_unique_idx ON Bet(userseed_id, serverseed_id, relative_id);
+CREATE UNIQUE INDEX bet_unique_idx ON Bet(userseed_id, serverseed_id, id);
 
 
 CREATE TABLE IF NOT EXISTS Invoice(

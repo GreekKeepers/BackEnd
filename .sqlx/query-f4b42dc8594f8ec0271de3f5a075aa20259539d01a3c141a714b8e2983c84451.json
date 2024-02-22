@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE ServerSeed\n            SET revealed = True\n            WHERE user_id = $1 AND revealed = False\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f4b42dc8594f8ec0271de3f5a075aa20259539d01a3c141a714b8e2983c84451"
+}

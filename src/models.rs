@@ -87,7 +87,7 @@ pub mod db_models {
     #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct UserSeed {
         pub id: i64,
-        pub relative_id: i64,
+        //pub relative_id: i64,
         pub user_id: i64,
         pub user_seed: String,
     }
@@ -95,17 +95,17 @@ pub mod db_models {
     #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct ServerSeed {
         pub id: i64,
-        pub relative_id: i64,
+        //pub relative_id: i64,
         pub user_id: i64,
 
         pub server_seed: String,
         pub revealed: bool,
     }
 
-    #[derive(Deserialize, Serialize, Clone, ToSchema)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, Default)]
     pub struct Bet {
         pub id: i64,
-        pub relative_id: i64,
+        //pub relative_id: i64,
         #[serde(with = "ts_seconds")]
         pub timestamp: DateTime<Utc>,
         pub amount: Decimal,
