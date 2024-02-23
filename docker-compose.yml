@@ -4,11 +4,46 @@ services:
     build: ./
     image: backend
     container_name: backend
-    restart: always
-    network_mode: "host"
+    #restart: always
+    #network_mode: "host"
     ports:
       - 8282:8282
-    # networks:
-    #   - bicasnet
+    networks:
+      - greekkeepersnet
     volumes:
       - ./logs/:/Backend/logs/
+
+  db:
+    image: postgres:14.1-alpine
+    container_name: bicas-db
+    environment:
+      - POSTGRES_USER=mgwdb
+      - POSTGRES_PASSWORD=mgwdb
+      - APP_DB_USER=mgwdb
+      - APP_DB_PASS=mgwdb
+      - APP_DB_NAME=mgwdb
+    ports:
+      - '5432:5432'
+    networks:
+      - greekkeepersnet
+    #network_mode: "host"
+    volumes:
+      - ./db-data/:/var/lib/postgresql/data
+      - ./db_scheme/scheme.sql:/docker-entrypoint-initdb.d/create_tables.sql
+
+  nginx:
+    build: ./nginx/
+    image: bicas-nginx
+    container_name: bicas-nginx
+    # network_mode: "host"
+    ports:
+      - '8585:8585'
+    networks:
+      - greekkeepersnet
+    # volumes:
+    #   - ./BicasCasino/src/public:/public
+
+
+networks:
+  greekkeepersnet:
+    driver: bridge

@@ -4,7 +4,7 @@ import requests
 
 def main():
     res = requests.post(
-        "http://127.0.0.1:8282/user/register",
+        "http://127.0.0.1:8585/api/user/register",
         json={
             "username": "YeahNotSewerSide",
             "password": "qw78as45QW&*AS$%!@#",
@@ -13,14 +13,14 @@ def main():
     print(res.content)
 
     res = requests.post(
-        "http://127.0.0.1:8282/user/login",
+        "http://127.0.0.1:8585/api/user/login",
         json={"login": "YeahNotSewerSide", "password": "qw78as45QW&*AS$%!@#"},
     )
 
     print(res.content)
 
     res = requests.get(
-        "http://127.0.0.1:8282/user/1",
+        "http://127.0.0.1:8585/api/user/1",
         headers={
             "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6IlllYWhOb3RTZXdlclNpZGUiLCJleHAiOjEwMCwiaWF0IjoxMDAsImF1ZCI6IiJ9.5WZGk8qJFt0RBQG7yXxvNtIVjhXT1nrjeD7mkSMbRiY"
         },
@@ -29,7 +29,7 @@ def main():
     print(res.content)
 
     res = requests.get(
-        "http://127.0.0.1:8282/invoice/qr",
+        "http://127.0.0.1:8585/api/invoice/qr",
         headers={
             "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcwODM3OTA3OCwiYXVkIjoiIn0.VwA0VVVPxMnXAHaVlxR0UnnXc1DMlWvTTva4RIBvz9M"
         },
@@ -71,12 +71,12 @@ def on_open(ws):
 def web_sockets():
     websocket.enableTrace(True)
     ws = websocket.WebSocketApp(
-        "ws://127.0.0.1:8282/updates",
+        "ws://127.0.0.1:8585/api/updates",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,
         on_close=on_close,
-        header={"X-Forwarded-For": "192.168.0.1:555"},
+        # header={"X-Forwarded-For": "192.168.0.1:555"},
     )
 
     ws.run_forever(
