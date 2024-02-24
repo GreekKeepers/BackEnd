@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS UserSeed(
     --relative_id BIGINT NOT NULL,
     user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
 
-    user_seed char(32) NOT NULL
+    user_seed char(64) NOT NULL
 );
 
 CREATE UNIQUE INDEX user_seed_unique_idx ON UserSeed(user_id, user_seed);

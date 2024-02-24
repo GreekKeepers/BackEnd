@@ -8,6 +8,7 @@ use crate::jwt;
 use crate::jwt::Payload;
 use crate::models::{db_models::TimeBoundaries, json_requests, LeaderboardType};
 use crate::tools;
+use crate::EngineBetSender;
 use crate::WsDataFeedReceiver;
 use crate::WsManagerEventSender;
 use base64::{engine::general_purpose, Engine as _};
@@ -36,6 +37,12 @@ fn with_thedex(
 fn with_manager_channel(
     ch: WsManagerEventSender,
 ) -> impl Filter<Extract = (WsManagerEventSender,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || ch.clone())
+}
+
+fn with_engine_channel(
+    ch: EngineBetSender,
+) -> impl Filter<Extract = (EngineBetSender,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || ch.clone())
 }
 
@@ -978,6 +985,7 @@ pub fn init_filters(
     db: DB,
     dex: TheDex, //bet_sender: WsDataFeedSender,
     manager_channel: WsManagerEventSender,
+    engine_sender: EngineBetSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     // network(db.clone())
     //     .or(rpc(db.clone()))
@@ -1002,11 +1010,22 @@ pub fn init_filters(
             .and(warp::ws())
             .and(with_db(db))
             .and(with_manager_channel(manager_channel.clone()))
+            .and(with_engine_channel(engine_sender.clone()))
             .and(warp::header::header::<SocketAddr>("X-Forwarded-For"))
             .map(
-                |ws: warp::ws::Ws, db, channel: WsManagerEventSender, addr| {
+                |ws: warp::ws::Ws,
+                 db,
+                 channel: WsManagerEventSender,
+                 engine_channel: EngineBetSender,
+                 addr| {
                     ws.on_upgrade(move |socket| {
-                        handlers::websockets_handler(socket, addr, db, channel.clone())
+                        handlers::websockets_handler(
+                            socket,
+                            addr,
+                            db,
+                            channel.clone(),
+                            engine_channel.clone(),
+                        )
                     })
                 },
             ))

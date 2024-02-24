@@ -1,6 +1,7 @@
 use crate::{
     config::DatabaseSettings,
-    models::db_models::{Amount, Coin, Invoice, User},
+    models::db_models::{Amount, Coin, Game, Invoice, ServerSeed, User, UserSeed},
+    tools::blake_hash,
 };
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -202,19 +203,62 @@ impl DB {
         .await
     }
 
-    pub async fn init_amount(&self, user_id: i64, coin_id: i64) -> Result<(), sqlx::Error> {
+    pub async fn fetch_amount(
+        &self,
+        user_id: i64,
+        coin_id: i64,
+    ) -> Result<Option<BigDecimal>, sqlx::Error> {
+        sqlx::query!(
+            r#"
+            SELECT Amount.amount as amount
+            FROM Amount
+            WHERE user_id=$1 AND coin_id=$2
+            LIMIT 1
+            "#,
+            user_id,
+            coin_id
+        )
+        .fetch_one(&self.db_pool)
+        .await
+        .map(|v| v.amount)
+    }
+
+    pub async fn fetch_game(&self, game_id: i64) -> Result<Option<Game>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Game,
+            r#"
+            SELECT *
+            FROM Game
+            WHERE id=$1
+            LIMIT 1
+            "#,
+            game_id
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
+    pub async fn init_amount(
+        &self,
+        user_id: i64,
+        coin_id: i64,
+        amount: BigDecimal,
+    ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
             INSERT INTO Amount(
                 user_id,
-                coin_id
+                coin_id,
+                amount
             ) VALUES (
                 $1,
-                $2
+                $2,
+                $3
             )
             "#,
             user_id,
-            coin_id
+            coin_id,
+            amount
         )
         .execute(&self.db_pool)
         .await?;
@@ -240,6 +284,39 @@ impl DB {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn fetch_current_user_seed(&self, user_id: i64) -> Result<UserSeed, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            UserSeed,
+            r#"
+            SELECT * FROM UserSeed
+            WHERE user_id = $1
+            ORDER BY id DESC
+            LIMIT 1
+            "#,
+            user_id,
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn fetch_current_server_seed(&self, user_id: i64) -> Result<ServerSeed, sqlx::Error> {
+        let mut res = sqlx::query_as_unchecked!(
+            ServerSeed,
+            r#"
+            SELECT * FROM ServerSeed
+            WHERE user_id = $1 AND revealed = FALSE
+            LIMIT 1
+            "#,
+            user_id,
+        )
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        res.server_seed = blake_hash(&res.server_seed);
+
+        Ok(res)
     }
 
     pub async fn new_server_seed(&self, user_id: i64, seed: &str) -> Result<(), sqlx::Error> {
@@ -279,6 +356,50 @@ impl DB {
         Ok(())
     }
 
+    pub async fn decrease_balance(
+        &self,
+        user_id: i64,
+        coin_id: i64,
+        amount: BigDecimal,
+    ) -> Result<bool, sqlx::Error> {
+        let res = sqlx::query!(
+            r#"
+            UPDATE Amount
+            SET amount = amount - $3
+            WHERE user_id = $1 AND coin_id = $2 and amount >= amount
+            "#,
+            user_id,
+            coin_id,
+            amount
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(res.rows_affected() > 0)
+    }
+
+    pub async fn increase_balance(
+        &self,
+        user_id: i64,
+        coin_id: i64,
+        amount: BigDecimal,
+    ) -> Result<bool, sqlx::Error> {
+        let res = sqlx::query!(
+            r#"
+            UPDATE Amount
+            SET amount = amount + $3
+            WHERE user_id = $1 AND coin_id = $2 
+            "#,
+            user_id,
+            coin_id,
+            amount
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(res.rows_affected() > 0)
+    }
+
     pub async fn place_bet(
         &self,
         amount: BigDecimal,
@@ -289,7 +410,7 @@ impl DB {
         coin_id: i64,
         userseed_id: i64,
         serverseed_id: i64,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<i64, sqlx::Error> {
         sqlx::query!(
             r#"
             INSERT INTO Bet(
@@ -310,7 +431,7 @@ impl DB {
                 $6,
                 $7,
                 $8
-            )
+            ) RETURNING id
             "#,
             amount,
             profit,
@@ -321,9 +442,8 @@ impl DB {
             userseed_id,
             serverseed_id
         )
-        .execute(&self.db_pool)
-        .await?;
-
-        Ok(())
+        .fetch_one(&self.db_pool)
+        .await
+        .map(|v| v.id)
     }
 }

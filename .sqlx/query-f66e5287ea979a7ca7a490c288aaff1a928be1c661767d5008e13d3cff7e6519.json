@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Amount(\n                user_id,\n                coin_id,\n                amount\n            ) VALUES (\n                $1,\n                $2,\n                $3\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Numeric"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f66e5287ea979a7ca7a490c288aaff1a928be1c661767d5008e13d3cff7e6519"
+}

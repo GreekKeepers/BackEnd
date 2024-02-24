@@ -3,6 +3,7 @@ use std::{io, sync::Arc};
 
 use crate::api_documentation::{serve_swagger, ApiDoc};
 use crate::communication::*;
+use crate::game_engine::Engine;
 //use api_documentation::{serve_swagger, ApiDoc};
 use config::DatabaseSettings;
 use db::DB;
@@ -23,6 +24,8 @@ mod config;
 mod db;
 mod errors;
 mod filters;
+mod game_engine;
+mod games;
 mod handlers;
 mod jwt;
 mod models;
@@ -113,23 +116,29 @@ async fn main() {
 
     let dex = TheDex::new(String::from(""), String::from(""));
 
-    let run = Arc::new(AtomicBool::new(true));
     let (ws_manager_tx, ws_manager_rx) = unbounded_channel::<WsManagerEvent>();
     let ws_manager = Manager::new(ws_manager_rx);
 
+    let (engine_tx, engine_rx) = async_channel::unbounded();
+
+    let engine = Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx);
+
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
-        r = ws_manager.run(run.clone()) => {
+        r = ws_manager.run() => {
             warn!("WS Manager stopped: `{:?}`", r);
         }
         _ = warp::serve(
             //filters::init_filters(db).recover(handle_rejection)
-            filters::init_filters(db, dex, ws_manager_tx).or(api_doc)
+            filters::init_filters(db, dex, ws_manager_tx, engine_tx).or(api_doc)
             .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},
         _ = signal::ctrl_c() => {
             warn!("CTRL+C received, stopping process...")
+        }
+        _ = engine.run() => {
+            warn!("Engine stopped");
         }
     }
 }

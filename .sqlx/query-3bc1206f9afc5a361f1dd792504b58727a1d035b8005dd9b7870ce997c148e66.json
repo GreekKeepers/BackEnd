@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT * FROM ServerSeed\n            WHERE user_id = $1 AND revealed = FALSE\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "server_seed",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "revealed",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3bc1206f9afc5a361f1dd792504b58727a1d035b8005dd9b7870ce997c148e66"
+}

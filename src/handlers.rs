@@ -628,8 +628,11 @@ pub mod game {
     };
 
     use crate::{
-        config::PASSWORD_SALT, models::db_models::Bet, tools, ChannelType, WsData,
-        WsDataFeedReceiver, WsEventSender, WsManagerEvent, WsManagerEventSender,
+        config::PASSWORD_SALT,
+        models::db_models::Bet,
+        tools::{self, blake_hash_256},
+        ChannelType, EngineBetSender, WsData, WsDataFeedReceiver, WsEventSender, WsManagerEvent,
+        WsManagerEventSender,
     };
 
     use self::json_requests::WebsocketsIncommingMessage;
@@ -642,6 +645,7 @@ pub mod game {
         stream::{self, SplitStream},
         SinkExt, StreamExt,
     };
+    use game::json_requests::PropagatedBet;
     use tokio::{sync::mpsc::unbounded_channel, time::sleep};
     use tracing::{debug, error};
     use warp::filters::ws::{Message, WebSocket};
@@ -724,6 +728,7 @@ pub mod game {
         address: SocketAddr,
         db: DB,
         manager_writer: WsManagerEventSender,
+        engine_sender: EngineBetSender,
     ) {
         let (data_feed_tx, mut data_feed) = unbounded_channel();
 
@@ -809,6 +814,7 @@ pub mod game {
                                         }
                                     },
                                     WebsocketsIncommingMessage::NewClientSeed { seed } => {
+                                        let seed = blake_hash_256(&seed);
                                         if let Some(user_id) = user_id {
                                             if let Err(e) = db.new_user_seed(user_id, &seed).await {
                                                 if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ErrorText(ErrorText { error: format!("{:?}",e) })).unwrap())).await{
@@ -844,14 +850,10 @@ pub mod game {
                                             }
                                         }
                                     },
-                                    WebsocketsIncommingMessage::MakeBet { game_id, amount, difficulty } => {
+                                    WebsocketsIncommingMessage::MakeBet(mut bet) => {
                                         if let Some(user_id) = user_id{
-                                            manager_writer.send(WsManagerEvent::PropagateBet(Bet{
-                                                amount,
-                                                profit: amount,
-                                                user_id,
-                                                ..Default::default()
-                                            })).unwrap();
+                                            bet.user_id = user_id;
+                                            engine_sender.send(bet).await;
                                         }
                                     },
                                 }
@@ -970,6 +972,8 @@ pub mod user {
     use blake2::{Blake2b512, Digest};
     use chrono::{TimeZone, Utc};
     use hex::ToHex;
+    use rust_decimal::prelude::FromPrimitive;
+    use sqlx::types::BigDecimal;
     use tracing::debug;
 
     use self::json_requests::ChangeNickname;
@@ -1010,10 +1014,18 @@ pub mod user {
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
+        debug!("Coins {:?}", coins);
+
         for coin in coins {
-            db.init_amount(user.id, coin.id)
-                .await
-                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            if coin.id == 1 {
+                db.init_amount(user.id, coin.id, BigDecimal::from_u64(1000).unwrap())
+                    .await
+                    .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            } else {
+                db.init_amount(user.id, coin.id, BigDecimal::from_u64(0).unwrap())
+                    .await
+                    .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            }
         }
 
         Ok(gen_info_response("User account has been created"))

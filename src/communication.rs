@@ -1,11 +1,15 @@
 use rust_decimal::Decimal;
-pub use tokio::sync::broadcast::{channel, Receiver, Sender};
+use sqlx::types::BigDecimal;
+use tokio::select;
+//pub use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 // use crate::models::db_models::{Bet, TokenPrice};
 // use crate::models::json_responses::BetInfoResponse;
 
 use crate::models::db_models::Bet;
+use crate::models::json_requests::PropagatedBet;
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
+pub use async_channel::{Receiver, Sender};
 pub use std::collections::{HashMap, HashSet};
 use std::{
     net::IpAddr,
@@ -19,13 +23,6 @@ use tracing::{debug, error, info};
 // pub struct DbPropagatedBet {
 //     pub bet: Bet,
 //     pub block_id: u64,
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct PropagatedBet {
-//     pub bet: BetInfoResponse,
-//     pub game_name: String,
-//     pub network_name: String,
 // }
 
 // pub type DbReceiver = UnboundedReceiver<DbMessage>;
@@ -67,6 +64,9 @@ pub type WsDataFeedSender = UnboundedSender<WsData>;
 
 pub type WsEventReceiver = UnboundedReceiver<WebsocketsIncommingMessage>;
 pub type WsEventSender = UnboundedSender<WebsocketsIncommingMessage>;
+
+pub type EngineBetReciever = Receiver<PropagatedBet>;
+pub type EngineBetSender = Sender<PropagatedBet>;
 
 #[derive(Debug)]
 pub enum WsManagerEvent {
@@ -167,11 +167,11 @@ impl Manager {
         Ok(())
     }
 
-    pub async fn run(mut self, run: Arc<AtomicBool>) -> Result<(), ManagerError> {
+    pub async fn run(mut self) -> Result<(), ManagerError> {
         info!("Starting WS manager");
 
         let mut events: Vec<WsManagerEvent> = Vec::with_capacity(50);
-        while run.load(Ordering::Relaxed) {
+        loop {
             let amount = self.manager_rx.recv_many(&mut events, 50).await;
             debug!("Got total `{}` events", amount);
             if amount == 0 {
@@ -186,6 +186,6 @@ impl Manager {
 
             events.clear();
         }
-        Ok(())
+        //Ok(())
     }
 }

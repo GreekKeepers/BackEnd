@@ -41,3 +41,4 @@ base64 = "0.21"
 qrcode-generator = "4.1.9"
 thedex = { git = "https://github.com/GreekKeepers/TheDex", branch = "main" }
 hex = "0.4.3"
+async-channel = "2.2.0"

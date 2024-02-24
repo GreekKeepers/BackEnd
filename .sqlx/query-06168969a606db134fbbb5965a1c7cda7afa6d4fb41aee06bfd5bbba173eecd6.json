@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT Amount.amount as amount\n            FROM Amount\n            WHERE user_id=$1 AND coin_id=$2\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "amount",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "06168969a606db134fbbb5965a1c7cda7afa6d4fb41aee06bfd5bbba173eecd6"
+}

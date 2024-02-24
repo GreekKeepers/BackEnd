@@ -23,6 +23,8 @@ impl FromStr for LeaderboardType {
 }
 
 pub mod db_models {
+    use crate::models::json_requests::PropagatedBet;
+
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
@@ -64,7 +66,7 @@ pub mod db_models {
         pub password: String,
     }
 
-    #[derive(Deserialize, Serialize, Clone, ToSchema)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug)]
     pub struct Coin {
         pub id: i64,
         pub name: String,
@@ -82,6 +84,17 @@ pub mod db_models {
         pub id: i64,
         pub name: String,
         pub parameters: String,
+    }
+
+    // #[derive(Deserialize, Serialize, Clone, ToSchema)]
+    // pub enum GameParameters{
+    //     CoinFlip()
+    // }
+
+    pub struct GameResult {
+        pub total_profit: Decimal,
+        pub outcomes: Vec<u32>,
+        pub num_games: u32,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema)]
@@ -118,6 +131,7 @@ pub mod db_models {
         pub coin_id: i64,
         pub userseed_id: i64,
         pub serverseed_id: i64,
+        pub outcomes: Vec<u32>,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema, Default)]
@@ -542,30 +556,30 @@ pub mod json_requests {
         pub network_id: i64,
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct PropagatedBet {
+        pub game_id: i64,
+        pub amount: Decimal,
+        pub difficulty: u64,
+        pub coin_id: i64,
+        pub user_id: i64,
+        pub data: String,
+        pub stop_loss: Decimal,
+        pub stop_win: Decimal,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema)]
     #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
-        Auth {
-            token: String,
-        },
-        SubscribeBets {
-            payload: Vec<i64>,
-        },
-        UnsubscribeBets {
-            payload: Vec<i64>,
-        },
+        Auth { token: String },
+        SubscribeBets { payload: Vec<i64> },
+        UnsubscribeBets { payload: Vec<i64> },
         SubscribeAllBets,
         UnsubscribeAllBets,
         Ping,
-        NewClientSeed {
-            seed: String,
-        },
+        NewClientSeed { seed: String },
         NewServerSeed,
-        MakeBet {
-            game_id: i64,
-            amount: Decimal,
-            difficulty: u64,
-        },
+        MakeBet(PropagatedBet),
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
