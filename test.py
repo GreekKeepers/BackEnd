@@ -60,7 +60,7 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[0]}')
+    ws.send('{"type":"SubscribeBets", "payload":[1]}')
 
     ws.send(
         '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwODgxMDQyMCwiYXVkIjoiIn0.0T8V8_ekmj6MJVl5EvyQS__vvAuqHRD_CL83IG1dBE4"}'
@@ -69,6 +69,10 @@ def on_open(ws):
     # creating user seed
 
     seed_data = {"type": "NewClientSeed", "seed": "Insane 100%rate win seed"}
+    ws.send(json.dumps(seed_data))
+
+    seed_data = {"type": "NewServerSeed"}
+    ws.send(json.dumps(seed_data))
 
     bet_data = {
         "type": "MakeBet",
@@ -85,7 +89,7 @@ def on_open(ws):
 
 
 def web_sockets():
-    websocket.enableTrace(True)
+    # websocket.enableTrace(True)
     ws = websocket.WebSocketApp(
         "ws://127.0.0.1:8282/updates",
         on_open=on_open,

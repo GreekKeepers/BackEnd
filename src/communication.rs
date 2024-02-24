@@ -89,7 +89,7 @@ pub struct Manager {
 impl Manager {
     pub fn new(manager_rx: WsManagerEventReceiver) -> Self {
         let mut subscriptions: HashMap<ChannelType, HashSet<IpAddr>> = HashMap::with_capacity(1);
-        subscriptions.insert(ChannelType::Bets(0), Default::default());
+        subscriptions.insert(ChannelType::Bets(1), Default::default());
 
         Self {
             feeds: Default::default(),
