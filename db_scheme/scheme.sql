@@ -86,3 +86,21 @@ CREATE TABLE IF NOT EXISTS Invoice(
     amount NUMERIC(1000, 4),
     currency TEXT NOT NULL
 );
+
+
+-- DATA
+
+INSERT INTO Coin(
+    name,
+    price
+) VALUES (
+    "DraxBonus",
+    1
+);
+INSERT INTO Coin(
+    name,
+    price
+) VALUES (
+    "Drax",
+    10
+);
