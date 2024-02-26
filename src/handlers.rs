@@ -776,6 +776,7 @@ pub mod game {
                     msg = reader_rx.recv() => {
                         match msg{
                             Some(msg) => {
+                                debug!("{:?}: {:?}", &address, &msg);
                                 match msg{
                                     WebsocketsIncommingMessage::Auth { token } => {
                                         if user_id.is_none(){
@@ -787,7 +788,10 @@ pub mod game {
                                                         break;
                                                     }
                                                 },
-                                                Err(_) => break
+                                                Err(e) => {
+                                                    error!("Auth error {:?}: {:?}", &address, e);
+                                                    break
+                                                }
                                             }
                                         }
                                     },

@@ -568,7 +568,7 @@ pub mod json_requests {
         pub stop_win: Decimal,
     }
 
-    #[derive(Deserialize, Serialize, ToSchema)]
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
     #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
         Auth { token: String },

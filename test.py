@@ -63,7 +63,7 @@ def on_open(ws):
     ws.send('{"type":"SubscribeBets", "payload":[1]}')
 
     ws.send(
-        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwODgxMDQyMCwiYXVkIjoiIn0.0T8V8_ekmj6MJVl5EvyQS__vvAuqHRD_CL83IG1dBE4"}'
+        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcwODk1NDgyMywiYXVkIjoiIn0.GUFquJ8c_UGyhHmmT1uNKNvj5WT4Gu90CUPZfFPWjok"}'
     )
 
     # creating user seed
@@ -89,7 +89,7 @@ def on_open(ws):
 
 
 def web_sockets():
-    # websocket.enableTrace(True)
+    websocket.enableTrace(True)
     ws = websocket.WebSocketApp(
         "ws://127.0.0.1:8282/updates",
         on_open=on_open,
