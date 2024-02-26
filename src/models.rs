@@ -189,7 +189,7 @@ pub mod json_responses {
     }
 
     #[derive(Serialize, Deserialize, ToSchema)]
-    #[serde(untagged)]
+    #[serde(tag = "type")]
     pub enum ResponseBody {
         ErrorText(ErrorText),
         InfoText(InfoText),
