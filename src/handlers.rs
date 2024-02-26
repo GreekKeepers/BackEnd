@@ -11,14 +11,14 @@ use crate::errors::ApiError;
 //     GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals, RefClicks,
 //     Withdrawal,
 // };
-use crate::models::json_requests::{self, CreateInvoice, Login, RegisterUser};
+use crate::models::json_requests::{self, CreateInvoice, Login};
 // #[allow(unused_imports)]
 // use crate::models::json_requests::{
 //     AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ChangePasswordRequest, ConnectWallet,
 //     DeletePartnerContacts, Login, RegisterPartner, SetNickname, SubmitError, SubmitQuestion,
 // };
 // #[allow(unused_imports)]
-use crate::models::db_models::Invoice;
+
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 // pub use abi::*;
 // pub use bets::*;
@@ -629,9 +629,8 @@ pub mod game {
 
     use crate::{
         config::PASSWORD_SALT,
-        models::db_models::Bet,
         tools::{self, blake_hash_256},
-        ChannelType, EngineBetSender, WsData, WsDataFeedReceiver, WsEventSender, WsManagerEvent,
+        ChannelType, EngineBetSender, WsData, WsEventSender, WsManagerEvent,
         WsManagerEventSender,
     };
 
@@ -642,10 +641,10 @@ pub mod game {
     use crate::tools::blake_hash;
     use base64::{engine::general_purpose, Engine};
     use futures::{
-        stream::{self, SplitStream},
+        stream::{SplitStream},
         SinkExt, StreamExt,
     };
-    use game::json_requests::PropagatedBet;
+    
     use tokio::{sync::mpsc::unbounded_channel, time::sleep};
     use tracing::{debug, error};
     use warp::filters::ws::{Message, WebSocket};
@@ -710,12 +709,12 @@ pub mod game {
         let user = db
             .fetch_user(decoded.sub)
             .await
-            .map_err(|e| ApiError::DbError(e))?
+            .map_err(ApiError::DbError)?
             .ok_or(ApiError::ArbitraryError(
                 "Wrong username or password".into(),
             ))?;
         let _token_serialized = tools::serialize_token(
-            &token,
+            token,
             &format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat),
         )
         .map_err(|_| ApiError::MalformedToken)?;
@@ -879,10 +878,10 @@ pub mod game {
 
 pub mod invoice {
     use self::json_requests::QrRequest;
-    use crate::tools::blake_hash;
+    
     use qrcode_generator::QrCodeEcc;
-    use rust_decimal::{prelude::FromPrimitive, Decimal};
-    use thedex::{models::CreateInvoice as CreateInvoiceRequest, TheDex};
+    
+    use thedex::{TheDex};
 
     use super::*;
     /// Create a new invoice
@@ -899,10 +898,10 @@ pub mod invoice {
         ),
     )]
     pub async fn create_invoice(
-        data: CreateInvoice,
-        id: i64,
-        db: DB,
-        dex: TheDex,
+        _data: CreateInvoice,
+        _id: i64,
+        _db: DB,
+        _dex: TheDex,
     ) -> Result<WarpResponse, warp::Rejection> {
         // let order_id = blake_hash(&format!(
         //     "{}{}{}{}",
@@ -958,8 +957,8 @@ pub mod invoice {
     )]
     pub async fn generate_qr(
         data: QrRequest,
-        id: i64,
-        db: DB,
+        _id: i64,
+        _db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
         Ok(get_pgn_response(
             qrcode_generator::to_png_to_vec(&data.data, QrCodeEcc::Low, 1024)
@@ -974,7 +973,7 @@ pub mod user {
     use crate::tools::blake_hash;
     use crate::{config::PASSWORD_SALT, models::json_responses::AccessToken};
     use blake2::{Blake2b512, Digest};
-    use chrono::{TimeZone, Utc};
+    
     use hex::ToHex;
     use rust_decimal::prelude::FromPrimitive;
     use sqlx::types::BigDecimal;
@@ -1067,7 +1066,7 @@ pub mod user {
                 iss: None,
                 sub: user.id,
                 exp: 100,
-                iat: iat,
+                iat,
                 aud: "".into(),
             },
             &format!("{}{}{}", *PASSWORD_SALT, hashed_password, iat),

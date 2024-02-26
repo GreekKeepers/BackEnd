@@ -1,11 +1,11 @@
 use crate::{
     config::DatabaseSettings,
-    models::db_models::{Amount, Coin, Game, Invoice, ServerSeed, User, UserSeed},
+    models::db_models::{Amount, Coin, Game, ServerSeed, User, UserSeed},
     tools::blake_hash,
 };
 
-use chrono::{DateTime, NaiveDateTime, Utc};
-use rust_decimal::Decimal;
+
+
 use sqlx::{postgres::PgPoolOptions, types::BigDecimal, PgPool};
 use tracing::info;
 
@@ -159,7 +159,7 @@ impl DB {
         .execute(&self.db_pool)
         .await?;
 
-        Ok(sqlx::query_as_unchecked!(
+        sqlx::query_as_unchecked!(
             User,
             r#"
             SELECT *
@@ -170,7 +170,7 @@ impl DB {
             login,
         )
         .fetch_one(&self.db_pool)
-        .await?)
+        .await
     }
 
     pub async fn fetch_coin(&self, name: &str) -> Result<Option<Coin>, sqlx::Error> {

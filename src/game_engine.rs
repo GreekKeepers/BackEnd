@@ -7,7 +7,7 @@ use crate::DB;
 use crate::{communication::*, games::GameEng};
 use serde_json::Error;
 use sqlx::types::BigDecimal;
-use tracing::{debug, error, info, warn};
+use tracing::{error, warn};
 
 use self::db_models::Bet;
 

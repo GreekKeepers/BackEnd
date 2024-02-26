@@ -1,4 +1,4 @@
-use std::sync::atomic::AtomicBool;
+
 use std::{io, sync::Arc};
 
 use crate::api_documentation::{serve_swagger, ApiDoc};

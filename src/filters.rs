@@ -6,10 +6,10 @@ use crate::errors::ApiError;
 use crate::handlers;
 use crate::jwt;
 use crate::jwt::Payload;
-use crate::models::{db_models::TimeBoundaries, json_requests, LeaderboardType};
+use crate::models::{json_requests};
 use crate::tools;
 use crate::EngineBetSender;
-use crate::WsDataFeedReceiver;
+
 use crate::WsManagerEventSender;
 use base64::{engine::general_purpose, Engine as _};
 use futures::FutureExt;
@@ -21,7 +21,7 @@ use thedex::TheDex;
 use tracing::debug;
 use warp::filters::header::headers_cloned;
 use warp::reject;
-use warp::reject::Rejection;
+
 use warp::Filter;
 
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {

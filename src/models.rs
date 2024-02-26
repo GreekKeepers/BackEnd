@@ -23,14 +23,14 @@ impl FromStr for LeaderboardType {
 }
 
 pub mod db_models {
-    use crate::models::json_requests::PropagatedBet;
+    
 
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
     use rust_decimal::Decimal;
-    use serde_with::{serde_as, DisplayFromStr};
-    use sqlx::types::BigDecimal;
+    
+    
 
     #[derive(Debug, Clone, ToSchema)]
     #[schema(rename_all = "lowercase")]
@@ -153,7 +153,7 @@ pub mod json_responses {
 
     use crate::WsData;
 
-    use self::db_models::{Amount, Bet, Invoice, ServerSeed, User};
+    use self::db_models::{Amount, Bet, Invoice};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -163,8 +163,8 @@ pub mod json_responses {
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
-    use serde_with::{serde_as, DisplayFromStr};
-    use sqlx::types::BigDecimal;
+    
+    
 
     #[derive(Serialize, Deserialize, ToSchema)]
     pub enum Status {
