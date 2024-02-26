@@ -79,28 +79,10 @@ impl Engine {
                 continue;
             }
 
-            match self
-                .db
-                .decrease_balance(bet.user_id, bet.coin_id, bet_amount)
-                .await
-            {
-                Ok(success) => {
-                    if !success {
-                        continue;
-                    }
-                }
-                Err(e) => {
-                    error!(
-                        "Error decreasing balance for user `{}`: {:?}",
-                        bet.user_id, e
-                    );
-                    continue;
-                }
-            }
-
             let game = if let Ok(Some(game)) = self.db.fetch_game(bet.game_id).await {
                 game
             } else {
+                warn!("Could not fetch game `{}`", bet.game_id);
                 continue;
             };
 
@@ -153,20 +135,44 @@ impl Engine {
             let game_result = if let Some(res) = game_eng.play(&bet, &random_numbers) {
                 res
             } else {
+                warn!("Could proccess bet");
                 continue;
             };
 
             // Apply taking money/sending profit
 
-            let profit_digd = BigDecimal::from_str(&game_result.total_profit.to_string()).unwrap();
-
             match self
                 .db
-                .increase_balance(bet.user_id, bet.coin_id, profit_digd)
+                .decrease_balance(bet.user_id, bet.coin_id, bet_amount)
                 .await
             {
                 Ok(success) => {
                     if !success {
+                        continue;
+                    }
+                }
+                Err(e) => {
+                    error!(
+                        "Error decreasing balance for user `{}`: {:?}",
+                        bet.user_id, e
+                    );
+                    continue;
+                }
+            }
+
+            let profit_digd = BigDecimal::from_str(&game_result.total_profit.to_string()).unwrap();
+
+            match self
+                .db
+                .increase_balance(bet.user_id, bet.coin_id, &profit_digd)
+                .await
+            {
+                Ok(success) => {
+                    if !success {
+                        warn!(
+                            "Increasing balance wasn't successful bet data: `{:?}` amount: `{}`",
+                            bet, &profit_digd
+                        );
                         continue;
                     }
                 }

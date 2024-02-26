@@ -382,7 +382,7 @@ impl DB {
         &self,
         user_id: i64,
         coin_id: i64,
-        amount: BigDecimal,
+        amount: &BigDecimal,
     ) -> Result<bool, sqlx::Error> {
         let res = sqlx::query!(
             r#"
