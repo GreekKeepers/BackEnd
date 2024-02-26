@@ -734,7 +734,7 @@ pub mod game {
 
         manager_writer
             .send(WsManagerEvent::SubscribeFeed {
-                id: address.ip(),
+                id: address,
                 feed: data_feed_tx,
             })
             .unwrap();
@@ -793,14 +793,14 @@ pub mod game {
                                     },
                                     WebsocketsIncommingMessage::SubscribeBets { payload } => {
                                         for id in payload{
-                                            if let Err(_) = manager_writer.send(WsManagerEvent::SubscribeChannel { id: address.ip(), channel: ChannelType::Bets(id) }){
+                                            if let Err(_) = manager_writer.send(WsManagerEvent::SubscribeChannel { id: address, channel: ChannelType::Bets(id) }){
                                                 break;
                                             }
                                         }
                                     },
                                     WebsocketsIncommingMessage::UnsubscribeBets { payload } => {
                                         for id in payload{
-                                            if let Err(_) = manager_writer.send(WsManagerEvent::UnsubscribeChannel { id: address.ip(), channel: ChannelType::Bets(id) }){
+                                            if let Err(_) = manager_writer.send(WsManagerEvent::UnsubscribeChannel { id: address, channel: ChannelType::Bets(id) }){
                                                 break;
                                             }
                                         }
@@ -868,7 +868,7 @@ pub mod game {
         }
 
         manager_writer
-            .send(WsManagerEvent::UnsubscribeFeed(address.ip()))
+            .send(WsManagerEvent::UnsubscribeFeed(address))
             .unwrap();
     }
 }

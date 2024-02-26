@@ -11,6 +11,7 @@ use crate::models::json_requests::PropagatedBet;
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
 pub use async_channel::{Receiver, Sender};
 pub use std::collections::{HashMap, HashSet};
+use std::net::SocketAddr;
 use std::{
     net::IpAddr,
     sync::{
@@ -70,10 +71,19 @@ pub type EngineBetSender = Sender<PropagatedBet>;
 
 #[derive(Debug)]
 pub enum WsManagerEvent {
-    SubscribeFeed { id: IpAddr, feed: WsDataFeedSender },
-    UnsubscribeFeed(IpAddr),
-    SubscribeChannel { id: IpAddr, channel: ChannelType },
-    UnsubscribeChannel { id: IpAddr, channel: ChannelType },
+    SubscribeFeed {
+        id: SocketAddr,
+        feed: WsDataFeedSender,
+    },
+    UnsubscribeFeed(SocketAddr),
+    SubscribeChannel {
+        id: SocketAddr,
+        channel: ChannelType,
+    },
+    UnsubscribeChannel {
+        id: SocketAddr,
+        channel: ChannelType,
+    },
     PropagateBet(Bet),
 }
 
@@ -81,14 +91,15 @@ pub type WsManagerEventReceiver = UnboundedReceiver<WsManagerEvent>;
 pub type WsManagerEventSender = UnboundedSender<WsManagerEvent>;
 
 pub struct Manager {
-    feeds: HashMap<IpAddr, WsDataFeedSender>,
-    subscriptions: HashMap<ChannelType, HashSet<IpAddr>>,
+    feeds: HashMap<SocketAddr, WsDataFeedSender>,
+    subscriptions: HashMap<ChannelType, HashSet<SocketAddr>>,
     manager_rx: WsManagerEventReceiver,
 }
 
 impl Manager {
     pub fn new(manager_rx: WsManagerEventReceiver) -> Self {
-        let mut subscriptions: HashMap<ChannelType, HashSet<IpAddr>> = HashMap::with_capacity(1);
+        let mut subscriptions: HashMap<ChannelType, HashSet<SocketAddr>> =
+            HashMap::with_capacity(1);
         subscriptions.insert(ChannelType::Bets(1), Default::default());
 
         Self {

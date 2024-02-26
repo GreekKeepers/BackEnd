@@ -1,4 +1,4 @@
-use std::net::IpAddr;
+use std::net::SocketAddr;
 
 use crate::communication::ChannelType;
 use thedex::errors::Error as TheDexError;
@@ -11,7 +11,7 @@ pub enum ManagerError {
     ChannelIsNotPresent(ChannelType),
 
     #[error("Feed for an address `{0:?}` not registered")]
-    FeedDoesntExist(IpAddr),
+    FeedDoesntExist(SocketAddr),
 }
 
 #[derive(Error, Debug)]
