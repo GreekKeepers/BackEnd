@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use utoipa::ToSchema;
 
 use crate::models::{db_models::GameResult, json_requests::PropagatedBet};
@@ -22,7 +23,12 @@ pub struct CoinFlip {
 
 impl GameEng for CoinFlip {
     fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
-        let data: CoinFlipData = serde_json::from_str(&bet.data).ok()?;
+        let data: CoinFlipData = serde_json::from_str(&bet.data)
+            .map_err(|e| {
+                error!("Error parsing CoinFlip data `{:?}`: {:?}", bet.data, e);
+                e
+            })
+            .ok()?;
         let mut total_profit = Decimal::ZERO;
 
         let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());

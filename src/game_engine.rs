@@ -135,7 +135,7 @@ impl Engine {
             let game_result = if let Some(res) = game_eng.play(&bet, &random_numbers) {
                 res
             } else {
-                warn!("Could proccess bet");
+                warn!("Couldn't proccess bet");
                 continue;
             };
 
