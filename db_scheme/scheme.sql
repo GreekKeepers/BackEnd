@@ -90,17 +90,29 @@ CREATE TABLE IF NOT EXISTS Invoice(
 
 -- DATA
 
+
+-- COINS
 INSERT INTO Coin(
     name,
     price
 ) VALUES (
-    "DraxBonus",
+    'DraxBonus',
     1
 );
 INSERT INTO Coin(
     name,
     price
 ) VALUES (
-    "Drax",
+    'Drax',
     10
+);
+
+
+-- GAMES
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'CoinFlip',
+    '{"profit_coef":1.98}'
 );
