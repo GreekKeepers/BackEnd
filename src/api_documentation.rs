@@ -27,7 +27,9 @@ use warp::{
             handlers::login_user,
             handlers::register_user,
             handlers::create_invoice,
-            handlers::generate_qr
+            handlers::generate_qr,
+            handlers::get_client_seed,
+            handlers::get_server_seed
         ),
         components(schemas(
             //json_requests::User,
@@ -51,6 +53,7 @@ use warp::{
             json_responses::ErrorText,
             json_responses::InfoText,
             json_responses::AccessToken,
+            json_responses::Seed,
 
             db_models::User,
             db_models::Coin,

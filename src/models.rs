@@ -23,14 +23,11 @@ impl FromStr for LeaderboardType {
 }
 
 pub mod db_models {
-    
 
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
     use rust_decimal::Decimal;
-    
-    
 
     #[derive(Debug, Clone, ToSchema)]
     #[schema(rename_all = "lowercase")]
@@ -163,8 +160,6 @@ pub mod json_responses {
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
-    
-    
 
     #[derive(Serialize, Deserialize, ToSchema)]
     pub enum Status {
@@ -196,6 +191,7 @@ pub mod json_responses {
         Amounts(Amounts),
         User(UserStripped),
         Invoice(Invoice),
+        ClientSeed(Seed),
         // Networks(Networks),
         // Rpcs(Rpcs),
         // BlockExplorers(BlockExplorers),
@@ -205,7 +201,7 @@ pub mod json_responses {
         // Player(Player),
         Bets(Bets),
         Bet(Bet),
-        ServerSeedHidden { seed: String },
+        ServerSeedHidden(Seed),
         // Abi(GameAbi),
         // Totals(Totals),
         // LatestGames(LatestGames),
@@ -229,7 +225,7 @@ pub mod json_responses {
         fn from(value: WsData) -> Self {
             match value {
                 WsData::NewBet(bet) => ResponseBody::Bet(bet),
-                WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden { seed },
+                WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden(Seed { seed }),
             }
         }
     }
@@ -238,7 +234,9 @@ pub mod json_responses {
         fn from(value: &WsData) -> Self {
             match value {
                 WsData::NewBet(bet) => ResponseBody::Bet(bet.clone()),
-                WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden { seed: seed.clone() },
+                WsData::ServerSeed(seed) => {
+                    ResponseBody::ServerSeedHidden(Seed { seed: seed.clone() })
+                }
             }
         }
     }
@@ -246,6 +244,11 @@ pub mod json_responses {
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct Amounts {
         pub amounts: Vec<Amount>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct Seed {
+        pub seed: String,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -566,6 +569,7 @@ pub mod json_requests {
         pub data: String,
         pub stop_loss: Decimal,
         pub stop_win: Decimal,
+        pub num_games: u64,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug)]

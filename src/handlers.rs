@@ -629,9 +629,9 @@ pub mod game {
 
     use crate::{
         config::PASSWORD_SALT,
+        models::json_responses::Seed,
         tools::{self, blake_hash_256},
-        ChannelType, EngineBetSender, WsData, WsEventSender, WsManagerEvent,
-        WsManagerEventSender,
+        ChannelType, EngineBetSender, WsData, WsEventSender, WsManagerEvent, WsManagerEventSender,
     };
 
     use self::json_requests::WebsocketsIncommingMessage;
@@ -640,11 +640,8 @@ pub mod game {
     use crate::jwt::Payload;
     use crate::tools::blake_hash;
     use base64::{engine::general_purpose, Engine};
-    use futures::{
-        stream::{SplitStream},
-        SinkExt, StreamExt,
-    };
-    
+    use futures::{stream::SplitStream, SinkExt, StreamExt};
+
     use tokio::{sync::mpsc::unbounded_channel, time::sleep};
     use tracing::{debug, error};
     use warp::filters::ws::{Message, WebSocket};
@@ -847,7 +844,7 @@ pub mod game {
                                             seed_hex_chars.next();
                                             seed_hex_chars.next();
                                             let seed = seed_hex_chars.as_str();
-                                            if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ServerSeedHidden { seed: seed.into() }).unwrap())).await{
+                                            if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ServerSeedHidden (Seed{ seed: seed.into() })).unwrap())).await{
                                                 error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
                                                 break;
                                             }
@@ -878,10 +875,10 @@ pub mod game {
 
 pub mod invoice {
     use self::json_requests::QrRequest;
-    
+
     use qrcode_generator::QrCodeEcc;
-    
-    use thedex::{TheDex};
+
+    use thedex::TheDex;
 
     use super::*;
     /// Create a new invoice
@@ -969,11 +966,11 @@ pub mod invoice {
 
 pub mod user {
     use crate::jwt;
-    use crate::models::json_responses::{Amounts, UserStripped};
+    use crate::models::json_responses::{Amounts, Seed, UserStripped};
     use crate::tools::blake_hash;
     use crate::{config::PASSWORD_SALT, models::json_responses::AccessToken};
     use blake2::{Blake2b512, Digest};
-    
+
     use hex::ToHex;
     use rust_decimal::prelude::FromPrimitive;
     use sqlx::types::BigDecimal;
@@ -1161,6 +1158,54 @@ pub mod user {
             .ok_or(ApiError::UserDoesntExist)?;
 
         Ok(gen_arbitrary_response(ResponseBody::User(user)))
+    }
+
+    /// Get user client seed
+    ///
+    ///
+    #[utoipa::path(
+        tag="user",
+        get,
+        path = "/api/user/seed/client",
+        responses(
+            (status = 200, description = "Client seed", body = Seed),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_client_seed(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let seed = db
+            .fetch_current_user_seed(id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::ClientSeed(Seed {
+            seed: seed.user_seed,
+        })))
+    }
+
+    /// Get user server seed
+    ///
+    ///
+    #[utoipa::path(
+        tag="user",
+        get,
+        path = "/api/user/seed/server",
+        responses(
+            (status = 200, description = "Server seed", body = Seed),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_server_seed(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let seed = db
+            .fetch_current_server_seed(id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::ServerSeedHidden(
+            Seed {
+                seed: seed.server_seed,
+            },
+        )))
     }
 }
 

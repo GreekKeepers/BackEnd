@@ -6,7 +6,7 @@ use crate::errors::ApiError;
 use crate::handlers;
 use crate::jwt;
 use crate::jwt::Payload;
-use crate::models::{json_requests};
+use crate::models::json_requests;
 use crate::tools;
 use crate::EngineBetSender;
 
@@ -941,12 +941,37 @@ pub fn get_user(
         .and_then(handlers::get_user)
 }
 
+pub fn get_client_seed(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("client")
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::get_client_seed)
+}
+
+pub fn get_server_seed(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("server")
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::get_server_seed)
+}
+
+pub fn seed(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("seed").and(get_client_seed(db.clone()).or(get_server_seed(db)))
+}
+
 pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("user").and(
         get_user(db.clone())
             .or(register_user(db.clone()))
             .or(login_user(db.clone()))
-            .or(get_amounts(db.clone()).or(change_username(db))),
+            .or(get_amounts(db.clone()).or(change_username(db.clone())))
+            .or(seed(db)),
     )
 }
 

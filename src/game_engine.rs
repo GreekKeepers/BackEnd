@@ -5,6 +5,7 @@ use crate::models::*;
 use crate::tools::blake_hash_256_u64;
 use crate::DB;
 use crate::{communication::*, games::GameEng};
+use rust_decimal::Decimal;
 use serde_json::Error;
 use sqlx::types::BigDecimal;
 use tracing::{error, warn};
@@ -65,6 +66,12 @@ impl Engine {
                     break;
                 }
             };
+
+            if bet.num_games > 100 {
+                continue;
+            }
+
+            let total_bet = bet.amount * Decimal::from(bet.num_games);
 
             let amount =
                 if let Ok(Some(amount)) = self.db.fetch_amount(bet.user_id, bet.coin_id).await {
@@ -129,7 +136,7 @@ impl Engine {
                 &user_seed.user_seed,
                 &server_seed.server_seed,
                 timestamp.timestamp_millis() as u64,
-                game_eng.numbers_per_bet(),
+                game_eng.numbers_per_bet() * bet.num_games,
             );
 
             let game_result = if let Some(res) = game_eng.play(&bet, &random_numbers) {
@@ -143,7 +150,11 @@ impl Engine {
 
             match self
                 .db
-                .decrease_balance(bet.user_id, bet.coin_id, bet_amount)
+                .decrease_balance(
+                    bet.user_id,
+                    bet.coin_id,
+                    bet_amount * BigDecimal::from(game_result.num_games),
+                )
                 .await
             {
                 Ok(success) => {
