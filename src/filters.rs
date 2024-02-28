@@ -941,6 +941,16 @@ pub fn get_user(
         .and_then(handlers::get_user)
 }
 
+pub fn get_logined_user(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!()
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(with_db(db))
+        .and_then(handlers::get_user)
+}
+
 pub fn get_client_seed(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -971,7 +981,8 @@ pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
             .or(register_user(db.clone()))
             .or(login_user(db.clone()))
             .or(get_amounts(db.clone()).or(change_username(db.clone())))
-            .or(seed(db)),
+            .or(seed(db.clone()))
+            .or(get_logined_user(db)),
     )
 }
 

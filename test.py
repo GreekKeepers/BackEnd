@@ -20,9 +20,9 @@ def main():
     print(res.content)
 
     res = requests.get(
-        "http://127.0.0.1:8282/user/1",
+        "http://127.0.0.1:8282/user",
         headers={
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6IlllYWhOb3RTZXdlclNpZGUiLCJleHAiOjEwMCwiaWF0IjoxMDAsImF1ZCI6IiJ9.5WZGk8qJFt0RBQG7yXxvNtIVjhXT1nrjeD7mkSMbRiY"
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
         },
     )
 
@@ -121,4 +121,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    web_sockets()
+    main()

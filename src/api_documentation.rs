@@ -54,6 +54,7 @@ use warp::{
             json_responses::InfoText,
             json_responses::AccessToken,
             json_responses::Seed,
+            json_responses::UserStripped,
 
             db_models::User,
             db_models::Coin,
