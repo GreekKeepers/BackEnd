@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS Bet(
     timestamp TIMESTAMP DEFAULT NOW(),
     amount NUMERIC(1000, 4),
     profit NUMERIC(1000, 4),
+    num_games INTEGER NOT NULL,
 
     bet_info TEXT NOT NULL,
 

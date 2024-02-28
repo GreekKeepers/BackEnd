@@ -17,7 +17,6 @@ sqlx = { version = "0.7.3", features = [
 	"runtime-tokio-rustls",
 	"chrono",
 	"macros",
-	"bigdecimal",
 	"rust_decimal",
 ] }
 blake2 = "0.10.6"

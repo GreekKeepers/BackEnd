@@ -120,6 +120,7 @@ pub mod db_models {
         pub timestamp: DateTime<Utc>,
         pub amount: Decimal,
         pub profit: Decimal,
+        pub num_games: i32,
 
         pub bet_info: String,
 
@@ -563,7 +564,6 @@ pub mod json_requests {
     pub struct PropagatedBet {
         pub game_id: i64,
         pub amount: Decimal,
-        pub difficulty: u64,
         pub coin_id: i64,
         pub user_id: i64,
         pub data: String,

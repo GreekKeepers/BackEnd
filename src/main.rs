@@ -1,4 +1,3 @@
-
 use std::{io, sync::Arc};
 
 use crate::api_documentation::{serve_swagger, ApiDoc};
@@ -117,7 +116,7 @@ async fn main() {
     let dex = TheDex::new(String::from(""), String::from(""));
 
     let (ws_manager_tx, ws_manager_rx) = unbounded_channel::<WsManagerEvent>();
-    let ws_manager = Manager::new(ws_manager_rx);
+    let ws_manager = Manager::new(ws_manager_rx, &db).await;
 
     let (engine_tx, engine_rx) = async_channel::unbounded();
 

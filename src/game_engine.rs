@@ -1,13 +1,10 @@
-use std::str::FromStr;
-
-use crate::games::CoinFlip;
+use crate::games::{CoinFlip, Dice};
 use crate::models::*;
 use crate::tools::blake_hash_256_u64;
 use crate::DB;
 use crate::{communication::*, games::GameEng};
 use rust_decimal::Decimal;
 use serde_json::Error;
-use sqlx::types::BigDecimal;
 use tracing::{error, warn};
 
 use self::db_models::Bet;
@@ -31,10 +28,17 @@ impl Engine {
         }
     }
 
-    pub fn parse_game(game_name: &str, params: &str) -> Result<Option<impl GameEng>, Error> {
+    pub fn parse_game(game_name: &str, params: &str) -> Result<Option<Box<dyn GameEng>>, Error> {
         match game_name {
             "CoinFlip" => match serde_json::from_str::<CoinFlip>(params) {
-                Ok(gm) => Ok(Some(gm)),
+                Ok(gm) => Ok(Some(Box::new(gm))),
+                Err(e) => {
+                    error!("Error deserializing CoinFlip game: `{:?}`", e);
+                    Err(e)
+                }
+            },
+            "Dice" => match serde_json::from_str::<Dice>(params) {
+                Ok(gm) => Ok(Some(Box::new(gm))),
                 Err(e) => {
                     error!("Error deserializing CoinFlip game: `{:?}`", e);
                     Err(e)
@@ -71,7 +75,7 @@ impl Engine {
                 continue;
             }
 
-            let total_bet = bet.amount * Decimal::from(bet.num_games);
+            //let total_bet = bet.amount * Decimal::from(bet.num_games);
 
             let amount =
                 if let Ok(Some(amount)) = self.db.fetch_amount(bet.user_id, bet.coin_id).await {
@@ -80,9 +84,7 @@ impl Engine {
                     continue;
                 };
 
-            let bet_amount = BigDecimal::from_str(&bet.amount.to_string()).unwrap();
-
-            if bet_amount > amount {
+            if bet.amount > amount {
                 continue;
             }
 
@@ -153,7 +155,7 @@ impl Engine {
                 .decrease_balance(
                     bet.user_id,
                     bet.coin_id,
-                    bet_amount * BigDecimal::from(game_result.num_games),
+                    bet.amount * Decimal::from(game_result.num_games),
                 )
                 .await
             {
@@ -171,18 +173,16 @@ impl Engine {
                 }
             }
 
-            let profit_digd = BigDecimal::from_str(&game_result.total_profit.to_string()).unwrap();
-
             match self
                 .db
-                .increase_balance(bet.user_id, bet.coin_id, &profit_digd)
+                .increase_balance(bet.user_id, bet.coin_id, &game_result.total_profit)
                 .await
             {
                 Ok(success) => {
                     if !success {
                         warn!(
                             "Increasing balance wasn't successful bet data: `{:?}` amount: `{}`",
-                            bet, &profit_digd
+                            bet, &game_result.total_profit
                         );
                         continue;
                     }
@@ -196,6 +196,24 @@ impl Engine {
                 }
             }
 
+            if let Err(e) = self
+                .db
+                .place_bet(
+                    bet.amount,
+                    game_result.total_profit,
+                    game_result.num_games as i32,
+                    &bet.data,
+                    bet.game_id,
+                    bet.user_id,
+                    bet.coin_id,
+                    user_seed.id,
+                    server_seed.id,
+                )
+                .await
+            {
+                error!("Error adding bet to the db: {:?}", e);
+            };
+
             let constructed_bet = Bet {
                 id: 0,
                 timestamp,
@@ -208,6 +226,7 @@ impl Engine {
                 userseed_id: user_seed.id,
                 serverseed_id: server_seed.id,
                 outcomes: game_result.outcomes,
+                num_games: game_result.num_games as i32,
             };
 
             if let Err(e) = self

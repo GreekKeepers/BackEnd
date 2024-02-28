@@ -965,7 +965,7 @@ pub mod user {
 
     use hex::ToHex;
     use rust_decimal::prelude::FromPrimitive;
-    use sqlx::types::BigDecimal;
+    use rust_decimal::Decimal;
     use tracing::debug;
 
     use self::json_requests::ChangeNickname;
@@ -1010,11 +1010,11 @@ pub mod user {
 
         for coin in coins {
             if coin.id == 1 {
-                db.init_amount(user.id, coin.id, BigDecimal::from_u64(1000).unwrap())
+                db.init_amount(user.id, coin.id, Decimal::from_u64(1000).unwrap())
                     .await
                     .map_err(|e| reject::custom(ApiError::DbError(e)))?;
             } else {
-                db.init_amount(user.id, coin.id, BigDecimal::from_u64(0).unwrap())
+                db.init_amount(user.id, coin.id, Decimal::from_u64(0).unwrap())
                     .await
                     .map_err(|e| reject::custom(ApiError::DbError(e)))?;
             }

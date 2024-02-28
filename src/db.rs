@@ -4,9 +4,8 @@ use crate::{
     tools::blake_hash,
 };
 
-
-
-use sqlx::{postgres::PgPoolOptions, types::BigDecimal, PgPool};
+use rust_decimal::Decimal;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::info;
 
 #[derive(Debug, Clone)]
@@ -40,6 +39,18 @@ impl DB {
         .await
     }
 
+    pub async fn fetch_all_games(&self) -> Result<Vec<Game>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Game,
+            r#"
+            SELECT *
+            FROM Game
+            "#
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
     pub async fn add_invoice(
         &self,
         id: &str,
@@ -48,7 +59,7 @@ impl DB {
         status: i32,
         pay_url: String,
         user_id: i64,
-        amount: BigDecimal,
+        amount: Decimal,
         currency: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
@@ -207,7 +218,7 @@ impl DB {
         &self,
         user_id: i64,
         coin_id: i64,
-    ) -> Result<Option<BigDecimal>, sqlx::Error> {
+    ) -> Result<Option<Decimal>, sqlx::Error> {
         sqlx::query!(
             r#"
             SELECT Amount.amount as amount
@@ -242,7 +253,7 @@ impl DB {
         &self,
         user_id: i64,
         coin_id: i64,
-        amount: BigDecimal,
+        amount: Decimal,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
@@ -360,7 +371,7 @@ impl DB {
         &self,
         user_id: i64,
         coin_id: i64,
-        amount: BigDecimal,
+        amount: Decimal,
     ) -> Result<bool, sqlx::Error> {
         let res = sqlx::query!(
             r#"
@@ -382,7 +393,7 @@ impl DB {
         &self,
         user_id: i64,
         coin_id: i64,
-        amount: &BigDecimal,
+        amount: &Decimal,
     ) -> Result<bool, sqlx::Error> {
         let res = sqlx::query!(
             r#"
@@ -402,8 +413,9 @@ impl DB {
 
     pub async fn place_bet(
         &self,
-        amount: BigDecimal,
-        profit: BigDecimal,
+        amount: Decimal,
+        profit: Decimal,
+        num_games: i32,
         bet_info: &str,
         game_id: i64,
         user_id: i64,
@@ -416,6 +428,7 @@ impl DB {
             INSERT INTO Bet(
                 amount,
                 profit,
+                num_games,
                 bet_info,
                 game_id,
                 user_id,
@@ -430,11 +443,13 @@ impl DB {
                 $5,
                 $6,
                 $7,
-                $8
+                $8,
+                $9
             ) RETURNING id
             "#,
             amount,
             profit,
+            num_games,
             bet_info,
             game_id,
             user_id,

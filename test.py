@@ -60,19 +60,19 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[1]}')
+    ws.send('{"type":"SubscribeBets", "payload":[1,3]}')
 
     ws.send(
-        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcwODk1NDgyMywiYXVkIjoiIn0.GUFquJ8c_UGyhHmmT1uNKNvj5WT4Gu90CUPZfFPWjok"}'
+        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"}'
     )
 
     # creating user seed
 
-    seed_data = {"type": "NewClientSeed", "seed": "Insane 100%rate win seed"}
-    ws.send(json.dumps(seed_data))
+    # seed_data = {"type": "NewClientSeed", "seed": "Insane 100%rate win seed"}
+    # ws.send(json.dumps(seed_data))
 
-    seed_data = {"type": "NewServerSeed"}
-    ws.send(json.dumps(seed_data))
+    # seed_data = {"type": "NewServerSeed"}
+    # ws.send(json.dumps(seed_data))
 
     bet_data = {
         "type": "MakeBet",
@@ -81,15 +81,29 @@ def on_open(ws):
         "user_id": 0,
         "data": '{"is_heads":true}',
         "amount": "1",
-        "difficulty": 0,
         "stop_loss": 0,
         "stop_win": 0,
+        "num_games": 100,
+    }
+    ws.send(json.dumps(bet_data))
+
+    # DICE bet
+    bet_data = {
+        "type": "MakeBet",
+        "game_id": 3,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{"roll_over":true, "multiplier":"2.0204"}',
+        "amount": "1",
+        "stop_loss": 0,
+        "stop_win": 0,
+        "num_games": 5,
     }
     ws.send(json.dumps(bet_data))
 
 
 def web_sockets():
-    websocket.enableTrace(True)
+    # websocket.enableTrace(True)
     ws = websocket.WebSocketApp(
         "ws://127.0.0.1:8282/updates",
         on_open=on_open,

@@ -1,11 +1,9 @@
-
-
-
 //pub use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 // use crate::models::db_models::{Bet, TokenPrice};
 // use crate::models::json_responses::BetInfoResponse;
 
+use crate::db::DB;
 use crate::models::db_models::Bet;
 use crate::models::json_requests::PropagatedBet;
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
@@ -91,10 +89,13 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(manager_rx: WsManagerEventReceiver) -> Self {
+    pub async fn new(manager_rx: WsManagerEventReceiver, db: &DB) -> Self {
+        let games = db.fetch_all_games().await.expect("Unable to fetch games");
         let mut subscriptions: HashMap<ChannelType, HashSet<SocketAddr>> =
-            HashMap::with_capacity(1);
-        subscriptions.insert(ChannelType::Bets(1), Default::default());
+            HashMap::with_capacity(games.len());
+        for game in games {
+            subscriptions.insert(ChannelType::Bets(game.id), Default::default());
+        }
 
         Self {
             feeds: Default::default(),
