@@ -117,3 +117,11 @@ INSERT INTO Game(
     'CoinFlip',
     '{"profit_coef":1.98}'
 );
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'Dice',
+    '{"profit_coef":1.98}'
+);
