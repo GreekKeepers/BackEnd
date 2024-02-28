@@ -827,23 +827,15 @@ pub mod game {
                                     },
                                     WebsocketsIncommingMessage::NewServerSeed => {
                                         if let Some(user_id) = user_id {
-                                            let seed_hex = blake_hash(&format!("{}{}{}",user_id,chrono::offset::Utc::now(),*PASSWORD_SALT));
-                                            let mut seed_hex_chars = seed_hex.chars();
-                                            seed_hex_chars.next();
-                                            seed_hex_chars.next();
-                                            let seed = seed_hex_chars.as_str();
+                                            let seed = blake_hash(&format!("{}{}{}",user_id,chrono::offset::Utc::now(),*PASSWORD_SALT));
                                             let _ = db.reveal_last_seed(user_id).await;
-                                            if let Err(e) = db.new_server_seed(user_id, seed).await{
+                                            if let Err(e) = db.new_server_seed(user_id, &seed).await{
                                                 if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ErrorText(ErrorText { error: format!("{:?}",e) })).unwrap())).await{
                                                     error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
                                                     break;
                                                 }
                                             }
-                                            let seed_hex = blake_hash(seed);
-                                            let mut seed_hex_chars = seed_hex.chars();
-                                            seed_hex_chars.next();
-                                            seed_hex_chars.next();
-                                            let seed = seed_hex_chars.as_str();
+                                            let seed = blake_hash(&seed);
                                             if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ServerSeedHidden (Seed{ seed: seed.into() })).unwrap())).await{
                                                 error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
                                                 break;
