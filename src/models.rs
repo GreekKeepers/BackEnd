@@ -121,6 +121,7 @@ pub mod db_models {
         pub amount: Decimal,
         pub profit: Decimal,
         pub num_games: i32,
+        pub outcomes: String,
 
         pub bet_info: String,
 
@@ -129,7 +130,6 @@ pub mod db_models {
         pub coin_id: i64,
         pub userseed_id: i64,
         pub serverseed_id: i64,
-        pub outcomes: Vec<u32>,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema, Default)]

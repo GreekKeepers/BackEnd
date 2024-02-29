@@ -12,8 +12,6 @@ use crate::EngineBetSender;
 
 use crate::WsManagerEventSender;
 use base64::{engine::general_purpose, Engine as _};
-use futures::FutureExt;
-use futures::StreamExt;
 use http::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::net::SocketAddr;
 use std::str;
@@ -470,31 +468,30 @@ fn json_body_generate_qr_code(
 //         .and_then(handlers::get_network_bets)
 // }
 
-// pub fn get_all_last_bets(
-//     db: DB,
-// ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-//     warp::path!("list")
-//         .and(with_db(db))
-//         .and_then(handlers::get_all_last_bets)
-// }
+pub fn get_all_last_bets(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("list")
+        .and(with_db(db))
+        .and_then(handlers::get_all_last_bets)
+}
 
-// pub fn get_bets_for_game(
-//     db: DB,
-// ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-//     warp::path!("game" / String)
-//         .and(with_db(db))
-//         .and_then(handlers::get_bets_for_game)
-// }
+pub fn get_bets_for_game(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("game" / String)
+        .and(with_db(db))
+        .and_then(handlers::get_bets_for_game)
+}
 
-// pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-//     warp::path("bets").and(
-//         get_player_bets(db.clone())
-//             .or(get_game_bets(db.clone()))
-//             .or(get_network_bets(db.clone()))
-//             .or(get_all_last_bets(db.clone()))
-//             .or(get_bets_for_game(db.clone()).or(get_player_bets_inc(db))),
-//     )
-// }
+pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("bets").and(
+        //get_player_bets(db.clone())
+        //.or(get_game_bets(db.clone()))
+        //.or(get_network_bets(db.clone()))
+        get_all_last_bets(db.clone()).or(get_bets_for_game(db.clone())),
+    )
+}
 
 // // PARTNERS REFERALS
 // pub fn submit_question(
@@ -1042,6 +1039,7 @@ pub fn init_filters(
     //         }))
     user(db.clone())
         .or(invoice(db.clone(), dex))
+        .or(bets(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

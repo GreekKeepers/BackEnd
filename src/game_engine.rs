@@ -196,12 +196,15 @@ impl Engine {
                 }
             }
 
+            let outcomes = format!("{:?}", game_result.outcomes);
+
             if let Err(e) = self
                 .db
                 .place_bet(
                     bet.amount,
                     game_result.total_profit,
                     game_result.num_games as i32,
+                    &outcomes,
                     &bet.data,
                     bet.game_id,
                     bet.user_id,
@@ -225,7 +228,7 @@ impl Engine {
                 coin_id: bet.coin_id,
                 userseed_id: user_seed.id,
                 serverseed_id: server_seed.id,
-                outcomes: game_result.outcomes,
+                outcomes,
                 num_games: game_result.num_games as i32,
             };
 

@@ -30,6 +30,7 @@ use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseB
 // pub use network::*;
 // pub use nickname::*;
 // pub use partner::*;
+pub use bets::*;
 pub use game::*;
 pub use invoice::*;
 pub use user::*;
@@ -475,135 +476,137 @@ pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
 //     }
 // }
 
-// pub mod bets {
-//     use super::*;
-//     /// Get player bets
-//     ///
-//     /// Gets bets of the player by player address, max amount of returned bets per call is 10
-//     #[utoipa::path(
-//         tag="bets",
-//         get,
-//         path = "/api/bets/player/{address}/{last_id}",
-//         responses(
-//             (status = 200, description = "User's bets", body = Bets),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("address" = String, Path, description = "User address"),
-//             ("last_id" = Option<i64>, Path, description = "last bet id")
-//         ),
-//     )]
-//     pub async fn get_player_bets(
-//         address: String,
-//         last_id: Option<i64>,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let bets = db
-//             .query_bets_for_address(&address, last_id, *config::PAGE_SIZE)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+pub mod bets {
+    use crate::{config, models::json_responses::Bets};
 
-//         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-//     }
+    use super::*;
+    /// Get player bets
+    ///
+    /// Gets bets of the player by player address, max amount of returned bets per call is 10
+    // #[utoipa::path(
+    //     tag="bets",
+    //     get,
+    //     path = "/api/bets/player/{address}/{last_id}",
+    //     responses(
+    //         (status = 200, description = "User's bets", body = Bets),
+    //         (status = 500, description = "Internal server error", body = ErrorText),
+    //     ),
+    //     params(
+    //         ("address" = String, Path, description = "User address"),
+    //         ("last_id" = Option<i64>, Path, description = "last bet id")
+    //     ),
+    // )]
+    // pub async fn get_player_bets(
+    //     address: String,
+    //     last_id: Option<i64>,
+    //     db: DB,
+    // ) -> Result<WarpResponse, warp::Rejection> {
+    //     let bets = db
+    //         .query_bets_for_address(&address, last_id, *config::PAGE_SIZE)
+    //         .await
+    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-//     /// Get player bets in increasing order
-//     ///
-//     /// Gets bets of the player by player address, max amount of returned bets per call is 10. Bets are returned in increasing order.
-//     #[utoipa::path(
-//         tag="bets",
-//         get,
-//         path = "/api/bets/player/inc/{address}/{last_id}",
-//         responses(
-//             (status = 200, description = "User's bets", body = Bets),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("address" = String, Path, description = "User address"),
-//             ("last_id" = Option<i64>, Path, description = "last bet id")
-//         ),
-//     )]
-//     pub async fn get_player_bets_inc(
-//         address: String,
-//         first_id: Option<i64>,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let bets = db
-//             .query_bets_for_address_inc(&address, first_id, *config::PAGE_SIZE)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    // }
 
-//         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-//     }
+    /// Get player bets in increasing order
+    ///
+    /// Gets bets of the player by player address, max amount of returned bets per call is 10. Bets are returned in increasing order.
+    // #[utoipa::path(
+    //     tag="bets",
+    //     get,
+    //     path = "/api/bets/player/inc/{address}/{last_id}",
+    //     responses(
+    //         (status = 200, description = "User's bets", body = Bets),
+    //         (status = 500, description = "Internal server error", body = ErrorText),
+    //     ),
+    //     params(
+    //         ("address" = String, Path, description = "User address"),
+    //         ("last_id" = Option<i64>, Path, description = "last bet id")
+    //     ),
+    // )]
+    // pub async fn get_player_bets_inc(
+    //     address: String,
+    //     first_id: Option<i64>,
+    //     db: DB,
+    // ) -> Result<WarpResponse, warp::Rejection> {
+    //     let bets = db
+    //         .query_bets_for_address_inc(&address, first_id, *config::PAGE_SIZE)
+    //         .await
+    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-//     pub async fn get_game_bets(game_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let bets = db
-//             .query_bets_for_game(game_id, *config::PAGE_SIZE)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    // }
 
-//         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-//     }
+    // pub async fn get_game_bets(game_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
+    //     let bets = db
+    //         .query_bets_for_game(game_id, *config::PAGE_SIZE)
+    //         .await
+    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-//     /// Get all last bets for a game
-//     ///
-//     /// Gets 10 of the latest bets from the game
-//     #[utoipa::path(
-//         tag="bets",
-//         get,
-//         path = "/api/bets/game/{game_name}",
-//         responses(
-//             (status = 200, description = "Bets", body = Bets),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("game_name" = String, Path, description = "Name of the game")
-//         ),
-//     )]
-//     pub async fn get_bets_for_game(
-//         game_name: String,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let bets = db
-//             .query_bets_for_game_name(&game_name, *config::PAGE_SIZE)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    // }
 
-//         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-//     }
+    /// Get all last bets for a game
+    ///
+    /// Gets 10 of the latest bets from the game
+    #[utoipa::path(
+        tag="bets",
+        get,
+        path = "/api/bets/game/{game_name}",
+        responses(
+            (status = 200, description = "Bets", body = Bets),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("game_name" = String, Path, description = "Name of the game")
+        ),
+    )]
+    pub async fn get_bets_for_game(
+        game_name: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let bets = db
+            .fetch_bets_for_gamename(&game_name, *config::PAGE_SIZE)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-//     pub async fn get_network_bets(
-//         netowork_id: i64,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let bets = db
-//             .query_bets_for_network(netowork_id, *config::PAGE_SIZE)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    }
 
-//         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-//     }
+    // pub async fn get_network_bets(
+    //     netowork_id: i64,
+    //     db: DB,
+    // ) -> Result<WarpResponse, warp::Rejection> {
+    //     let bets = db
+    //         .query_bets_for_network(netowork_id, *config::PAGE_SIZE)
+    //         .await
+    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-//     /// Get all last bets
-//     ///
-//     /// Gets 10 of the latest bets from all networks for all games
-//     #[utoipa::path(
-//         tag="bets",
-//         get,
-//         path = "/api/bets/list",
-//         responses(
-//             (status = 200, description = "Bets", body = Bets),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//     )]
-//     pub async fn get_all_last_bets(db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let bets = db
-//             .query_all_latest_bets(*config::PAGE_SIZE)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    // }
 
-//         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-//     }
-// }
+    /// Get all last bets
+    ///
+    /// Gets 10 of the latest bets from all networks for all games
+    #[utoipa::path(
+        tag="bets",
+        get,
+        path = "/api/bets/list",
+        responses(
+            (status = 200, description = "Bets", body = Bets),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_all_last_bets(db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let bets = db
+            .fetch_all_latest_bets(*config::PAGE_SIZE)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    }
+}
 
 // pub mod abi {
 //     use super::*;
@@ -758,7 +761,9 @@ pub mod game {
                                 ws_tx.start_send_unpin(Message::text(serde_json::to_string(&e).unwrap())).unwrap();
                             }
                             events.clear();
-                            ws_tx.flush().await;
+                            if let Err(_) = ws_tx.flush().await{
+                                break;
+                            };
                         }
                     }
                     _ = sleep(Duration::from_millis(5000)) => {
@@ -845,7 +850,9 @@ pub mod game {
                                     WebsocketsIncommingMessage::MakeBet(mut bet) => {
                                         if let Some(user_id) = user_id{
                                             bet.user_id = user_id;
-                                            engine_sender.send(bet).await;
+                                            if let Err(_) = engine_sender.send(bet).await{
+                                                break;
+                                            };
                                         }
                                     },
                                 }

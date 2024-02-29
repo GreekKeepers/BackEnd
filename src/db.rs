@@ -1,6 +1,6 @@
 use crate::{
     config::DatabaseSettings,
-    models::db_models::{Amount, Coin, Game, ServerSeed, User, UserSeed},
+    models::db_models::{Amount, Bet, Coin, Game, ServerSeed, User, UserSeed},
     tools::blake_hash,
 };
 
@@ -23,6 +23,67 @@ impl DB {
             .connect_lazy(&connection_string)
             .expect("URI string should be correct");
         Self { db_pool }
+    }
+
+    pub async fn fetch_bets_for_gamename(
+        &self,
+        game_name: &str,
+        limit: i64,
+    ) -> Result<Vec<Bet>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Bet,
+            r#"
+            SELECT 
+                Bet.id,
+                Bet.timestamp,
+                Bet.amount,
+                Bet.profit,
+                Bet.num_games,
+                Bet.bet_info,
+                Bet.game_id,
+                Bet.user_id,
+                Bet.coin_id,
+                Bet.userseed_id,
+                Bet.serverseed_id,
+                Bet.outcomes
+            FROM Bet
+            INNER JOIN Game ON Bet.game_id=Game.id
+            WHERE Game.name=$1
+            ORDER BY Bet.id DESC
+            LIMIT $2
+            "#,
+            game_name,
+            limit
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn fetch_all_latest_bets(&self, limit: i64) -> Result<Vec<Bet>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Bet,
+            r#"
+            SELECT 
+                Bet.id,
+                Bet.timestamp,
+                Bet.amount,
+                Bet.profit,
+                Bet.num_games,
+                Bet.bet_info,
+                Bet.game_id,
+                Bet.user_id,
+                Bet.coin_id,
+                Bet.userseed_id,
+                Bet.serverseed_id,
+                Bet.outcomes
+            FROM Bet
+            ORDER BY Bet.id DESC
+            LIMIT $1
+            "#,
+            limit
+        )
+        .fetch_all(&self.db_pool)
+        .await
     }
 
     pub async fn fetch_user(&self, id: i64) -> Result<Option<User>, sqlx::Error> {
@@ -416,6 +477,7 @@ impl DB {
         amount: Decimal,
         profit: Decimal,
         num_games: i32,
+        outcomes: &str,
         bet_info: &str,
         game_id: i64,
         user_id: i64,
@@ -429,6 +491,7 @@ impl DB {
                 amount,
                 profit,
                 num_games,
+                outcomes,
                 bet_info,
                 game_id,
                 user_id,
@@ -444,12 +507,14 @@ impl DB {
                 $6,
                 $7,
                 $8,
-                $9
+                $9,
+                $10
             ) RETURNING id
             "#,
             amount,
             profit,
             num_games,
+            outcomes,
             bet_info,
             game_id,
             user_id,

@@ -29,7 +29,9 @@ use warp::{
             handlers::create_invoice,
             handlers::generate_qr,
             handlers::get_client_seed,
-            handlers::get_server_seed
+            handlers::get_server_seed,
+            handlers::get_bets_for_game,
+            handlers::get_all_last_bets
         ),
         components(schemas(
             //json_requests::User,
