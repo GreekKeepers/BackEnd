@@ -1,4 +1,4 @@
-use crate::games::{CoinFlip, Dice, RPS};
+use crate::games::{CoinFlip, Dice, Race, RPS};
 use crate::models::*;
 use crate::tools::blake_hash_256_u64;
 use crate::DB;
@@ -13,18 +13,35 @@ pub struct Engine {
     db: DB,
     manager_sender: WsManagerEventSender,
     bet_reciever: EngineBetReciever,
+    game_engines: HashMap<u64, Box<dyn GameEng>>,
 }
 
 impl Engine {
-    pub fn new(
+    pub async fn new(
         db: DB,
         manager_sender: WsManagerEventSender,
         bet_reciever: EngineBetReciever,
     ) -> Self {
+        let games: HashMap<u64, Box<dyn GameEng>> = db
+            .fetch_all_games()
+            .await
+            .expect("Error fetching games from db")
+            .into_iter()
+            .map(|game| {
+                (
+                    game.id as u64,
+                    Engine::parse_game(&game.name, &game.parameters)
+                        .unwrap()
+                        .unwrap(),
+                )
+            })
+            .collect();
+
         Self {
             db,
             manager_sender,
             bet_reciever,
+            game_engines: games,
         }
     }
 
@@ -48,6 +65,13 @@ impl Engine {
                 Ok(gm) => Ok(Some(Box::new(gm))),
                 Err(e) => {
                     error!("Error deserializing RPS game: `{:?}`", e);
+                    Err(e)
+                }
+            },
+            "Race" => match serde_json::from_str::<Race>(params) {
+                Ok(gm) => Ok(Some(Box::new(gm))),
+                Err(e) => {
+                    error!("Error deserializing Race game: `{:?}`", e);
                     Err(e)
                 }
             },
@@ -95,27 +119,11 @@ impl Engine {
                 continue;
             }
 
-            let game = if let Ok(Some(game)) = self.db.fetch_game(bet.game_id).await {
-                game
+            let game_eng = if let Some(game_eng) = self.game_engines.get(&(bet.game_id as u64)) {
+                game_eng
             } else {
-                warn!("Could not fetch game `{}`", bet.game_id);
+                warn!("Game `{:?}` not found", bet.game_id);
                 continue;
-            };
-
-            // TODO: move engines to be static
-            let game_eng = match Engine::parse_game(&game.name, &game.parameters) {
-                Ok(eng) => {
-                    if let Some(eng) = eng {
-                        eng
-                    } else {
-                        warn!("Game `{:?}` not found", game.name);
-                        continue;
-                    }
-                }
-                Err(e) => {
-                    error!("Error parsing game parameters for `{}`: {:?}", game.name, e);
-                    continue;
-                }
             };
 
             let user_seed = match self.db.fetch_current_user_seed(bet.user_id).await {

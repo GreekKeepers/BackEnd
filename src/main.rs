@@ -120,7 +120,7 @@ async fn main() {
 
     let (engine_tx, engine_rx) = async_channel::unbounded();
 
-    let engine = Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx);
+    let engine = Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx).await;
 
     info!("Server started, waiting for CTRL+C");
     tokio::select! {

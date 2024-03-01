@@ -134,3 +134,11 @@ INSERT INTO Game(
     'RPS',
     '{"profit_coef":"1.98", "draw_coef":"0.99"}'
 );
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'Race',
+    '{"profit_coef":"4.9", "cars_amount":5}'
+);
