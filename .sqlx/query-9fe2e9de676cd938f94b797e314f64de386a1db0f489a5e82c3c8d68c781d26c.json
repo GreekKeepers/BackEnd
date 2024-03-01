@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT \n                Bet.id,\n                Bet.timestamp,\n                Bet.amount,\n                Bet.profit,\n                Bet.num_games,\n                Bet.bet_info,\n                Bet.game_id,\n                Bet.user_id,\n                Bet.coin_id,\n                Bet.userseed_id,\n                Bet.serverseed_id,\n                Bet.outcomes\n            FROM Bet\n            ORDER BY Bet.id DESC\n            LIMIT $1\n            ",
+  "query": "\n            SELECT \n                Bet.id,\n                Bet.timestamp,\n                Bet.amount,\n                Bet.profit,\n                Bet.num_games,\n                Bet.bet_info,\n                Bet.uuid,\n                Bet.game_id,\n                Bet.user_id,\n                Bet.coin_id,\n                Bet.userseed_id,\n                Bet.serverseed_id,\n                Bet.outcomes\n            FROM Bet\n            ORDER BY Bet.id DESC\n            LIMIT $1\n            ",
   "describe": {
     "columns": [
       {
@@ -35,31 +35,36 @@
       },
       {
         "ordinal": 6,
+        "name": "uuid",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
         "name": "game_id",
         "type_info": "Int8"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "user_id",
         "type_info": "Int8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "coin_id",
         "type_info": "Int8"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "userseed_id",
         "type_info": "Int8"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "serverseed_id",
         "type_info": "Int8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "outcomes",
         "type_info": "Text"
       }
@@ -81,8 +86,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "c16087594285dd48feb628b491699cb1a20064cbd98bf5e368171243912ce28c"
+  "hash": "9fe2e9de676cd938f94b797e314f64de386a1db0f489a5e82c3c8d68c781d26c"
 }

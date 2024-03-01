@@ -108,12 +108,15 @@ impl Engine {
 
             //let total_bet = bet.amount * Decimal::from(bet.num_games);
 
-            let amount =
-                if let Ok(Some(amount)) = self.db.fetch_amount(bet.user_id, bet.coin_id).await {
-                    amount
-                } else {
-                    continue;
-                };
+            let amount = if let Ok(Some(amount)) = self
+                .db
+                .fetch_amount(bet.user_id.unwrap(), bet.coin_id)
+                .await
+            {
+                amount
+            } else {
+                continue;
+            };
 
             if bet.amount > amount {
                 continue;
@@ -126,23 +129,29 @@ impl Engine {
                 continue;
             };
 
-            let user_seed = match self.db.fetch_current_user_seed(bet.user_id).await {
+            let user_seed = match self.db.fetch_current_user_seed(bet.user_id.unwrap()).await {
                 Ok(seed) => seed,
                 Err(e) => {
                     error!(
                         "Error getting user seed for user `{}`: {:?}",
-                        bet.user_id, e
+                        bet.user_id.unwrap(),
+                        e
                     );
                     continue;
                 }
             };
 
-            let server_seed = match self.db.fetch_current_server_seed(bet.user_id).await {
+            let server_seed = match self
+                .db
+                .fetch_current_server_seed(bet.user_id.unwrap())
+                .await
+            {
                 Ok(seed) => seed,
                 Err(e) => {
                     error!(
                         "Error getting server seed for user `{}`: {:?}",
-                        bet.user_id, e
+                        bet.user_id.unwrap(),
+                        e
                     );
                     continue;
                 }
@@ -169,7 +178,7 @@ impl Engine {
             match self
                 .db
                 .decrease_balance(
-                    bet.user_id,
+                    bet.user_id.unwrap(),
                     bet.coin_id,
                     bet.amount * Decimal::from(game_result.num_games),
                 )
@@ -183,7 +192,8 @@ impl Engine {
                 Err(e) => {
                     error!(
                         "Error decreasing balance for user `{}`: {:?}",
-                        bet.user_id, e
+                        bet.user_id.unwrap(),
+                        e
                     );
                     continue;
                 }
@@ -191,7 +201,7 @@ impl Engine {
 
             match self
                 .db
-                .increase_balance(bet.user_id, bet.coin_id, &game_result.total_profit)
+                .increase_balance(bet.user_id.unwrap(), bet.coin_id, &game_result.total_profit)
                 .await
             {
                 Ok(success) => {
@@ -206,7 +216,8 @@ impl Engine {
                 Err(e) => {
                     error!(
                         "Error increasing balance for user `{}`: {:?}",
-                        bet.user_id, e
+                        bet.user_id.unwrap(),
+                        e
                     );
                     continue;
                 }
@@ -223,7 +234,7 @@ impl Engine {
                     &outcomes,
                     &bet.data,
                     bet.game_id,
-                    bet.user_id,
+                    bet.user_id.unwrap(),
                     bet.coin_id,
                     user_seed.id,
                     server_seed.id,
@@ -240,12 +251,13 @@ impl Engine {
                 profit: game_result.total_profit,
                 bet_info: bet.data,
                 game_id: bet.game_id,
-                user_id: bet.user_id,
+                user_id: bet.user_id.unwrap(),
                 coin_id: bet.coin_id,
                 userseed_id: user_seed.id,
                 serverseed_id: server_seed.id,
                 outcomes,
                 num_games: game_result.num_games as i32,
+                uuid: bet.uuid.unwrap(),
             };
 
             if let Err(e) = self

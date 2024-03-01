@@ -633,7 +633,7 @@ pub mod game {
 
     use crate::{
         config::PASSWORD_SALT,
-        models::json_responses::{Games, Seed},
+        models::json_responses::{Games, Seed, UuidToken},
         tools::{self, blake_hash_256},
         ChannelType, EngineBetSender, WsData, WsEventSender, WsManagerEvent, WsManagerEventSender,
     };
@@ -648,6 +648,7 @@ pub mod game {
 
     use tokio::{sync::mpsc::unbounded_channel, time::sleep};
     use tracing::{debug, error};
+    use uuid::Uuid;
     use warp::filters::ws::{Message, WebSocket};
 
     pub async fn websockets_reader(
@@ -732,13 +733,15 @@ pub mod game {
     ) {
         let (data_feed_tx, mut data_feed) = unbounded_channel();
 
+        let uuid = Uuid::new_v4().to_string();
+
         manager_writer
             .send(WsManagerEvent::SubscribeFeed {
-                id: address,
+                id: uuid.clone(),
                 feed: data_feed_tx,
             })
             .unwrap();
-        debug!("New connection {:?}", &socket);
+        debug!("New connection {:?}: {:?}", &socket, &uuid);
         let (mut ws_tx, ws_rx) = socket.split();
 
         let (reader_tx, mut reader_rx) = unbounded_channel();
@@ -749,6 +752,16 @@ pub mod game {
         let mut events = Vec::<WsData>::with_capacity(10);
 
         let mut user_id: Option<i64> = None;
+
+        if let Err(e) = ws_tx
+            .send(Message::text(
+                serde_json::to_string(&ResponseBody::Uuid(UuidToken { uuid: uuid.clone() }))
+                    .unwrap(),
+            ))
+            .await
+        {
+            error!("Error on socket `{:?}`: `{:?}`", ws_tx, e);
+        }
 
         while run.load(Ordering::Relaxed) {
             tokio::select! {
@@ -799,14 +812,14 @@ pub mod game {
                                     },
                                     WebsocketsIncommingMessage::SubscribeBets { payload } => {
                                         for id in payload{
-                                            if let Err(_) = manager_writer.send(WsManagerEvent::SubscribeChannel { id: address, channel: ChannelType::Bets(id) }){
+                                            if let Err(_) = manager_writer.send(WsManagerEvent::SubscribeChannel { id: uuid.clone(), channel: ChannelType::Bets(id) }){
                                                 break;
                                             }
                                         }
                                     },
                                     WebsocketsIncommingMessage::UnsubscribeBets { payload } => {
                                         for id in payload{
-                                            if let Err(_) = manager_writer.send(WsManagerEvent::UnsubscribeChannel { id: address, channel: ChannelType::Bets(id) }){
+                                            if let Err(_) = manager_writer.send(WsManagerEvent::UnsubscribeChannel { id: uuid.clone(), channel: ChannelType::Bets(id) }){
                                                 break;
                                             }
                                         }
@@ -850,7 +863,8 @@ pub mod game {
                                     },
                                     WebsocketsIncommingMessage::MakeBet(mut bet) => {
                                         if let Some(user_id) = user_id{
-                                            bet.user_id = user_id;
+                                            bet.user_id.replace(user_id);
+                                            bet.uuid.replace(uuid.clone());
                                             if let Err(_) = engine_sender.send(bet).await{
                                                 break;
                                             };
@@ -868,7 +882,7 @@ pub mod game {
         }
 
         manager_writer
-            .send(WsManagerEvent::UnsubscribeFeed(address))
+            .send(WsManagerEvent::UnsubscribeFeed(uuid))
             .unwrap();
     }
 
@@ -876,8 +890,8 @@ pub mod game {
     ///
     /// Get all games records
     #[utoipa::path(
-        tag="invoice",
-        post,
+        tag="game",
+        get,
         path = "/api/game/list",
         responses(
             (status = 200, description = "All games records", body = Game),

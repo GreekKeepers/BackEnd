@@ -125,6 +125,8 @@ pub mod db_models {
 
         pub bet_info: String,
 
+        pub uuid: String,
+
         pub game_id: i64,
         pub user_id: i64,
         pub coin_id: i64,
@@ -194,6 +196,7 @@ pub mod json_responses {
         Invoice(Invoice),
         ClientSeed(Seed),
         Games(Games),
+        Uuid(UuidToken),
 
         // Networks(Networks),
         // Rpcs(Rpcs),
@@ -242,6 +245,11 @@ pub mod json_responses {
                 }
             }
         }
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct UuidToken {
+        pub uuid: String,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -572,7 +580,8 @@ pub mod json_requests {
         pub game_id: i64,
         pub amount: Decimal,
         pub coin_id: i64,
-        pub user_id: i64,
+        pub user_id: Option<i64>,
+        pub uuid: Option<String>,
         pub data: String,
         pub stop_loss: Decimal,
         pub stop_win: Decimal,

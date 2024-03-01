@@ -155,4 +155,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    main()
+    web_sockets()

@@ -11,7 +11,7 @@ pub enum ManagerError {
     ChannelIsNotPresent(ChannelType),
 
     #[error("Feed for an address `{0:?}` not registered")]
-    FeedDoesntExist(SocketAddr),
+    FeedDoesntExist(String),
 }
 
 #[derive(Error, Debug)]

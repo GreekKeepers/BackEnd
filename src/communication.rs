@@ -63,19 +63,10 @@ pub type EngineBetSender = Sender<PropagatedBet>;
 
 #[derive(Debug)]
 pub enum WsManagerEvent {
-    SubscribeFeed {
-        id: SocketAddr,
-        feed: WsDataFeedSender,
-    },
-    UnsubscribeFeed(SocketAddr),
-    SubscribeChannel {
-        id: SocketAddr,
-        channel: ChannelType,
-    },
-    UnsubscribeChannel {
-        id: SocketAddr,
-        channel: ChannelType,
-    },
+    SubscribeFeed { id: String, feed: WsDataFeedSender },
+    UnsubscribeFeed(String),
+    SubscribeChannel { id: String, channel: ChannelType },
+    UnsubscribeChannel { id: String, channel: ChannelType },
     PropagateBet(Bet),
 }
 
@@ -83,15 +74,15 @@ pub type WsManagerEventReceiver = UnboundedReceiver<WsManagerEvent>;
 pub type WsManagerEventSender = UnboundedSender<WsManagerEvent>;
 
 pub struct Manager {
-    feeds: HashMap<SocketAddr, WsDataFeedSender>,
-    subscriptions: HashMap<ChannelType, HashSet<SocketAddr>>,
+    feeds: HashMap<String, WsDataFeedSender>,
+    subscriptions: HashMap<ChannelType, HashSet<String>>,
     manager_rx: WsManagerEventReceiver,
 }
 
 impl Manager {
     pub async fn new(manager_rx: WsManagerEventReceiver, db: &DB) -> Self {
         let games = db.fetch_all_games().await.expect("Unable to fetch games");
-        let mut subscriptions: HashMap<ChannelType, HashSet<SocketAddr>> =
+        let mut subscriptions: HashMap<ChannelType, HashSet<String>> =
             HashMap::with_capacity(games.len());
         for game in games {
             subscriptions.insert(ChannelType::Bets(game.id), Default::default());
@@ -128,7 +119,7 @@ impl Manager {
         debug!("Got event: {:?}", event);
         match event {
             WsManagerEvent::SubscribeFeed { id, feed } => {
-                match self.feeds.insert(*id, feed.clone()) {
+                match self.feeds.insert(id.to_owned(), feed.clone()) {
                     Some(_) => {
                         //debug!("Channel for ip `{:?}` got removed", id);
                         self.subscriptions.iter_mut().for_each(|(_, ids)| {
@@ -146,18 +137,18 @@ impl Manager {
             }
             WsManagerEvent::SubscribeChannel { id, channel } => {
                 if !self.feeds.contains_key(id) {
-                    return Err(ManagerError::FeedDoesntExist(*id));
+                    return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
                 match self.subscriptions.get_mut(channel) {
                     Some(subs) => {
-                        subs.insert(*id);
+                        subs.insert(id.to_owned());
                     }
                     None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
                 }
             }
             WsManagerEvent::UnsubscribeChannel { id, channel } => {
                 if !self.feeds.contains_key(id) {
-                    return Err(ManagerError::FeedDoesntExist(*id));
+                    return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
                 match self.subscriptions.get_mut(channel) {
                     Some(subs) => {
