@@ -1014,6 +1014,18 @@ pub fn invoice(
     warp::path("invoice").and(create_invoice(db.clone(), dex).or(generate_qr(db)))
 }
 
+pub fn list_games(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("list")
+        .and(with_db(db.clone()))
+        .and_then(handlers::get_all_games)
+}
+
+pub fn game(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("game").and(list_games(db.clone()))
+}
+
 pub fn init_filters(
     db: DB,
     dex: TheDex, //bet_sender: WsDataFeedSender,
@@ -1040,6 +1052,7 @@ pub fn init_filters(
     user(db.clone())
         .or(invoice(db.clone(), dex))
         .or(bets(db.clone()))
+        .or(game(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

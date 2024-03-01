@@ -3,6 +3,12 @@ import requests
 
 
 def main():
+
+    res = requests.post(
+        "http://127.0.0.1:8282/game/list",
+    )
+    print(res.content)
+
     res = requests.post(
         "http://127.0.0.1:8282/user/register",
         json={
@@ -149,4 +155,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    web_sockets()
+    main()

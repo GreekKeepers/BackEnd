@@ -31,7 +31,8 @@ use warp::{
             handlers::get_client_seed,
             handlers::get_server_seed,
             handlers::get_bets_for_game,
-            handlers::get_all_last_bets
+            handlers::get_all_last_bets,
+            handlers::get_all_games
         ),
         components(schemas(
             //json_requests::User,
@@ -57,6 +58,7 @@ use warp::{
             json_responses::AccessToken,
             json_responses::Seed,
             json_responses::UserStripped,
+            json_responses::Games,
 
             db_models::User,
             db_models::Coin,

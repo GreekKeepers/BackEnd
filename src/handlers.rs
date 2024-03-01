@@ -19,6 +19,7 @@ use crate::models::json_requests::{self, CreateInvoice, Login};
 // };
 // #[allow(unused_imports)]
 
+use crate::models::db_models::Game;
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 // pub use abi::*;
 // pub use bets::*;
@@ -632,7 +633,7 @@ pub mod game {
 
     use crate::{
         config::PASSWORD_SALT,
-        models::json_responses::Seed,
+        models::json_responses::{Games, Seed},
         tools::{self, blake_hash_256},
         ChannelType, EngineBetSender, WsData, WsEventSender, WsManagerEvent, WsManagerEventSender,
     };
@@ -869,6 +870,27 @@ pub mod game {
         manager_writer
             .send(WsManagerEvent::UnsubscribeFeed(address))
             .unwrap();
+    }
+
+    /// Get all games
+    ///
+    /// Get all games records
+    #[utoipa::path(
+        tag="invoice",
+        post,
+        path = "/api/game/list",
+        responses(
+            (status = 200, description = "All games records", body = Game),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        )
+    )]
+    pub async fn get_all_games(db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let games = db
+            .fetch_all_games()
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Games(Games { games })))
     }
 }
 

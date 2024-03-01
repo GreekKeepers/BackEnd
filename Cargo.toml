@@ -41,3 +41,4 @@ qrcode-generator = "4.1.9"
 thedex = { git = "https://github.com/GreekKeepers/TheDex", branch = "main" }
 hex = "0.4.3"
 async-channel = "2.2.0"
+uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }

@@ -151,7 +151,7 @@ pub mod json_responses {
 
     use crate::WsData;
 
-    use self::db_models::{Amount, Bet, Invoice};
+    use self::db_models::{Amount, Bet, Game, Invoice};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -193,6 +193,8 @@ pub mod json_responses {
         User(UserStripped),
         Invoice(Invoice),
         ClientSeed(Seed),
+        Games(Games),
+
         // Networks(Networks),
         // Rpcs(Rpcs),
         // BlockExplorers(BlockExplorers),
@@ -240,6 +242,11 @@ pub mod json_responses {
                 }
             }
         }
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct Games {
+        pub games: Vec<Game>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
