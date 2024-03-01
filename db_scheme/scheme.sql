@@ -116,7 +116,7 @@ INSERT INTO Game(
     parameters
 ) VALUES (
     'CoinFlip',
-    '{"profit_coef":1.98}'
+    '{"profit_coef":"1.98"}'
 );
 
 INSERT INTO Game(
@@ -124,5 +124,13 @@ INSERT INTO Game(
     parameters
 ) VALUES (
     'Dice',
-    '{"profit_coef":1.98}'
+    '{"profit_coef":"1.98"}'
+);
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'RPS',
+    '{"profit_coef":"1.98", "draw_coef":"0.99"}'
 );

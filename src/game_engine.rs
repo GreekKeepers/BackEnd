@@ -1,4 +1,4 @@
-use crate::games::{CoinFlip, Dice};
+use crate::games::{CoinFlip, Dice, RPS};
 use crate::models::*;
 use crate::tools::blake_hash_256_u64;
 use crate::DB;
@@ -40,7 +40,14 @@ impl Engine {
             "Dice" => match serde_json::from_str::<Dice>(params) {
                 Ok(gm) => Ok(Some(Box::new(gm))),
                 Err(e) => {
-                    error!("Error deserializing CoinFlip game: `{:?}`", e);
+                    error!("Error deserializing Dice game: `{:?}`", e);
+                    Err(e)
+                }
+            },
+            "RPS" => match serde_json::from_str::<RPS>(params) {
+                Ok(gm) => Ok(Some(Box::new(gm))),
+                Err(e) => {
+                    error!("Error deserializing RPS game: `{:?}`", e);
                     Err(e)
                 }
             },
@@ -95,6 +102,7 @@ impl Engine {
                 continue;
             };
 
+            // TODO: move engines to be static
             let game_eng = match Engine::parse_game(&game.name, &game.parameters) {
                 Ok(eng) => {
                     if let Some(eng) = eng {
