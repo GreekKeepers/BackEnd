@@ -9,7 +9,6 @@ use crate::models::json_requests::PropagatedBet;
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
 pub use async_channel::{Receiver, Sender};
 pub use std::collections::{HashMap, HashSet};
-use std::net::SocketAddr;
 
 pub use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tracing::{debug, error, info};

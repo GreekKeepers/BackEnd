@@ -481,6 +481,7 @@ impl DB {
         num_games: i32,
         outcomes: &str,
         bet_info: &str,
+        uuid: &str,
         game_id: i64,
         user_id: i64,
         coin_id: i64,
@@ -495,6 +496,7 @@ impl DB {
                 num_games,
                 outcomes,
                 bet_info,
+                uuid,
                 game_id,
                 user_id,
                 coin_id,
@@ -510,7 +512,8 @@ impl DB {
                 $7,
                 $8,
                 $9,
-                $10
+                $10,
+                $11
             ) RETURNING id
             "#,
             amount,
@@ -518,6 +521,7 @@ impl DB {
             num_games,
             outcomes,
             bet_info,
+            uuid,
             game_id,
             user_id,
             coin_id,

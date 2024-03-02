@@ -635,7 +635,8 @@ pub mod game {
         config::PASSWORD_SALT,
         models::json_responses::{Games, Seed, UuidToken},
         tools::{self, blake_hash_256},
-        ChannelType, EngineBetSender, WsData, WsEventSender, WsManagerEvent, WsManagerEventSender,
+        ChannelType, EngineBetSender, WsData, WsDataFeedReceiver, WsDataFeedSender, WsEventSender,
+        WsManagerEvent, WsManagerEventSender,
     };
 
     use self::json_requests::WebsocketsIncommingMessage;
@@ -731,7 +732,8 @@ pub mod game {
         manager_writer: WsManagerEventSender,
         engine_sender: EngineBetSender,
     ) {
-        let (data_feed_tx, mut data_feed) = unbounded_channel();
+        let (data_feed_tx, mut data_feed): (WsDataFeedSender, WsDataFeedReceiver) =
+            unbounded_channel();
 
         let uuid = Uuid::new_v4().to_string();
 

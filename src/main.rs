@@ -6,6 +6,7 @@ use crate::game_engine::Engine;
 //use api_documentation::{serve_swagger, ApiDoc};
 use config::DatabaseSettings;
 use db::DB;
+use futures::future::join_all;
 use rejection_handler::handle_rejection;
 use std::env;
 use thedex::TheDex;
@@ -120,7 +121,17 @@ async fn main() {
 
     let (engine_tx, engine_rx) = async_channel::unbounded();
 
-    let engine = Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx).await;
+    info!("Starting `{}` engines", *config::ENGINES);
+    let mut engines: Vec<_> = Vec::with_capacity(*config::ENGINES as usize);
+    for _ in 0..*config::ENGINES {
+        engines.push(
+            Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx.clone())
+                .await
+                .run(),
+        );
+    }
+    let engines_handle = join_all(engines);
+    // let engine = Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx).await;
 
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
@@ -136,7 +147,7 @@ async fn main() {
         _ = signal::ctrl_c() => {
             warn!("CTRL+C received, stopping process...")
         }
-        _ = engine.run() => {
+        _ = engines_handle => {
             warn!("Engine stopped");
         }
     }

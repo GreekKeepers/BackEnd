@@ -5,7 +5,7 @@ use crate::DB;
 use crate::{communication::*, games::GameEng};
 use rust_decimal::Decimal;
 use serde_json::Error;
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 use self::db_models::Bet;
 
@@ -93,6 +93,7 @@ impl Engine {
     }
 
     pub async fn run(self) {
+        info!("Starting engine");
         loop {
             let bet = match self.bet_reciever.recv().await {
                 Ok(bet) => bet,
@@ -233,6 +234,7 @@ impl Engine {
                     game_result.num_games as i32,
                     &outcomes,
                     &bet.data,
+                    bet.uuid.as_ref().unwrap(),
                     bet.game_id,
                     bet.user_id.unwrap(),
                     bet.coin_id,
