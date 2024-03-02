@@ -19,7 +19,7 @@ use crate::models::json_requests::{self, CreateInvoice, Login};
 // };
 // #[allow(unused_imports)]
 
-use crate::models::db_models::Game;
+
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 // pub use abi::*;
 // pub use bets::*;
@@ -857,7 +857,7 @@ pub mod game {
                                                 }
                                             }
                                             let seed = blake_hash(&seed);
-                                            if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ServerSeedHidden (Seed{ seed: seed.into() })).unwrap())).await{
+                                            if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::ServerSeedHidden (Seed{ seed })).unwrap())).await{
                                                 error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
                                                 break;
                                             }

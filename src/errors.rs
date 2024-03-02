@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+
 
 use crate::communication::ChannelType;
 use thedex::errors::Error as TheDexError;
