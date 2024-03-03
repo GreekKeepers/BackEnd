@@ -1,4 +1,4 @@
-use crate::games::{CoinFlip, Dice, Race, RPS};
+use crate::games::{CoinFlip, Dice, Race, Wheel, RPS};
 use crate::models::*;
 use crate::tools::blake_hash_256_u64;
 use crate::DB;
@@ -72,6 +72,13 @@ impl Engine {
                 Ok(gm) => Ok(Some(Box::new(gm))),
                 Err(e) => {
                     error!("Error deserializing Race game: `{:?}`", e);
+                    Err(e)
+                }
+            },
+            "Wheel" => match serde_json::from_str::<Wheel>(params) {
+                Ok(gm) => Ok(Some(Box::new(gm))),
+                Err(e) => {
+                    error!("Error deserializing Wheel game: `{:?}`", e);
                     Err(e)
                 }
             },

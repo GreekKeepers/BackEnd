@@ -10,6 +10,9 @@ pub use rps::*;
 mod race;
 pub use race::*;
 
+mod wheel;
+pub use wheel::*;
+
 use crate::models::{db_models::GameResult, json_requests::PropagatedBet};
 
 pub trait GameEng {

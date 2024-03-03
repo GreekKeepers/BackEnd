@@ -131,7 +131,6 @@ async fn main() {
         );
     }
     let engines_handle = join_all(engines);
-    // let engine = Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx).await;
 
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
