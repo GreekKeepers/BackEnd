@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS Bet(
     profit NUMERIC(1000, 4),
     num_games INTEGER NOT NULL,
     outcomes TEXT NOT NULL,
+    profits TEXT NOT NULL,
 
     bet_info TEXT NOT NULL,
     uuid TEXT NOT NULL,

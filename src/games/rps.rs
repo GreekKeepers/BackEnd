@@ -69,6 +69,7 @@ impl GameEng for RPS {
         let draw = bet.amount * self.draw_coef;
 
         let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
             let action = (number % 3) as u32;
             outcomes.push(action);
@@ -78,10 +79,13 @@ impl GameEng for RPS {
             if rps_result == 2 {
                 total_profit += draw;
                 total_value += draw;
+                profits.push(draw);
             } else if rps_result == 1 {
                 total_profit += profit;
                 total_value += profit;
+                profits.push(profit);
             } else {
+                profits.push(Decimal::ZERO);
                 total_value -= bet.amount;
             }
 
@@ -101,6 +105,7 @@ impl GameEng for RPS {
         Some(GameResult {
             total_profit,
             outcomes,
+            profits,
             num_games: games as u32,
         })
     }

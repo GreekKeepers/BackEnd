@@ -6,6 +6,7 @@
 use crate::db::DB;
 use crate::models::db_models::Bet;
 use crate::models::json_requests::PropagatedBet;
+use crate::models::json_responses::BetExpanded;
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
 pub use async_channel::{Receiver, Sender};
 pub use std::collections::{HashMap, HashSet};
@@ -34,22 +35,9 @@ pub enum ChannelType {
 }
 
 pub enum WsData {
-    NewBet(Bet),
+    NewBet(BetExpanded),
     ServerSeed(String),
 }
-
-// pub enum WsEvent {
-//     Subscribe(ChannelType),
-//     UnsubscribeBets(ChannelType),
-//     Auth(String),
-//     NewClientSeed(String),
-//     NewServerSeed,
-//     MakeBet {
-//         game_id: i64,
-//         amount: Decimal,
-//         difficulty: u64,
-//     },
-// }
 
 pub type WsDataFeedReceiver = UnboundedReceiver<WsData>;
 pub type WsDataFeedSender = UnboundedSender<WsData>;
@@ -66,7 +54,7 @@ pub enum WsManagerEvent {
     UnsubscribeFeed(String),
     SubscribeChannel { id: String, channel: ChannelType },
     UnsubscribeChannel { id: String, channel: ChannelType },
-    PropagateBet(Bet),
+    PropagateBet(BetExpanded),
 }
 
 pub type WsManagerEventReceiver = UnboundedReceiver<WsManagerEvent>;
@@ -94,7 +82,7 @@ impl Manager {
         }
     }
 
-    fn propagate_bet(&self, bet: &Bet) -> Result<(), ManagerError> {
+    fn propagate_bet(&self, bet: &BetExpanded) -> Result<(), ManagerError> {
         match self.subscriptions.get(&ChannelType::Bets(bet.game_id)) {
             Some(subs) => {
                 for sub in subs.iter() {

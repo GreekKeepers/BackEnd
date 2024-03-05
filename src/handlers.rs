@@ -19,7 +19,6 @@ use crate::models::json_requests::{self, CreateInvoice, Login};
 // };
 // #[allow(unused_imports)]
 
-
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 // pub use abi::*;
 // pub use bets::*;
@@ -32,6 +31,7 @@ use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseB
 // pub use nickname::*;
 // pub use partner::*;
 pub use bets::*;
+pub use coin::*;
 pub use game::*;
 pub use invoice::*;
 pub use user::*;
@@ -910,6 +910,33 @@ pub mod game {
     }
 }
 
+pub mod coin {
+    use crate::models::json_responses::Coins;
+
+    use super::*;
+
+    /// Get all coins
+    ///
+    /// Get all coins records
+    #[utoipa::path(
+        tag="coin",
+        get,
+        path = "/api/coin/list",
+        responses(
+            (status = 200, description = "All coins records", body = Coin),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        )
+    )]
+    pub async fn get_all_coins(db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let coins = db
+            .fetch_coins()
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Coins(Coins { coins })))
+    }
+}
+
 pub mod invoice {
     use self::json_requests::QrRequest;
 
@@ -1175,7 +1202,7 @@ pub mod user {
         get,
         path = "/api/user/{user_id}",
         responses(
-            (status = 200, description = "Coins amounts", body = UserStripped),
+            (status = 200, description = "User Info", body = UserStripped),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(

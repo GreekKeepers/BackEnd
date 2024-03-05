@@ -62,6 +62,7 @@ impl GameEng for Dice {
         let profit = bet.amount * data.multiplier;
 
         let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
             let number = remap(
                 Decimal::from_u64(*number).unwrap(),
@@ -77,8 +78,10 @@ impl GameEng for Dice {
             {
                 total_profit += profit;
                 total_value += profit;
+                profits.push(profit);
             } else {
                 total_value -= bet.amount;
+                profits.push(Decimal::ZERO);
             }
 
             games = game + 1;
@@ -97,6 +100,7 @@ impl GameEng for Dice {
         Some(GameResult {
             total_profit,
             outcomes,
+            profits,
             num_games: games as u32,
         })
     }

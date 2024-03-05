@@ -1,6 +1,9 @@
 use crate::{
     config::DatabaseSettings,
-    models::db_models::{Amount, Bet, Coin, Game, ServerSeed, User, UserSeed},
+    models::{
+        db_models::{Amount, Bet, Coin, Game, ServerSeed, User, UserSeed},
+        json_responses::BetExpanded,
+    },
     tools::blake_hash,
 };
 
@@ -29,9 +32,9 @@ impl DB {
         &self,
         game_name: &str,
         limit: i64,
-    ) -> Result<Vec<Bet>, sqlx::Error> {
+    ) -> Result<Vec<BetExpanded>, sqlx::Error> {
         sqlx::query_as_unchecked!(
-            Bet,
+            BetExpanded,
             r#"
             SELECT 
                 Bet.id,
@@ -43,12 +46,15 @@ impl DB {
                 Bet.uuid,
                 Bet.game_id,
                 Bet.user_id,
+                Users.username,
                 Bet.coin_id,
                 Bet.userseed_id,
                 Bet.serverseed_id,
-                Bet.outcomes
+                Bet.outcomes,
+                Bet.profits
             FROM Bet
             INNER JOIN Game ON Bet.game_id=Game.id
+            INNER JOIN Users ON Bet.user_id=Users.id
             WHERE Game.name=$1
             ORDER BY Bet.id DESC
             LIMIT $2
@@ -60,9 +66,9 @@ impl DB {
         .await
     }
 
-    pub async fn fetch_all_latest_bets(&self, limit: i64) -> Result<Vec<Bet>, sqlx::Error> {
+    pub async fn fetch_all_latest_bets(&self, limit: i64) -> Result<Vec<BetExpanded>, sqlx::Error> {
         sqlx::query_as_unchecked!(
-            Bet,
+            BetExpanded,
             r#"
             SELECT 
                 Bet.id,
@@ -74,11 +80,14 @@ impl DB {
                 Bet.uuid,
                 Bet.game_id,
                 Bet.user_id,
+                Users.username,
                 Bet.coin_id,
                 Bet.userseed_id,
                 Bet.serverseed_id,
-                Bet.outcomes
+                Bet.outcomes,
+                Bet.profits
             FROM Bet
+            INNER JOIN Users ON bet.user_id = Users.id
             ORDER BY Bet.id DESC
             LIMIT $1
             "#,
@@ -480,6 +489,7 @@ impl DB {
         profit: Decimal,
         num_games: i32,
         outcomes: &str,
+        profits: &str,
         bet_info: &str,
         uuid: &str,
         game_id: i64,
@@ -495,6 +505,7 @@ impl DB {
                 profit,
                 num_games,
                 outcomes,
+                profits,
                 bet_info,
                 uuid,
                 game_id,
@@ -513,13 +524,15 @@ impl DB {
                 $8,
                 $9,
                 $10,
-                $11
+                $11,
+                $12
             ) RETURNING id
             "#,
             amount,
             profit,
             num_games,
             outcomes,
+            profits,
             bet_info,
             uuid,
             game_id,

@@ -91,6 +91,7 @@ pub mod db_models {
     pub struct GameResult {
         pub total_profit: Decimal,
         pub outcomes: Vec<u32>,
+        pub profits: Vec<Decimal>,
         pub num_games: u32,
     }
 
@@ -153,7 +154,7 @@ pub mod json_responses {
 
     use crate::WsData;
 
-    use self::db_models::{Amount, Bet, Game, Invoice};
+    use self::db_models::{Amount, Bet, Coin, Game, Invoice};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -163,6 +164,7 @@ pub mod json_responses {
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
+    use rust_decimal::Decimal;
 
     #[derive(Serialize, Deserialize, ToSchema)]
     pub enum Status {
@@ -197,7 +199,7 @@ pub mod json_responses {
         ClientSeed(Seed),
         Games(Games),
         Uuid(UuidToken),
-
+        Coins(Coins),
         // Networks(Networks),
         // Rpcs(Rpcs),
         // BlockExplorers(BlockExplorers),
@@ -206,7 +208,7 @@ pub mod json_responses {
         // Nickname(Nickname),
         // Player(Player),
         Bets(Bets),
-        Bet(Bet),
+        Bet(BetExpanded),
         ServerSeedHidden(Seed),
         // Abi(GameAbi),
         // Totals(Totals),
@@ -255,6 +257,11 @@ pub mod json_responses {
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct Games {
         pub games: Vec<Game>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct Coins {
+        pub coins: Vec<Coin>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -506,9 +513,33 @@ pub mod json_responses {
     //     //pub player_hand: Option<[Card; 5]>,
     // }
 
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, Default)]
+    pub struct BetExpanded {
+        pub id: i64,
+        //pub relative_id: i64,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub amount: Decimal,
+        pub profit: Decimal,
+        pub num_games: i32,
+        pub outcomes: String,
+        pub profits: String,
+
+        pub bet_info: String,
+
+        pub uuid: String,
+
+        pub game_id: i64,
+        pub user_id: i64,
+        pub username: String,
+        pub coin_id: i64,
+        pub userseed_id: i64,
+        pub serverseed_id: i64,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Bets {
-        pub bets: Vec<Bet>,
+        pub bets: Vec<BetExpanded>,
     }
 }
 

@@ -1,13 +1,11 @@
 use crate::games::{CoinFlip, Dice, Race, Wheel, RPS};
-use crate::models::*;
+use crate::models::json_responses::BetExpanded;
 use crate::tools::blake_hash_256_u64;
 use crate::DB;
 use crate::{communication::*, games::GameEng};
 use rust_decimal::Decimal;
 use serde_json::Error;
 use tracing::{error, info, warn};
-
-use self::db_models::Bet;
 
 pub struct Engine {
     db: DB,
@@ -232,6 +230,7 @@ impl Engine {
             }
 
             let outcomes = format!("{:?}", game_result.outcomes);
+            let profits = format!("{:?}", game_result.profits);
 
             if let Err(e) = self
                 .db
@@ -240,6 +239,7 @@ impl Engine {
                     game_result.total_profit,
                     game_result.num_games as i32,
                     &outcomes,
+                    &profits,
                     &bet.data,
                     bet.uuid.as_ref().unwrap(),
                     bet.game_id,
@@ -253,7 +253,14 @@ impl Engine {
                 error!("Error adding bet to the db: {:?}", e);
             };
 
-            let constructed_bet = Bet {
+            let user = if let Ok(Some(user)) = self.db.fetch_user(bet.user_id.unwrap()).await {
+                user
+            } else {
+                error!("Unable to find user: {:?}", bet.user_id);
+                continue;
+            };
+
+            let constructed_bet = BetExpanded {
                 id: 0,
                 timestamp,
                 amount: bet.amount,
@@ -261,12 +268,14 @@ impl Engine {
                 bet_info: bet.data,
                 game_id: bet.game_id,
                 user_id: bet.user_id.unwrap(),
+                username: user.username,
                 coin_id: bet.coin_id,
                 userseed_id: user_seed.id,
                 serverseed_id: server_seed.id,
                 outcomes,
                 num_games: game_result.num_games as i32,
                 uuid: bet.uuid.unwrap(),
+                profits,
             };
 
             if let Err(e) = self
