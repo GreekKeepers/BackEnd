@@ -165,6 +165,7 @@ pub mod json_responses {
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
     use rust_decimal::Decimal;
+    use thedex::models::Price;
 
     #[derive(Serialize, Deserialize, ToSchema)]
     pub enum Status {
@@ -200,6 +201,7 @@ pub mod json_responses {
         Games(Games),
         Uuid(UuidToken),
         Coins(Coins),
+        Prices(Prices),
         // Networks(Networks),
         // Rpcs(Rpcs),
         // BlockExplorers(BlockExplorers),
@@ -247,6 +249,11 @@ pub mod json_responses {
                 }
             }
         }
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    pub struct Prices {
+        pub prices: Vec<Price>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

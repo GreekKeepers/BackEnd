@@ -21,6 +21,8 @@ lazy_static! {
     pub static ref ABIS_FOLDER: String = env::var("ABIS_FOLDER").unwrap();
     pub static ref PASSWORD_SALT: String = env::var("PASSWORD_SALT").unwrap();
 
+    pub static ref X_EX_APIKEY: String = env::var("X_EX_APIKEY").unwrap();
+
     pub static ref ENGINES: u16 = env::var("ENGINES").unwrap().parse().unwrap();
 }
 

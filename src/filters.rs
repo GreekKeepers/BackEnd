@@ -160,6 +160,20 @@ fn with_auth(db: DB) -> impl Filter<Extract = (i64,), Error = warp::Rejection> +
         .and_then(auth_verified)
 }
 
+async fn dex(headers: HeaderMap<HeaderValue>, _: DB) -> Result<bool, warp::Rejection> {
+    headers
+        .get("X-EX-APIKEY")
+        .ok_or(ApiError::TheDexBadApiKey)?;
+    Ok(true)
+}
+
+fn with_dex_response(db: DB) -> impl Filter<Extract = (bool,), Error = warp::Rejection> + Clone {
+    headers_cloned()
+        .map(|header| header)
+        .and(with_db(db))
+        .and_then(dex)
+}
+
 // fn json_body_set_nickname(
 // ) -> impl Filter<Extract = (json_requests::SetNickname,), Error = warp::Rejection> + Clone {
 //     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -169,6 +183,11 @@ fn with_auth(db: DB) -> impl Filter<Extract = (i64,), Error = warp::Rejection> +
 // ) -> impl Filter<Extract = (json_requests::CreateReferal,), Error = warp::Rejection> + Clone {
 //     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 // }
+
+fn json_body_invoice_callback(
+) -> impl Filter<Extract = (thedex::models::Invoice,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
 
 fn json_body_register_user(
 ) -> impl Filter<Extract = (json_requests::RegisterUser,), Error = warp::Rejection> + Clone {
@@ -187,11 +206,6 @@ fn json_body_change_username(
 
 fn json_body_create_invoice(
 ) -> impl Filter<Extract = (json_requests::CreateInvoice,), Error = warp::Rejection> + Clone {
-    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
-}
-
-fn json_body_generate_qr_code(
-) -> impl Filter<Extract = (json_requests::QrRequest,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
@@ -351,11 +365,37 @@ pub fn generate_qr(
         .and_then(handlers::generate_qr)
 }
 
+pub fn crypto_prices(
+    db: DB,
+    dex: TheDex,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("prices")
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(with_thedex(dex))
+        .and_then(handlers::crypto_prices)
+}
+
+pub fn invoice_callback(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("callback")
+        .and(warp::post())
+        .and(with_dex_response(db.clone()))
+        .and(json_body_invoice_callback())
+        .and(with_db(db))
+        .and_then(handlers::invoice_callback)
+}
+
 pub fn invoice(
     db: DB,
     dex: TheDex,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("invoice").and(create_invoice(db.clone(), dex).or(generate_qr(db)))
+    warp::path("invoice").and(
+        create_invoice(db.clone(), dex.clone()).or(generate_qr(db.clone())
+            .or(crypto_prices(db.clone(), dex))
+            .or(invoice_callback(db))),
+    )
 }
 
 pub fn list_games(

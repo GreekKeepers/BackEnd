@@ -468,6 +468,7 @@ pub mod coin {
 
 pub mod invoice {
     use crate::models::db_models::Invoice;
+    use crate::models::json_responses::Prices;
     use crate::tools::blake_hash;
 
     use self::json_requests::QrRequest;
@@ -476,10 +477,110 @@ pub mod invoice {
 
     use rust_decimal::prelude::FromPrimitive;
     use rust_decimal::Decimal;
-    use thedex::models::CreateInvoice as CreateInvoiceRequest;
+    use thedex::models::CreateQuickInvoice;
     use thedex::TheDex;
+    use tracing::{error, warn};
 
     use super::*;
+
+    /// Callback
+    ///
+    /// Callback
+    #[utoipa::path(
+        tag="invoice",
+        post,
+        path = "/api/invoice/callback",
+        request_body = CreateInvoice,
+        responses(
+            (status = 200, description = "Prices", body = Invoice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn invoice_callback(
+        _: bool,
+        invoice: thedex::models::Invoice,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        match invoice.status {
+            thedex::models::InvoiceStatus::Successful => {
+                if let Some(order_id) = &invoice.order_id {
+                    if let Err(e) = db
+                        .invoice_update_status(order_id, invoice.status.clone() as i32)
+                        .await
+                    {
+                        error!("Error updating invoice: {:?}", e);
+                        return Ok(gen_info_response("Ok"));
+                    }
+                    if let Some(client_id) = &invoice.client_id {
+                        let client_id = if let Ok(client_id) = i64::from_str_radix(&client_id, 10) {
+                            client_id
+                        } else {
+                            error!("Error converting client_id: {:?}", invoice);
+                            return Ok(gen_info_response("Ok"));
+                        };
+                        if db
+                            .increase_balance(
+                                client_id,
+                                1,
+                                &(invoice.amount.ceil() * Decimal::from(1000)),
+                            )
+                            .await
+                            .map_err(|e| error!("Error updating invoice: {:?}", e))
+                            .is_err()
+                        {
+                            return Ok(gen_info_response("Ok"));
+                        }
+                        if db
+                            .increase_balance(
+                                client_id,
+                                2,
+                                &(invoice.amount.ceil() * Decimal::from(10)),
+                            )
+                            .await
+                            .map_err(|e| error!("Error updating invoice: {:?}", e))
+                            .is_err()
+                        {
+                            return Ok(gen_info_response("Ok"));
+                        }
+                    } else {
+                        error!("Client id not found in invoice: {:?}", invoice);
+                    }
+                } else {
+                    error!("Order id not found in invoice: {:?}", invoice);
+                }
+            }
+            _ => {
+                warn!("Not handling callback for invoice {:?}", invoice);
+            }
+        }
+
+        Ok(gen_info_response("Ok"))
+    }
+
+    /// Get prices
+    ///
+    /// Gets prices
+    #[utoipa::path(
+        tag="invoice",
+        get,
+        path = "/api/invoice/prices",
+        request_body = CreateInvoice,
+        responses(
+            (status = 200, description = "Prices", body = Invoice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn crypto_prices(_: i64, mut dex: TheDex) -> Result<WarpResponse, warp::Rejection> {
+        let response = dex
+            .prices(chrono::Utc::now().timestamp_millis() as u64)
+            .await
+            .map_err(ApiError::TheDexError)?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Prices(Prices {
+            prices: response.clone(),
+        })))
+    }
+
     /// Create a new invoice
     ///
     /// Creates a new invoice
@@ -508,17 +609,17 @@ pub mod invoice {
         ));
         let amount = Decimal::from_u32(data.amount.clone() as u32).unwrap();
         let result = dex
-            .create_invoice(
-                CreateInvoiceRequest {
+            .create_quick_invoice(
+                CreateQuickInvoice {
                     amount,
-                    currency: data.currency.clone(),
+                    pay_currency: data.currency.clone(),
                     merchant_id: String::new(),
                     order_id: Some(order_id.clone()),
                     email: None,
                     client_id: Some(id.to_string()),
                     title: Some(format!("Bying for ${}", data.amount as u32)),
                     description: None,
-                    recalculation: Some(true),
+                    recalculation: Some(false),
                     needs_email_confirmation: Some(false),
                     success_url: Some(String::from(
                         "https://game.greekkeepers.io/api/invoice/success",
@@ -533,14 +634,14 @@ pub mod invoice {
                 chrono::offset::Utc::now().timestamp_millis() as u64,
             )
             .await
-            .map_err(ApiError::CreateInvoiceError)?;
+            .map_err(ApiError::TheDexError)?;
 
         db.add_invoice(
             &order_id,
             &String::new(),
             &order_id,
             result.status.clone() as i32,
-            &result.pay_url,
+            &result.purse,
             id,
             amount,
             &data.currency,

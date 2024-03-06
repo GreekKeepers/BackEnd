@@ -1,5 +1,3 @@
-
-
 use crate::communication::ChannelType;
 use thedex::errors::Error as TheDexError;
 use thiserror::Error;
@@ -63,8 +61,11 @@ pub enum ApiError {
     #[error("Error generating qr code for data `{0}`")]
     QrGenerationError(String),
 
-    #[error("Error creating invoice: {0}")]
-    CreateInvoiceError(TheDexError),
+    #[error("Error with TheDex: {0}")]
+    TheDexError(TheDexError),
+
+    #[error("Bad Api Key")]
+    TheDexBadApiKey,
 }
 
 impl reject::Reject for ApiError {}

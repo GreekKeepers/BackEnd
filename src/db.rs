@@ -137,6 +137,22 @@ impl DB {
         .await
     }
 
+    pub async fn invoice_update_status(&self, id: &str, status: i32) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE Invoice
+            SET status = $1
+            WHERE id=$2
+            "#,
+            status,
+            id
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn add_invoice(
         &self,
         id: &str,
