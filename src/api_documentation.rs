@@ -33,7 +33,9 @@ use warp::{
             handlers::get_bets_for_game,
             handlers::get_all_last_bets,
             handlers::get_all_games,
-            handlers::get_all_coins
+            handlers::get_all_coins,
+            handlers::crypto_prices,
+            
         ),
         components(schemas(
             //json_requests::User,
