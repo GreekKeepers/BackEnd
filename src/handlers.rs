@@ -84,469 +84,10 @@ pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
     .into_response()
 }
 
-// pub mod network {
-//     use super::*;
-//     /// Get list of supported networks
-//     ///
-//     /// Gets a list of all supported networks
-//     #[utoipa::path(
-//         tag="network",
-//         get,
-//         path = "/api/network/list",
-//         responses(
-//             (status = 200, description = "Networks", body = Networks),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//     )]
-//     pub async fn get_networks(db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let networks = db
-//             .query_all_networks()
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         let mut networks_full_info: Vec<NetworkFullInfo> = Vec::with_capacity(networks.len());
-//         for network in networks {
-//             let network_id = network.network_id;
-//             networks_full_info.push(NetworkFullInfo {
-//                 basic_info: network,
-//                 rpcs: db
-//                     .query_all_rpcs(network_id)
-//                     .await
-//                     .map_err(|e| reject::custom(ApiError::DbError(e)))?,
-//                 explorers: db
-//                     .query_block_explorers(network_id)
-//                     .await
-//                     .map_err(|e| reject::custom(ApiError::DbError(e)))?,
-//             });
-//         }
-
-//         Ok(gen_arbitrary_response(ResponseBody::Networks(Networks {
-//             networks: networks_full_info,
-//         })))
-//     }
-// }
-
-// pub mod rpcs {
-//     use super::*;
-//     /// Get list of rpcs for the network
-//     ///
-//     /// Gets a list of rpcs for a chosen network
-//     #[utoipa::path(
-//         tag="rpcs",
-//         get,
-//         path = "/api/rpc/get/{network_id}",
-//         responses(
-//             (status = 200, description = "Rpcs", body = Rpcs),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("network_id" = i64, Path, description = "Chain ID of the network")
-//         ),
-//     )]
-//     pub async fn get_rpcs(network_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let rpcs = db
-//             .query_all_rpcs(network_id)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::Rpcs(Rpcs { rpcs })))
-//     }
-// }
-
-// pub mod block_explorers {
-//     use super::*;
-//     /// Get list of block explorers for the network
-//     ///
-//     /// Gets a list of block explorers for a chosen network
-//     #[utoipa::path(
-//         tag="block explorers",
-//         get,
-//         path = "/api/block_explorer/get/{network_id}",
-//         responses(
-//             (status = 200, description = "Block explorers", body = BlockExplorers),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("network_id" = i64, Path, description = "Chain ID of the network")
-//         ),
-//     )]
-//     pub async fn get_block_explorers(
-//         network_id: i64,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let explorers = db
-//             .query_block_explorers(network_id)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::BlockExplorers(
-//             BlockExplorers { explorers },
-//         )))
-//     }
-
-//     pub async fn get_all_explorers(db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let explorers = db
-//             .query_all_block_explorers()
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::BlockExplorers(
-//             BlockExplorers { explorers },
-//         )))
-//     }
-// }
-
-// pub mod token {
-//     use super::*;
-//     /// Get list of tokens for the network
-//     ///
-//     /// Gets a list of tokens for a chosen network
-//     #[utoipa::path(
-//         tag="token",
-//         get,
-//         path = "/api/token/get/{network_id}",
-//         responses(
-//             (status = 200, description = "Tokens", body = Tokens),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("network_id" = i64, Path, description = "Chain ID of the network")
-//         ),
-//     )]
-//     pub async fn get_tokens(network_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let tokens = db
-//             .query_all_tokens(network_id)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::Tokens(Tokens {
-//             tokens,
-//         })))
-//     }
-
-//     #[utoipa::path(
-//         tag="token",
-//         get,
-//         path = "/api/token/price/{token_name}",
-//         responses(
-//             (status = 200, description = "Token price", body = TokenPrice),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("token_name" = String, Path, description = "Name of the token, always uppercase")
-//         ),
-//     )]
-//     pub async fn get_token_price(
-//         token_name: String,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let price = db
-//             .query_token_price(&token_name)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?
-//             .map_or(0.0f64, |price| price.price);
-
-//         Ok(gen_arbitrary_response(ResponseBody::TokenPrice(
-//             TokenPrice { token_price: price },
-//         )))
-//     }
-// }
-
-// pub mod game {
-//     use super::*;
-//     /// Get game info
-//     ///
-//     /// Gets a game info for the specified network
-//     #[utoipa::path(
-//         tag="game",
-//         get,
-//         path = "/api/game/get/{network_id}/{game_name}",
-//         responses(
-//             (status = 200, description = "Game", body = GameInfo),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("network_id" = i64, Path, description = "Chain ID of the network"),
-//             ("game_name" = String, Path, description = "Name of the game")
-//         ),
-//     )]
-//     pub async fn get_game(
-//         network_id: i64,
-//         game_name: String,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let game = db
-//             .query_game(network_id, &game_name)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?
-//             .ok_or(reject::custom(ApiError::GameDoesntExist(
-//                 network_id, game_name,
-//             )))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::Game(game)))
-//     }
-
-//     pub async fn get_game_by_id(game_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let game = db
-//             .query_game_by_id(game_id)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?
-//             .ok_or(reject::custom(ApiError::GameWithIDDoesntExist(game_id)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::Game(game)))
-//     }
-// }
-
-// pub mod nickname {
-//     use super::*;
-//     /// Get player nickname
-//     ///
-//     /// Gets nickname of the player with address
-//     #[utoipa::path(
-//         tag="nickname",
-//         get,
-//         path = "/api/player/nickname/get/{address}",
-//         responses(
-//             (status = 200, description = "Nickname", body = Nickname),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("address" = String, Path, description = "Address of the player")
-//         ),
-//     )]
-//     pub async fn get_nickname(address: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let nickname = db
-//             .query_nickname(&address)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?
-//             .unwrap_or({
-//                 debug!("Nickname for an address `{}` wasn't found", address);
-//                 Nickname {
-//                     id: 0,
-//                     address: address.clone(),
-//                     nickname: address,
-//                 }
-//             });
-
-//         Ok(gen_arbitrary_response(ResponseBody::Nickname(nickname)))
-//     }
-
-//     /// Set player nickname
-//     ///
-//     /// Sets player request, requires signed signature from the user
-//     #[utoipa::path(
-//         tag="nickname",
-//         post,
-//         path = "/api/player/nickname/set",
-//         request_body = SetNickname,
-//         responses(
-//             (status = 200, description = "Nickname was set", body = InfoText),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//     )]
-//     pub async fn set_nickname(
-//         credentials: json_requests::SetNickname,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         db.set_nickname(&credentials.address, &credentials.nickname)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_info_response("The nickname has been changed"))
-//     }
-// }
-
-// pub mod player {
-//     use crate::models::json_responses::LatestGames;
-
-//     use super::*;
-//     /// Get user by address
-//     ///
-//     /// Gets user info by user's address
-//     #[utoipa::path(
-//         tag="player",
-//         get,
-//         path = "/api/player/get/{address}",
-//         responses(
-//             (status = 200, description = "User info", body = Player),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("address" = String, Path, description = "User address")
-//         ),
-//     )]
-//     pub async fn get_player(address: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let player = db
-//             .query_player(&address)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?
-//             .unwrap_or_else(|| {
-//                 //debug!("Player with address `{}` wasn't foung", address);
-//                 Default::default()
-//             });
-
-//         Ok(gen_arbitrary_response(ResponseBody::Player(player)))
-//     }
-
-//     /// Get user totals
-//     ///
-//     /// Gets user's statistics
-//     #[utoipa::path(
-//         tag="player",
-//         get,
-//         path = "/api/player/totals/{address}",
-//         responses(
-//             (status = 200, description = "User statistics", body = PlayerTotals),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("address" = String, Path, description = "User address")
-//         ),
-//     )]
-//     pub async fn get_player_totals(
-//         address: String,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let totals = db
-//             .query_player_totals(&address)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::PlayerTotals(totals)))
-//     }
-
-//     /// Get latest games of the user
-//     ///
-//     /// Gets 2 latest games played by a user
-//     #[utoipa::path(
-//         tag="player",
-//         get,
-//         path = "/api/player/latest_games/{address}",
-//         responses(
-//             (status = 200, description = "Latest games", body = LatestGames),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//             ("address" = String, Path, description = "User address")
-//         ),
-//     )]
-//     pub async fn get_latest_games(
-//         address: String,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         let latest_games = db
-//             .get_latest_games(&address)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::LatestGames(
-//             LatestGames {
-//                 games: latest_games,
-//             },
-//         )))
-//     }
-
-//     /// Subscribe to the referal owner
-//     ///
-//     /// Subscribes to the owner of the referal wallet
-//     #[utoipa::path(
-//         tag="referal",
-//         get,
-//         path = "/api/player/referal/subscribe",
-//         responses(
-//             (status = 200, description = "Ok", body = InfoText),
-//             (status = 500, description = "Internal server error", body = ErrorText),
-//         ),
-//         params(
-//         ),
-//     )]
-//     pub async fn create_referal(
-//         data: json_requests::CreateReferal,
-//         db: DB,
-//     ) -> Result<WarpResponse, warp::Rejection> {
-//         if data.refer_to.to_lowercase() == data.referal.to_lowercase() {
-//             return Err(reject::custom(ApiError::ArbitraryError(
-//                 "Referer and referal are the same".into(),
-//             )));
-//         }
-//         db.create_referal(&data.refer_to, &data.referal)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_info_response("Referal has been created"))
-//     }
-// }
-
 pub mod bets {
     use crate::{config, models::json_responses::Bets};
 
     use super::*;
-    /// Get player bets
-    ///
-    /// Gets bets of the player by player address, max amount of returned bets per call is 10
-    // #[utoipa::path(
-    //     tag="bets",
-    //     get,
-    //     path = "/api/bets/player/{address}/{last_id}",
-    //     responses(
-    //         (status = 200, description = "User's bets", body = Bets),
-    //         (status = 500, description = "Internal server error", body = ErrorText),
-    //     ),
-    //     params(
-    //         ("address" = String, Path, description = "User address"),
-    //         ("last_id" = Option<i64>, Path, description = "last bet id")
-    //     ),
-    // )]
-    // pub async fn get_player_bets(
-    //     address: String,
-    //     last_id: Option<i64>,
-    //     db: DB,
-    // ) -> Result<WarpResponse, warp::Rejection> {
-    //     let bets = db
-    //         .query_bets_for_address(&address, last_id, *config::PAGE_SIZE)
-    //         .await
-    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-    // }
-
-    /// Get player bets in increasing order
-    ///
-    /// Gets bets of the player by player address, max amount of returned bets per call is 10. Bets are returned in increasing order.
-    // #[utoipa::path(
-    //     tag="bets",
-    //     get,
-    //     path = "/api/bets/player/inc/{address}/{last_id}",
-    //     responses(
-    //         (status = 200, description = "User's bets", body = Bets),
-    //         (status = 500, description = "Internal server error", body = ErrorText),
-    //     ),
-    //     params(
-    //         ("address" = String, Path, description = "User address"),
-    //         ("last_id" = Option<i64>, Path, description = "last bet id")
-    //     ),
-    // )]
-    // pub async fn get_player_bets_inc(
-    //     address: String,
-    //     first_id: Option<i64>,
-    //     db: DB,
-    // ) -> Result<WarpResponse, warp::Rejection> {
-    //     let bets = db
-    //         .query_bets_for_address_inc(&address, first_id, *config::PAGE_SIZE)
-    //         .await
-    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-    // }
-
-    // pub async fn get_game_bets(game_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
-    //     let bets = db
-    //         .query_bets_for_game(game_id, *config::PAGE_SIZE)
-    //         .await
-    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-    // }
 
     /// Get all last bets for a game
     ///
@@ -608,18 +149,6 @@ pub mod bets {
         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
     }
 }
-
-// pub mod abi {
-//     use super::*;
-//     pub async fn get_abi(signature: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
-//         let abi = db
-//             .query_abi(&signature)
-//             .await
-//             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-//         Ok(gen_arbitrary_response(ResponseBody::Abi(abi)))
-//     }
-// }
 
 pub mod game {
     use std::{
@@ -938,10 +467,16 @@ pub mod coin {
 }
 
 pub mod invoice {
+    use crate::models::db_models::Invoice;
+    use crate::tools::blake_hash;
+
     use self::json_requests::QrRequest;
 
     use qrcode_generator::QrCodeEcc;
 
+    use rust_decimal::prelude::FromPrimitive;
+    use rust_decimal::Decimal;
+    use thedex::models::CreateInvoice as CreateInvoiceRequest;
     use thedex::TheDex;
 
     use super::*;
@@ -959,48 +494,71 @@ pub mod invoice {
         ),
     )]
     pub async fn create_invoice(
-        _data: CreateInvoice,
-        _id: i64,
-        _db: DB,
-        _dex: TheDex,
+        data: CreateInvoice,
+        id: i64,
+        db: DB,
+        dex: TheDex,
     ) -> Result<WarpResponse, warp::Rejection> {
-        // let order_id = blake_hash(&format!(
-        //     "{}{}{}{}",
-        //     id,
-        //     data.amount.clone() as u32,
-        //     data.currency,
-        //     chrono::offset::Utc::now().timestamp_millis()
-        // ));
-        // let result = dex
-        //     .create_invoice(
-        //         CreateInvoiceRequest {
-        //             amount: Decimal::from_u32(data.amount.clone() as u32).unwrap(),
-        //             currency: data.currency,
-        //             merchant_id: String::new(),
-        //             order_id: Some(order_id),
-        //             email: None,
-        //             client_id: Some(id.to_string()),
-        //             title: Some(format!("Bying for ${}", data.amount as u32)),
-        //             description: None,
-        //             recalculation: Some(true),
-        //             needs_email_confirmation: Some(false),
-        //             success_url: Some(String::from(
-        //                 "https://game.greekkeepers.io/api/invoice/success",
-        //             )),
-        //             failure_url: Some(String::from(
-        //                 "https://game.greekkeepers.io/api/invoice/failure",
-        //             )),
-        //             callback_url: Some(String::from(
-        //                 "https://game.greekkeepers.io/api/invoice/callback",
-        //             )),
-        //         },
-        //         chrono::offset::Utc::now().timestamp_millis() as u64,
-        //     )
-        //     .await
-        //     .map_err(ApiError::CreateInvoiceError)?;
-        Ok(gen_arbitrary_response(ResponseBody::Invoice(
-            Default::default(),
-        )))
+        let order_id = blake_hash(&format!(
+            "{}{}{}{}",
+            id,
+            data.amount.clone() as u32,
+            data.currency,
+            chrono::offset::Utc::now().timestamp_millis()
+        ));
+        let amount = Decimal::from_u32(data.amount.clone() as u32).unwrap();
+        let result = dex
+            .create_invoice(
+                CreateInvoiceRequest {
+                    amount,
+                    currency: data.currency.clone(),
+                    merchant_id: String::new(),
+                    order_id: Some(order_id.clone()),
+                    email: None,
+                    client_id: Some(id.to_string()),
+                    title: Some(format!("Bying for ${}", data.amount as u32)),
+                    description: None,
+                    recalculation: Some(true),
+                    needs_email_confirmation: Some(false),
+                    success_url: Some(String::from(
+                        "https://game.greekkeepers.io/api/invoice/success",
+                    )),
+                    failure_url: Some(String::from(
+                        "https://game.greekkeepers.io/api/invoice/failure",
+                    )),
+                    callback_url: Some(String::from(
+                        "https://game.greekkeepers.io/api/invoice/callback",
+                    )),
+                },
+                chrono::offset::Utc::now().timestamp_millis() as u64,
+            )
+            .await
+            .map_err(ApiError::CreateInvoiceError)?;
+
+        db.add_invoice(
+            &order_id,
+            &String::new(),
+            &order_id,
+            result.status.clone() as i32,
+            &result.pay_url,
+            id,
+            amount,
+            &data.currency,
+        )
+        .await
+        .map_err(ApiError::DbError)?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Invoice(Invoice {
+            id: order_id.clone(),
+            merchant_id: String::new(),
+            order_id,
+            create_date: result.create_date,
+            status: result.status as i32,
+            pay_url: result.pay_url,
+            user_id: id,
+            amount: amount,
+            currency: data.currency,
+        })))
     }
 
     /// Generate qr code
@@ -1009,21 +567,22 @@ pub mod invoice {
     #[utoipa::path(
         tag="invoice",
         get,
-        path = "/api/invoice/qr",
-        request_body = QrRequest,
+        path = "/api/invoice/qr/{invoice_id}",
         responses(
-            (status = 200, description = "User account was created", body = Invoice),
+            (status = 200, description = "Get QR code for the invoice", body = Invoice),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
+        params(
+            ("invoice_id" = String, Path, description = "Id of the invoice, returned by the invoice creation endpoint")
+        )
     )]
-    pub async fn generate_qr(
-        data: QrRequest,
-        _id: i64,
-        _db: DB,
-    ) -> Result<WarpResponse, warp::Rejection> {
+    pub async fn generate_qr(invoice_id: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        // db.fetch_invoice(&invoice_id)
+        //     .await
+        //     .map_err(ApiError::DbError)?;
         Ok(get_pgn_response(
-            qrcode_generator::to_png_to_vec(&data.data, QrCodeEcc::Low, 1024)
-                .map_err(|_| ApiError::QrGenerationError(data.data))?,
+            qrcode_generator::to_png_to_vec(&invoice_id, QrCodeEcc::Low, 1024)
+                .map_err(|_| ApiError::QrGenerationError(invoice_id))?,
         ))
     }
 }

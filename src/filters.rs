@@ -345,10 +345,8 @@ pub fn create_invoice(
 pub fn generate_qr(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("qr")
+    warp::path!("qr" / String)
         .and(warp::get())
-        .and(json_body_generate_qr_code())
-        .and(with_auth(db.clone()))
         .and(with_db(db.clone()))
         .and_then(handlers::generate_qr)
 }

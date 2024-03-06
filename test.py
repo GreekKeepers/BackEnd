@@ -39,12 +39,18 @@ def main():
 
     print(res.content)
 
-    res = requests.get(
-        "http://127.0.0.1:8282/invoice/qr",
+    res = requests.post(
+        "http://127.0.0.1:8282/invoice/create",
         headers={
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcwODM3OTA3OCwiYXVkIjoiIn0.VwA0VVVPxMnXAHaVlxR0UnnXc1DMlWvTTva4RIBvz9M"
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
         },
-        json={"data": "some data"},
+        json={"amount": 10, "currency": "USDT"},
+    )
+
+    print(res.content)
+
+    res = requests.get(
+        "http://127.0.0.1:8282/invoice/qr/123123",
     )
 
     print(res.content)

@@ -1,7 +1,7 @@
 use crate::{
     config::DatabaseSettings,
     models::{
-        db_models::{Amount, Bet, Coin, Game, ServerSeed, User, UserSeed},
+        db_models::{Amount, Bet, Coin, Game, Invoice, ServerSeed, User, UserSeed},
         json_responses::BetExpanded,
     },
     tools::blake_hash,
@@ -123,13 +123,27 @@ impl DB {
         .await
     }
 
+    pub async fn fetch_invoice(&self, id: &str) -> Result<Invoice, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Invoice,
+            r#"
+            SELECT * 
+            FROM Invoice
+            WHERE id=$1
+            "#,
+            id
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
     pub async fn add_invoice(
         &self,
         id: &str,
         merchant_id: &str,
         order_id: &str,
         status: i32,
-        pay_url: String,
+        pay_url: &str,
         user_id: i64,
         amount: Decimal,
         currency: &str,
