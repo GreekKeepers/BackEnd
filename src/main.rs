@@ -114,7 +114,7 @@ async fn main() {
             HeaderName::from_static("accept"),
         ]);
 
-    let mut dex = TheDex::new(String::from(""), String::from("")).await;
+    let dex = TheDex::new(config::X_EX_APIKEY.clone(), config::X_EX_SECRETKEY.clone()).await;
 
     let (ws_manager_tx, ws_manager_rx) = unbounded_channel::<WsManagerEvent>();
     let ws_manager = Manager::new(ws_manager_rx, &db).await;

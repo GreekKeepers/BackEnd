@@ -479,7 +479,7 @@ pub mod invoice {
     use rust_decimal::Decimal;
     use thedex::models::CreateQuickInvoice;
     use thedex::TheDex;
-    use tracing::{error, warn};
+    use tracing::{debug, error, warn};
 
     use super::*;
 
@@ -598,7 +598,7 @@ pub mod invoice {
         data: CreateInvoice,
         id: i64,
         db: DB,
-        dex: TheDex,
+        mut dex: TheDex,
     ) -> Result<WarpResponse, warp::Rejection> {
         let order_id = blake_hash(&format!(
             "{}{}{}{}",
@@ -608,18 +608,39 @@ pub mod invoice {
             chrono::offset::Utc::now().timestamp_millis()
         ));
         let amount = Decimal::from_u32(data.amount.clone() as u32).unwrap();
+        let prices = dex
+            .prices(chrono::offset::Utc::now().timestamp_millis() as u64)
+            .await
+            .map_err(ApiError::TheDexError)?;
+
+        let short_curr = &data
+            .currency
+            .split('_')
+            .next()
+            .ok_or(ApiError::UnknownCurrency(data.currency.clone()))?;
+        let price = prices
+            .iter()
+            .find(|el| el.monetary.short.eq(short_curr))
+            .ok_or(ApiError::UnknownCurrency(data.currency.clone()))?
+            .rates
+            .iter()
+            .find(|el| el.fiat_currency.eq("USD"))
+            .ok_or(ApiError::UnknownCurrency("USD".into()))?;
+
+        let currency_amount = amount / price.rate;
+
         let result = dex
             .create_quick_invoice(
                 CreateQuickInvoice {
-                    amount,
+                    amount: currency_amount,
                     pay_currency: data.currency.clone(),
-                    merchant_id: String::new(),
+                    merchant_id: "LDB3LVD7".into(),
                     order_id: Some(order_id.clone()),
                     email: None,
                     client_id: Some(id.to_string()),
-                    title: Some(format!("Bying for ${}", data.amount as u32)),
+                    title: Some(format!("Bying {}", currency_amount)),
                     description: None,
-                    recalculation: Some(false),
+                    recalculation: Some(true),
                     needs_email_confirmation: Some(false),
                     success_url: Some(String::from(
                         "https://game.greekkeepers.io/api/invoice/success",
@@ -653,7 +674,7 @@ pub mod invoice {
             id: order_id.clone(),
             merchant_id: String::new(),
             order_id,
-            create_date: result.create_date,
+            create_date: Default::default(),
             status: result.status as i32,
             pay_url: result.pay_url,
             user_id: id,
@@ -678,11 +699,12 @@ pub mod invoice {
         )
     )]
     pub async fn generate_qr(invoice_id: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
-        // db.fetch_invoice(&invoice_id)
-        //     .await
-        //     .map_err(ApiError::DbError)?;
+        let invoice = db
+            .fetch_invoice(&invoice_id)
+            .await
+            .map_err(ApiError::DbError)?;
         Ok(get_pgn_response(
-            qrcode_generator::to_png_to_vec(&invoice_id, QrCodeEcc::Low, 1024)
+            qrcode_generator::to_png_to_vec(&invoice.pay_url, QrCodeEcc::Low, 1024)
                 .map_err(|_| ApiError::QrGenerationError(invoice_id))?,
         ))
     }

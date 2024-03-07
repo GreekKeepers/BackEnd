@@ -44,13 +44,13 @@ def main():
         headers={
             "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
         },
-        json={"amount": 10, "currency": "USDT"},
+        json={"amount": 10, "currency": "BTC_BITCOIN"},
     )
 
     print(res.content)
 
     res = requests.get(
-        "http://127.0.0.1:8282/invoice/qr/123123",
+        "http://127.0.0.1:8282/invoice/qr/79255f6b4ac72de420c01e265f161b3baf3179ac8894131e8a1a68a26515cd75cf02a3636e4e816ccbbbb4386c154ed45ce8fb37511ba540a83dca6638246ab3",
     )
 
     print(res.content)
@@ -180,4 +180,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    web_sockets()
+    main()

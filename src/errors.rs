@@ -66,6 +66,9 @@ pub enum ApiError {
 
     #[error("Bad Api Key")]
     TheDexBadApiKey,
+
+    #[error("UknownCurrency `{0}`")]
+    UnknownCurrency(String),
 }
 
 impl reject::Reject for ApiError {}

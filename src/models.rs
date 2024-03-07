@@ -135,7 +135,7 @@ pub mod db_models {
         pub serverseed_id: i64,
     }
 
-    #[derive(Deserialize, Serialize, Clone, ToSchema, Default)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Default, Debug)]
     pub struct Invoice {
         pub id: String,
         pub merchant_id: String,
@@ -151,6 +151,8 @@ pub mod db_models {
 }
 
 pub mod json_responses {
+
+    use std::sync::Arc;
 
     use crate::WsData;
 
@@ -253,7 +255,7 @@ pub mod json_responses {
 
     #[derive(Serialize, Deserialize, Clone)]
     pub struct Prices {
-        pub prices: Vec<Price>,
+        pub prices: Arc<Vec<Price>>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
