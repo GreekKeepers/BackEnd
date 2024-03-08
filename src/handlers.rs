@@ -660,7 +660,7 @@ pub mod invoice {
 
         db.add_invoice(
             &order_id,
-            &String::new(),
+            "LDB3LVD7",
             &order_id,
             result.status.clone() as i32,
             &result.purse,
@@ -673,11 +673,11 @@ pub mod invoice {
 
         Ok(gen_arbitrary_response(ResponseBody::Invoice(Invoice {
             id: order_id.clone(),
-            merchant_id: String::new(),
+            merchant_id: "LDB3LVD7".into(),
             order_id,
             create_date: Default::default(),
             status: result.status as i32,
-            pay_url: result.pay_url,
+            pay_url: result.purse,
             user_id: id,
             amount: amount,
             currency: data.currency,
