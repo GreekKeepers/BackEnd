@@ -255,7 +255,7 @@ pub mod json_responses {
 
     #[derive(Serialize, Deserialize, Clone)]
     pub struct Prices {
-        pub prices: Arc<Vec<Price>>,
+        pub prices: Vec<Price>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

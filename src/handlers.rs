@@ -577,7 +577,7 @@ pub mod invoice {
             .map_err(ApiError::TheDexError)?;
 
         Ok(gen_arbitrary_response(ResponseBody::Prices(Prices {
-            prices: response.clone(),
+            prices: response,
         })))
     }
 
@@ -651,6 +651,7 @@ pub mod invoice {
                     callback_url: Some(String::from(
                         "https://game.greekkeepers.io/api/invoice/callback",
                     )),
+                    unfix_amount: Some(false),
                 },
                 chrono::offset::Utc::now().timestamp_millis() as u64,
             )
