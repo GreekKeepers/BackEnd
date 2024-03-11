@@ -43,6 +43,7 @@ use serde::Serialize;
 // use tracing::{debug, error};
 use warp::http::StatusCode;
 // use warp::ws::{Message, WebSocket};
+use crate::communication::EnginePropagatedBet;
 use std::time::{SystemTime, UNIX_EPOCH};
 use warp::Reply;
 use warp::{http::Response as HttpResponse, reject, reply::Response as WarpResponse};
@@ -396,11 +397,21 @@ pub mod game {
                                         if let Some(user_id) = user_id{
                                             bet.user_id.replace(user_id);
                                             bet.uuid.replace(uuid.clone());
-                                            if let Err(_) = engine_sender.send(bet).await{
+                                            if let Err(_) = engine_sender.send(EnginePropagatedBet::NewBet(bet)).await{
                                                 break;
                                             };
                                         }
                                     },
+                                    WebsocketsIncommingMessage::ContinueGame(mut bet) => {
+                                        if let Some(user_id) = user_id{
+                                            bet.user_id.replace(user_id);
+                                            bet.uuid.replace(uuid.clone());
+                                            if let Err(_) = engine_sender.send(EnginePropagatedBet::ContinueGame(bet)).await{
+                                                break;
+                                            };
+                                        }
+
+                                    }
                                 }
                             },
                             None => {

@@ -2,7 +2,7 @@ use std::{io, sync::Arc};
 
 use crate::api_documentation::{serve_swagger, ApiDoc};
 use crate::communication::*;
-use crate::game_engine::Engine;
+use crate::game_engine::{Engine, StatefulGameEngine};
 //use api_documentation::{serve_swagger, ApiDoc};
 use config::DatabaseSettings;
 use db::DB;
@@ -121,16 +121,28 @@ async fn main() {
 
     let (engine_tx, engine_rx) = async_channel::unbounded();
 
+    let (stateful_engine_tx, stateful_engine_rx) = unbounded_channel::<EnginePropagatedBet>();
+
     info!("Starting `{}` engines", *config::ENGINES);
     let mut engines: Vec<_> = Vec::with_capacity(*config::ENGINES as usize);
     for _ in 0..*config::ENGINES {
         engines.push(
-            Engine::new(db.clone(), ws_manager_tx.clone(), engine_rx.clone())
-                .await
-                .run(),
+            Engine::new(
+                db.clone(),
+                ws_manager_tx.clone(),
+                engine_rx.clone(),
+                stateful_engine_tx.clone(),
+            )
+            .await
+            .run(),
         );
     }
     let engines_handle = join_all(engines);
+
+    let statefull_engine =
+        StatefulGameEngine::new(db.clone(), ws_manager_tx.clone(), stateful_engine_rx)
+            .await
+            .run();
 
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
@@ -148,6 +160,9 @@ async fn main() {
         }
         _ = engines_handle => {
             warn!("Engine stopped");
+        }
+        _ = statefull_engine => {
+            warn!("Statefull engine stopped");
         }
     }
 }

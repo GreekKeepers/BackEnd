@@ -1,4 +1,10 @@
-use crate::models::{db_models::GameResult, json_requests::PropagatedBet};
+use crate::{
+    db::DB,
+    models::{
+        db_models::{Bet, GameResult},
+        json_requests::PropagatedBet,
+    },
+};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use utoipa::ToSchema;
@@ -12,6 +18,8 @@ use tracing::error;
 use crate::games::GameEng;
 
 use lazy_static::lazy_static;
+
+use super::GameType;
 lazy_static! {
     static ref DICE_LOWER_BOUNDARY: Decimal = Decimal::from_str("1.0421").unwrap();
     static ref DICE_UPPER_BOUNDARY: Decimal = Decimal::from_str("99.9999").unwrap();
@@ -43,7 +51,12 @@ pub struct Dice {
 }
 
 impl GameEng for Dice {
-    fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
+    fn play(
+        &self,
+        prev_bet: Option<&Bet>,
+        bet: &PropagatedBet,
+        random_numbers: &[u64],
+    ) -> Option<GameResult> {
         let data: DiceData = serde_json::from_str(&bet.data)
             .map_err(|e| {
                 error!("Error parsing Dice data `{:?}`: {:?}", bet.data, e);
@@ -102,10 +115,16 @@ impl GameEng for Dice {
             outcomes,
             profits,
             num_games: games as u32,
+            data: bet.data.clone(),
+            finished: true,
         })
     }
 
     fn numbers_per_bet(&self) -> u64 {
         1
+    }
+
+    fn get_type(&self) -> GameType {
+        GameType::Stateless
     }
 }

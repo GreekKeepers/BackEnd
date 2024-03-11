@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE \n            FROM GameState\n            WHERE game_id=$1 AND\n                user_id=$2 AND\n                coin_id=$3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7d19012bb184fb688505a4b9239d307277cbcda6f4f48e2c50c55d49fcdd4314"
+}

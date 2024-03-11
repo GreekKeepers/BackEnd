@@ -1,7 +1,7 @@
 use crate::{
     config::DatabaseSettings,
     models::{
-        db_models::{Amount, Bet, Coin, Game, Invoice, ServerSeed, User, UserSeed},
+        db_models::{Amount, Bet, Coin, Game, GameState, Invoice, ServerSeed, User, UserSeed},
         json_responses::BetExpanded,
     },
     tools::blake_hash,
@@ -28,6 +28,149 @@ impl DB {
         Self { db_pool }
     }
 
+    pub async fn fetch_game_state(
+        &self,
+        game_id: i64,
+        user_id: i64,
+        coin_id: i64,
+    ) -> Result<Option<GameState>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            GameState,
+            r#"SELECT *
+            FROM GameState
+            WHERE game_id=$1 AND
+                user_id=$2 AND
+                coin_id=$3
+            "#,
+            game_id,
+            user_id,
+            coin_id
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
+    pub async fn remove_game_state(
+        &self,
+        game_id: i64,
+        user_id: i64,
+        coin_id: i64,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE 
+            FROM GameState
+            WHERE game_id=$1 AND
+                user_id=$2 AND
+                coin_id=$3
+            "#,
+            game_id,
+            user_id,
+            coin_id
+        )
+        .execute(&self.db_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn change_game_state(
+        &self,
+        game_id: i64,
+        user_id: i64,
+        coin_id: i64,
+        new_state: &str,
+    ) -> Result<bool, sqlx::Error> {
+        Ok(sqlx::query!(
+            r#"UPDATE GameState
+            SET state=$4
+            WHERE game_id=$1 AND user_id=$2 AND coin_id=$3
+            "#,
+            game_id,
+            user_id,
+            coin_id,
+            new_state
+        )
+        .execute(&self.db_pool)
+        .await?
+        .rows_affected()
+            > 0)
+    }
+
+    pub async fn insert_game_state(
+        &self,
+        game_id: i64,
+        user_id: i64,
+        uuid: &str,
+        coin_id: i64,
+        bet_info: &str,
+        new_state: &str,
+        amount: &Decimal,
+        userseed_id: i64,
+        serverseed_id: i64,
+    ) -> Result<bool, sqlx::Error> {
+        Ok(sqlx::query!(
+            r#"INSERT INTO GameState(
+                bet_info,
+                game_id,
+                user_id,
+                uuid,
+                coin_id,
+                amount,
+                userseed_id,
+                serverseed_id,
+                state
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8,
+                $9
+            )
+            "#,
+            bet_info,
+            game_id,
+            user_id,
+            uuid,
+            coin_id,
+            amount,
+            userseed_id,
+            serverseed_id,
+            new_state
+        )
+        .execute(&self.db_pool)
+        .await?
+        .rows_affected()
+            > 0)
+    }
+
+    pub async fn fetch_bet(
+        &self,
+        game_id: i64,
+        user_id: i64,
+        uuid: &str,
+        coin_id: i64,
+    ) -> Result<Option<Bet>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Bet,
+            r#"SELECT *
+            FROM Bet
+            WHERE game_id=$1 AND
+                user_id=$2 AND
+                uuid=$3 AND num_games=0
+                AND coin_id=$4
+            "#,
+            game_id,
+            user_id,
+            uuid,
+            coin_id
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
     pub async fn fetch_bets_for_gamename(
         &self,
         game_name: &str,
@@ -43,6 +186,7 @@ impl DB {
                 Bet.profit,
                 Bet.num_games,
                 Bet.bet_info,
+                Bet.state,
                 Bet.uuid,
                 Bet.game_id,
                 Bet.user_id,
@@ -77,6 +221,7 @@ impl DB {
                 Bet.profit,
                 Bet.num_games,
                 Bet.bet_info,
+                Bet.state,
                 Bet.uuid,
                 Bet.game_id,
                 Bet.user_id,
@@ -521,6 +666,7 @@ impl DB {
         outcomes: &str,
         profits: &str,
         bet_info: &str,
+        state: Option<&str>,
         uuid: &str,
         game_id: i64,
         user_id: i64,
@@ -536,13 +682,14 @@ impl DB {
                 num_games,
                 outcomes,
                 profits,
-                bet_info,
+                bet_info, 
                 uuid,
                 game_id,
                 user_id,
                 coin_id,
                 userseed_id,
-                serverseed_id
+                serverseed_id,
+                state
             ) VALUES (
                 $1,
                 $2,
@@ -555,7 +702,8 @@ impl DB {
                 $9,
                 $10,
                 $11,
-                $12
+                $12,
+                $13
             ) RETURNING id
             "#,
             amount,
@@ -569,7 +717,8 @@ impl DB {
             user_id,
             coin_id,
             userseed_id,
-            serverseed_id
+            serverseed_id,
+            state
         )
         .fetch_one(&self.db_pool)
         .await

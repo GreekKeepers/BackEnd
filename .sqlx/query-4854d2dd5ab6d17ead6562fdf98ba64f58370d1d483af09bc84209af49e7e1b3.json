@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                Bet.id,\n                Bet.timestamp,\n                Bet.amount,\n                Bet.profit,\n                Bet.num_games,\n                Bet.bet_info,\n                Bet.state,\n                Bet.uuid,\n                Bet.game_id,\n                Bet.user_id,\n                Users.username,\n                Bet.coin_id,\n                Bet.userseed_id,\n                Bet.serverseed_id,\n                Bet.outcomes,\n                Bet.profits\n            FROM Bet\n            INNER JOIN Game ON Bet.game_id=Game.id\n            INNER JOIN Users ON Bet.user_id=Users.id\n            WHERE Game.name=$1\n            ORDER BY Bet.id DESC\n            LIMIT $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "timestamp",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "amount",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 3,
+        "name": "profit",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 4,
+        "name": "num_games",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "bet_info",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "state",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "uuid",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "game_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 9,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "username",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "coin_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 12,
+        "name": "userseed_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 13,
+        "name": "serverseed_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 14,
+        "name": "outcomes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "profits",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4854d2dd5ab6d17ead6562fdf98ba64f58370d1d483af09bc84209af49e7e1b3"
+}

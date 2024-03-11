@@ -4,8 +4,8 @@
 // use crate::models::json_responses::BetInfoResponse;
 
 use crate::db::DB;
-use crate::models::db_models::Bet;
-use crate::models::json_requests::PropagatedBet;
+use crate::models::db_models::{Bet, GameState};
+use crate::models::json_requests::{ContinueGame, PropagatedBet};
 use crate::models::json_responses::BetExpanded;
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
 pub use async_channel::{Receiver, Sender};
@@ -37,6 +37,7 @@ pub enum ChannelType {
 pub enum WsData {
     NewBet(BetExpanded),
     ServerSeed(String),
+    StateUpdate(GameState),
 }
 
 pub type WsDataFeedReceiver = UnboundedReceiver<WsData>;
@@ -45,8 +46,16 @@ pub type WsDataFeedSender = UnboundedSender<WsData>;
 pub type WsEventReceiver = UnboundedReceiver<WebsocketsIncommingMessage>;
 pub type WsEventSender = UnboundedSender<WebsocketsIncommingMessage>;
 
-pub type EngineBetReciever = Receiver<PropagatedBet>;
-pub type EngineBetSender = Sender<PropagatedBet>;
+pub enum EnginePropagatedBet {
+    NewBet(PropagatedBet),
+    ContinueGame(ContinueGame),
+}
+
+pub type EngineBetReciever = Receiver<EnginePropagatedBet>;
+pub type EngineBetSender = Sender<EnginePropagatedBet>;
+
+pub type StatefulEngineBetReciever = UnboundedReceiver<EnginePropagatedBet>;
+pub type StatefulEngineBetSender = UnboundedSender<EnginePropagatedBet>;
 
 #[derive(Debug)]
 pub enum WsManagerEvent {
@@ -55,6 +64,7 @@ pub enum WsManagerEvent {
     SubscribeChannel { id: String, channel: ChannelType },
     UnsubscribeChannel { id: String, channel: ChannelType },
     PropagateBet(BetExpanded),
+    PropagateState(GameState),
 }
 
 pub type WsManagerEventReceiver = UnboundedReceiver<WsManagerEvent>;
@@ -96,6 +106,26 @@ impl Manager {
             None => {
                 return Err(ManagerError::ChannelIsNotPresent(ChannelType::Bets(
                     bet.game_id,
+                )))
+            }
+        }
+        Ok(())
+    }
+
+    fn propagate_state(&self, state: &GameState) -> Result<(), ManagerError> {
+        match self.subscriptions.get(&ChannelType::Bets(state.game_id)) {
+            Some(subs) => {
+                for sub in subs.iter() {
+                    if let Some(feed) = self.feeds.get(sub) {
+                        if let Err(e) = feed.send(WsData::StateUpdate(state.clone())) {
+                            error!("Error propagating bet to feed `{:?}`: `{:?}`", sub, e);
+                        }
+                    }
+                }
+            }
+            None => {
+                return Err(ManagerError::ChannelIsNotPresent(ChannelType::Bets(
+                    state.game_id,
                 )))
             }
         }
@@ -147,6 +177,7 @@ impl Manager {
             WsManagerEvent::PropagateBet(bet) => {
                 self.propagate_bet(bet)?;
             }
+            WsManagerEvent::PropagateState(state) => self.propagate_state(state)?,
         }
         Ok(())
     }

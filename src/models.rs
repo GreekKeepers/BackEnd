@@ -93,6 +93,8 @@ pub mod db_models {
         pub outcomes: Vec<u32>,
         pub profits: Vec<Decimal>,
         pub num_games: u32,
+        pub data: String,
+        pub finished: bool,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema)]
@@ -123,8 +125,30 @@ pub mod db_models {
         pub profit: Decimal,
         pub num_games: i32,
         pub outcomes: String,
+        pub profits: Vec<Decimal>,
 
         pub bet_info: String,
+        pub state: Option<String>,
+
+        pub uuid: String,
+
+        pub game_id: i64,
+        pub user_id: i64,
+        pub coin_id: i64,
+        pub userseed_id: i64,
+        pub serverseed_id: i64,
+    }
+
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, Default)]
+    pub struct GameState {
+        pub id: i64,
+        //pub relative_id: i64,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub amount: Decimal,
+
+        pub bet_info: String,
+        pub state: String,
 
         pub uuid: String,
 
@@ -156,7 +180,7 @@ pub mod json_responses {
 
     use crate::WsData;
 
-    use self::db_models::{Amount, Bet, Coin, Game, Invoice};
+    use self::db_models::{Amount, Bet, Coin, Game, GameState, Invoice};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -213,6 +237,7 @@ pub mod json_responses {
         // Player(Player),
         Bets(Bets),
         Bet(BetExpanded),
+        State(GameState),
         ServerSeedHidden(Seed),
         // Abi(GameAbi),
         // Totals(Totals),
@@ -238,6 +263,7 @@ pub mod json_responses {
             match value {
                 WsData::NewBet(bet) => ResponseBody::Bet(bet),
                 WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden(Seed { seed }),
+                WsData::StateUpdate(state) => ResponseBody::State(state),
             }
         }
     }
@@ -249,6 +275,7 @@ pub mod json_responses {
                 WsData::ServerSeed(seed) => {
                     ResponseBody::ServerSeedHidden(Seed { seed: seed.clone() })
                 }
+                WsData::StateUpdate(state) => ResponseBody::State(state.clone()),
             }
         }
     }
@@ -535,6 +562,7 @@ pub mod json_responses {
         pub profits: String,
 
         pub bet_info: String,
+        pub state: Option<String>,
 
         pub uuid: String,
 
@@ -628,6 +656,15 @@ pub mod json_requests {
         pub num_games: u64,
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct ContinueGame {
+        pub game_id: i64,
+        pub coin_id: i64,
+        pub user_id: Option<i64>,
+        pub uuid: Option<String>,
+        pub data: String,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug)]
     #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
@@ -640,6 +677,7 @@ pub mod json_requests {
         NewClientSeed { seed: String },
         NewServerSeed,
         MakeBet(PropagatedBet),
+        ContinueGame(ContinueGame),
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

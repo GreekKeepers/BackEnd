@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Bet(\n                amount,\n                profit,\n                num_games,\n                outcomes,\n                profits,\n                bet_info, \n                uuid,\n                game_id,\n                user_id,\n                coin_id,\n                userseed_id,\n                serverseed_id,\n                state\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4,\n                $5,\n                $6,\n                $7,\n                $8,\n                $9,\n                $10,\n                $11,\n                $12,\n                $13\n            ) RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Numeric",
+        "Numeric",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "44515fabf846ef2c6338b00fd5d3b7d77266d60875eaf08d5d8f9f7c1a3b6659"
+}

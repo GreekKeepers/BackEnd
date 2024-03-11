@@ -1,4 +1,10 @@
-use crate::models::{db_models::GameResult, json_requests::PropagatedBet};
+use crate::{
+    db::DB,
+    models::{
+        db_models::{Bet, GameResult},
+        json_requests::PropagatedBet,
+    },
+};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -6,6 +12,8 @@ use rust_decimal::Decimal;
 use tracing::error;
 
 use crate::games::GameEng;
+
+use super::GameType;
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct RaceData {
@@ -19,7 +27,12 @@ pub struct Race {
 }
 
 impl GameEng for Race {
-    fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
+    fn play(
+        &self,
+        prev_bet: Option<&Bet>,
+        bet: &PropagatedBet,
+        random_numbers: &[u64],
+    ) -> Option<GameResult> {
         let data: RaceData = serde_json::from_str(&bet.data)
             .map_err(|e| {
                 error!("Error parsing Race data `{:?}`: {:?}", bet.data, e);
@@ -70,10 +83,16 @@ impl GameEng for Race {
             outcomes,
             profits,
             num_games: games as u32,
+            data: bet.data.clone(),
+            finished: true,
         })
     }
 
     fn numbers_per_bet(&self) -> u64 {
         1
+    }
+
+    fn get_type(&self) -> GameType {
+        GameType::Stateless
     }
 }

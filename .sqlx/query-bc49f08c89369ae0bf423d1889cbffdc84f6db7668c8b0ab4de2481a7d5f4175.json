@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE GameState\n            SET state=$4\n            WHERE game_id=$1 AND user_id=$2 AND coin_id=$3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bc49f08c89369ae0bf423d1889cbffdc84f6db7668c8b0ab4de2481a7d5f4175"
+}

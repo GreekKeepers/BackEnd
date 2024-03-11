@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT \n                Bet.id,\n                Bet.timestamp,\n                Bet.amount,\n                Bet.profit,\n                Bet.num_games,\n                Bet.bet_info,\n                Bet.uuid,\n                Bet.game_id,\n                Bet.user_id,\n                Users.username,\n                Bet.coin_id,\n                Bet.userseed_id,\n                Bet.serverseed_id,\n                Bet.outcomes,\n                Bet.profits\n            FROM Bet\n            INNER JOIN Users ON bet.user_id = Users.id\n            ORDER BY Bet.id DESC\n            LIMIT $1\n            ",
+  "query": "SELECT *\n            FROM Bet\n            WHERE game_id=$1 AND\n                user_id=$2 AND\n                uuid=$3 AND num_games=0\n                AND coin_id=$4\n            ",
   "describe": {
     "columns": [
       {
@@ -30,57 +30,60 @@
       },
       {
         "ordinal": 5,
-        "name": "bet_info",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 6,
-        "name": "uuid",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 7,
-        "name": "game_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 8,
-        "name": "user_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 9,
-        "name": "username",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 10,
-        "name": "coin_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 11,
-        "name": "userseed_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 12,
-        "name": "serverseed_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 13,
         "name": "outcomes",
         "type_info": "Text"
       },
       {
-        "ordinal": 14,
+        "ordinal": 6,
         "name": "profits",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "bet_info",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "state",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "uuid",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "game_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 12,
+        "name": "coin_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 13,
+        "name": "userseed_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 14,
+        "name": "serverseed_id",
+        "type_info": "Int8"
       }
     ],
     "parameters": {
       "Left": [
+        "Int8",
+        "Int8",
+        "Text",
         "Int8"
       ]
     },
@@ -93,7 +96,7 @@
       false,
       false,
       false,
-      false,
+      true,
       false,
       false,
       false,
@@ -102,5 +105,5 @@
       false
     ]
   },
-  "hash": "cf9344fa00c847452b9f49d9896cbef64364a9b4bd07d1fb6c0381062e9a380e"
+  "hash": "fed5709a39a90b2e9c349089d438af48f5d71b80f8d13671e5fe808ed8c43e2b"
 }

@@ -91,7 +91,7 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[1,3,4,5,6]}')
+    ws.send('{"type":"SubscribeBets", "payload":[1,3,4,5,6,7]}')
 
     ws.send(
         '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"}'
@@ -174,6 +174,29 @@ def on_open(ws):
     }
     ws.send(json.dumps(bet_data))
 
+    # Statefull bet
+    bet_data = {
+        "type": "MakeBet",
+        "game_id": 7,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{"num":12321322, "end_game": false}',
+        "amount": "1",
+        "stop_loss": 0,
+        "stop_win": 0,
+        "num_games": 100,
+    }
+    ws.send(json.dumps(bet_data))
+
+    bet_data = {
+        "type": "ContinueGame",
+        "game_id": 7,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{"num":12321322, "end_game": false}',
+    }
+    ws.send(json.dumps(bet_data))
+
 
 def web_sockets():
     # websocket.enableTrace(True)
@@ -194,4 +217,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    main()
+    web_sockets()

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO GameState(\n                bet_info,\n                game_id,\n                user_id,\n                uuid,\n                coin_id,\n                amount,\n                userseed_id,\n                serverseed_id,\n                state\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4,\n                $5,\n                $6,\n                $7,\n                $8,\n                $9\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Int8",
+        "Text",
+        "Int8",
+        "Numeric",
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "013ac4de1a68892f8322b3e1224f895c173d0006d8e54c57f387ee5b30bd6452"
+}
