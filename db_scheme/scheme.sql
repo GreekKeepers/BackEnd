@@ -169,6 +169,14 @@ INSERT INTO Game(
     name,
     parameters
 ) VALUES (
+    'StatefullTest'
+    '{"multiplier":"1.98"}'
+);
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
     'Wheel',
     '{"max_risk":2,
      "max_num_sectors":4,
