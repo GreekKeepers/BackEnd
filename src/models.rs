@@ -90,7 +90,7 @@ pub mod db_models {
 
     pub struct GameResult {
         pub total_profit: Decimal,
-        pub outcomes: Vec<u32>,
+        pub outcomes: Vec<u64>,
         pub profits: Vec<Decimal>,
         pub num_games: u32,
         pub data: String,

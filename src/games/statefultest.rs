@@ -11,9 +11,7 @@ use utoipa::ToSchema;
 use rust_decimal::Decimal;
 use tracing::error;
 
-use crate::games::GameEng;
-
-use super::{GameType, StatefulGameEng};
+use super::StatefulGameEng;
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct StatefullTestData {
@@ -23,7 +21,7 @@ pub struct StatefullTestData {
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct StatefullTestState {
-    pub state: Vec<(u32, u32)>,
+    pub state: Vec<(u64, u64)>,
 }
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
@@ -44,17 +42,17 @@ impl StatefulGameEng for StatefullTest {
             })
             .ok()?;
 
-        let generated_num = random_numbers[0] as u32;
+        let generated_num = random_numbers[0];
 
         if let Some(num) = data.num {
-            if num <= generated_num {
+            if num as u64 <= generated_num {
                 return Some(GameResult {
                     total_profit: self.multiplier,
                     outcomes: vec![generated_num],
                     profits: vec![self.multiplier],
                     num_games: 1,
                     data: serde_json::to_string(&StatefullTestState {
-                        state: vec![(num, generated_num)],
+                        state: vec![(num as u64, generated_num)],
                     })
                     .unwrap(),
                     finished: data.end_game,
@@ -66,7 +64,7 @@ impl StatefulGameEng for StatefullTest {
                     profits: vec![Decimal::ZERO],
                     num_games: 1,
                     data: serde_json::to_string(&StatefullTestState {
-                        state: vec![(num, generated_num)],
+                        state: vec![(num as u64, generated_num)],
                     })
                     .unwrap(),
                     finished: true,
@@ -99,14 +97,14 @@ impl StatefulGameEng for StatefullTest {
         let mut total_won = parsed_state.state.len();
 
         if let Some(num) = data.num {
-            let generated_num = random_numbers[0] as u32;
-            parsed_state.state.push((num, generated_num));
-            let outcomes: Vec<u32> = parsed_state.state.iter().map(|v| v.1).collect();
+            let generated_num = random_numbers[0];
+            parsed_state.state.push((num as u64, generated_num));
+            let outcomes: Vec<u64> = parsed_state.state.iter().map(|v| v.1).collect();
 
-            let state_string = serde_json::to_string(&parsed_state.state).unwrap();
+            let state_string = serde_json::to_string(&parsed_state).unwrap();
             total_won += 1;
 
-            if num <= generated_num {
+            if num as u64 <= generated_num {
                 // won
 
                 return Some(GameResult {
@@ -128,9 +126,9 @@ impl StatefulGameEng for StatefullTest {
                 });
             }
         }
-        let outcomes: Vec<u32> = parsed_state.state.iter().map(|v| v.1).collect();
+        let outcomes: Vec<u64> = parsed_state.state.iter().map(|v| v.1).collect();
 
-        let state_string = serde_json::to_string(&parsed_state.state).unwrap();
+        let state_string = serde_json::to_string(&parsed_state).unwrap();
         return Some(GameResult {
             total_profit: state.amount * self.multiplier * Decimal::from(total_won),
             outcomes,

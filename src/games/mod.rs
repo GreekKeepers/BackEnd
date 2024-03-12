@@ -16,6 +16,12 @@ pub use wheel::*;
 mod statefultest;
 pub use statefultest::*;
 
+mod poker;
+pub use poker::*;
+
+mod mines;
+pub use mines::*;
+
 use crate::{
     db::DB,
     models::{

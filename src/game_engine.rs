@@ -1,4 +1,4 @@
-use crate::games::{CoinFlip, Dice, Race, StatefulGameEng, StatefullTest, Wheel, RPS};
+use crate::games::{CoinFlip, Dice, Mines, Race, StatefulGameEng, StatefullTest, Wheel, RPS};
 use crate::models::db_models::GameState;
 use crate::models::json_responses::BetExpanded;
 use crate::tools::blake_hash_256_u64;
@@ -61,6 +61,13 @@ pub fn parse_statefull_game(
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {
                 error!("Error deserializing StatefullTest game: `{:?}`", e);
+                Err(e)
+            }
+        },
+        "Mines" => match serde_json::from_str::<Mines>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Mines game: `{:?}`", e);
                 Err(e)
             }
         },

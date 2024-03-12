@@ -91,7 +91,7 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[1,3,4,5,6,7]}')
+    ws.send('{"type":"SubscribeBets", "payload":[1,3,4,5,6,7,8]}')
 
     ws.send(
         '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"}'
@@ -194,6 +194,33 @@ def on_open(ws):
         "coin_id": 1,
         "user_id": 0,
         "data": '{"num":12321322, "end_game": false}',
+    }
+    ws.send(json.dumps(bet_data))
+
+    # Mines bet
+    tiles = [False] * 25
+    tiles[0] = True
+    tiles[6] = True
+
+    bet_data = {
+        "type": "MakeBet",
+        "game_id": 8,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{"num_mines":1, "cashout":false, "tiles": [false,false,false,false,true,false,false,false,false,false,false,false,false,true,false,false,false,false,false,false,false,false,false,false,false]}',
+        "amount": "1",
+        "stop_loss": 0,
+        "stop_win": 0,
+        "num_games": 100,
+    }
+    ws.send(json.dumps(bet_data))
+
+    bet_data = {
+        "type": "ContinueGame",
+        "game_id": 8,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{ "cashout":false, "tiles": [false,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}',
     }
     ws.send(json.dumps(bet_data))
 

@@ -20,7 +20,7 @@ pub struct RPSData {
     pub action: u32, // 0 - rock, 1 - paper, 2 - scissors
 }
 
-fn rps_outcome(player: u32, rng: u32) -> u32 {
+fn rps_outcome(player: u64, rng: u64) -> u32 {
     if player == rng {
         return 2;
     }
@@ -81,13 +81,13 @@ impl GameEng for RPS {
         let profit = bet.amount * self.profit_coef;
         let draw = bet.amount * self.draw_coef;
 
-        let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut outcomes: Vec<u64> = Vec::with_capacity(random_numbers.len());
         let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
-            let action = (number % 3) as u32;
+            let action = number % 3;
             outcomes.push(action);
 
-            let rps_result = rps_outcome(data.action, action);
+            let rps_result = rps_outcome(data.action as u64, action);
 
             if rps_result == 2 {
                 total_profit += draw;

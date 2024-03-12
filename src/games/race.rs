@@ -50,13 +50,13 @@ impl GameEng for Race {
 
         let profit = bet.amount * self.profit_coef;
 
-        let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut outcomes: Vec<u64> = Vec::with_capacity(random_numbers.len());
         let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
-            let winner_car = (number % self.cars_amount) as u32;
+            let winner_car = number % self.cars_amount;
             outcomes.push(winner_car);
 
-            if data.car as u32 == winner_car {
+            if data.car == winner_car {
                 total_profit += profit;
                 total_value += profit;
                 profits.push(profit);
