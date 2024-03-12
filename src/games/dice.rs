@@ -74,7 +74,7 @@ impl GameEng for Dice {
         let number_to_roll = *HUNDRED - (*NINTYNINE / data.multiplier);
         let profit = bet.amount * data.multiplier;
 
-        let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut outcomes: Vec<u64> = Vec::with_capacity(random_numbers.len());
         let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
             let number = remap(
@@ -84,7 +84,7 @@ impl GameEng for Dice {
                 *DICE_LOWER_BOUNDARY,
                 *DICE_UPPER_BOUNDARY,
             );
-            outcomes.push((number * *DICE_MULT).to_u32().unwrap());
+            outcomes.push((number * *DICE_MULT).to_u64().unwrap());
 
             if (data.roll_over && number >= number_to_roll)
                 || (!data.roll_over && number <= number_to_roll)

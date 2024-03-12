@@ -54,10 +54,10 @@ impl GameEng for Wheel {
 
         let num_sectors = (data.num_sectors + 1) * 10;
 
-        let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut outcomes: Vec<u64> = Vec::with_capacity(random_numbers.len());
         let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
-            let sector = (number % num_sectors as u64) as u32;
+            let sector = number % num_sectors as u64;
             outcomes.push(sector);
 
             let multiplier = multipliers[sector as usize];

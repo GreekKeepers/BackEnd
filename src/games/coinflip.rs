@@ -44,10 +44,10 @@ impl GameEng for CoinFlip {
 
         let profit = bet.amount * self.profit_coef;
 
-        let mut outcomes: Vec<u32> = Vec::with_capacity(random_numbers.len());
+        let mut outcomes: Vec<u64> = Vec::with_capacity(random_numbers.len());
         let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
-            let side = (number % 2) as u32;
+            let side = (number % 2) as u64;
             outcomes.push(side);
 
             if (data.is_heads && side == 1) || (!data.is_heads && side == 0) {
