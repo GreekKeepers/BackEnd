@@ -169,7 +169,7 @@ INSERT INTO Game(
     name,
     parameters
 ) VALUES (
-    'StatefullTest'
+    'StatefullTest',
     '{"multiplier":"1.98"}'
 );
 
