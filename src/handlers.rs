@@ -412,6 +412,23 @@ pub mod game {
                                         }
 
                                     }
+                                    WebsocketsIncommingMessage::GetState(request) => {
+                                        if let Some(user_id) = user_id {
+                                            if let Ok(Some(state)) = db.fetch_game_state(request.game_id, user_id, request.coin_id).await{
+                                                if let Err(e) = ws_tx
+                                                    .send(Message::text(
+                                                        serde_json::to_string(&ResponseBody::State(state))
+                                                            .unwrap(),
+                                                    ))
+                                                    .await
+                                                {
+                                                    error!("Error on socket `{:?}`: `{:?}`", ws_tx, e);
+                                                }
+
+                                            }
+                                        }
+                                    }
+
                                 }
                             },
                             None => {

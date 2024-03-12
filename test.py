@@ -198,6 +198,14 @@ def on_open(ws):
     ws.send(json.dumps(bet_data))
 
     # Mines bet
+
+    bet_data = {
+        "type": "GetState",
+        "game_id": 8,
+        "coin_id": 1,
+    }
+    ws.send(json.dumps(bet_data))
+
     tiles = [False] * 25
     tiles[0] = True
     tiles[6] = True

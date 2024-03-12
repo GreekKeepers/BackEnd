@@ -678,6 +678,13 @@ pub mod json_requests {
         NewServerSeed,
         MakeBet(PropagatedBet),
         ContinueGame(ContinueGame),
+        GetState(GetState),
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct GetState {
+        pub game_id: i64,
+        pub coin_id: i64,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
