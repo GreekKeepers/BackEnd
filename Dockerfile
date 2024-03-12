@@ -1,4 +1,4 @@
-FROM rust:1.72.1 as builder
+FROM rust:1.76 as builder
 WORKDIR /Backend
 COPY . .
 
