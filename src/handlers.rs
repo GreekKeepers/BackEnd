@@ -425,6 +425,12 @@ pub mod game {
                                                     error!("Error on socket `{:?}`: `{:?}`", ws_tx, e);
                                                 }
 
+                                            } else {
+                                                if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&ResponseBody::InfoText(InfoText { message: "No state found".into() })).unwrap())).await{
+                                                    error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);
+                                                    break;
+                                                }
+
                                             }
                                         }
                                     }
