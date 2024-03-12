@@ -101,7 +101,7 @@ impl StatefulGameEng for StatefullTest {
             parsed_state.state.push((num as u64, generated_num));
             let outcomes: Vec<u64> = parsed_state.state.iter().map(|v| v.1).collect();
 
-            let state_string = serde_json::to_string(&parsed_state.state).unwrap();
+            let state_string = serde_json::to_string(&parsed_state).unwrap();
             total_won += 1;
 
             if num as u64 <= generated_num {
@@ -128,7 +128,7 @@ impl StatefulGameEng for StatefullTest {
         }
         let outcomes: Vec<u64> = parsed_state.state.iter().map(|v| v.1).collect();
 
-        let state_string = serde_json::to_string(&parsed_state.state).unwrap();
+        let state_string = serde_json::to_string(&parsed_state).unwrap();
         return Some(GameResult {
             total_profit: state.amount * self.multiplier * Decimal::from(total_won),
             outcomes,

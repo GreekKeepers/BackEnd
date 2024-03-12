@@ -37,7 +37,7 @@ pub struct MinesState {
 }
 
 fn is_gem(number_of_tiles_left: usize, number_of_mines_left: usize, rng: usize) -> bool {
-    let win_chance = 1000 - (number_of_mines_left * 10000) / number_of_tiles_left;
+    let win_chance = 10000 - (number_of_mines_left * 10000) / number_of_tiles_left;
 
     if rng % 10000 <= win_chance {
         return true;
@@ -48,7 +48,7 @@ fn is_gem(number_of_tiles_left: usize, number_of_mines_left: usize, rng: usize) 
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Mines {
-    pub multipliers: HashMap<u64, Vec<Decimal>>,
+    pub multipliers: Vec<Vec<Decimal>>,
     pub max_reveal: [u32; 24],
 }
 
@@ -121,12 +121,7 @@ impl StatefulGameEng for Mines {
             });
         }
 
-        let multiplier = if let Some(mults) = self.multipliers.get(&(number_of_mines_left as u64)) {
-            mults[number_of_revealed_tiles - 1]
-        } else {
-            warn!("Multiplier `{:?}` not found", number_of_mines_left);
-            return None;
-        };
+        let multiplier = self.multipliers[number_of_mines_left - 1][number_of_revealed_tiles - 1];
 
         if !data.cashout {
             let profit = multiplier * bet.amount;
@@ -194,20 +189,14 @@ impl StatefulGameEng for Mines {
         let picked_tiles = if let Some(picked_tiles) = data.tiles {
             picked_tiles
         } else {
-            // cashout
+            // stop game & cashout
             let profit = parsed_state.current_multiplier * state.amount;
             return Some(GameResult {
                 total_profit: profit,
                 outcomes: random_numbers.iter().cloned().collect(),
                 profits: vec![profit],
-                num_games: 1,
-                data: serde_json::to_string(&MinesState {
-                    state: parsed_state.state,
-                    mines: parsed_state.mines,
-                    game_num: 1,
-                    current_multiplier: parsed_state.current_multiplier,
-                })
-                .unwrap(),
+                num_games: parsed_state.game_num as u32 + 1,
+                data: serde_json::to_string(&parsed_state).unwrap(),
                 finished: true,
             });
         };
@@ -243,9 +232,6 @@ impl StatefulGameEng for Mines {
 
         let mut number_of_mines_left: usize = initial_bet_data.num_mines as usize;
 
-        //let mut mines: [bool; 25] = [false; 25];
-        //let mut revealed_tiles: [bool; 25] = [false; 25];
-
         let mut won = true;
 
         for i in 0usize..25 {
@@ -279,48 +265,35 @@ impl StatefulGameEng for Mines {
                 total_profit: Decimal::ZERO,
                 outcomes: random_numbers.iter().cloned().collect(),
                 profits: vec![Decimal::ZERO],
-                num_games: parsed_state.game_num + 1,
+                num_games: parsed_state.game_num as u32 + 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),
                 finished: true,
             });
         }
+        let multiplier = self.multipliers[number_of_mines_left - 1][number_of_revealed_tiles - 1];
 
-        let multiplier = if let Some(mults) = self.multipliers.get(&(number_of_mines_left as u64)) {
-            mults[number_of_revealed_tiles - 1]
-        } else {
-            warn!("Multiplier `{:?}` not found", number_of_mines_left);
-            return None;
-        };
+        parsed_state.current_multiplier = multiplier;
+
+        let profit = multiplier * state.amount;
 
         if !data.cashout {
-            let profit = multiplier * state.amount;
             return Some(GameResult {
                 total_profit: profit,
                 outcomes: random_numbers.iter().cloned().collect(),
                 profits: vec![profit],
-                num_games: parsed_state.game_num + 1,
+                num_games: parsed_state.game_num as u32 + 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),
                 finished: false,
             });
-        } else {
-            let profit = multiplier * bet.amount;
-            return Some(GameResult {
-                total_profit: profit,
-                outcomes: random_numbers.iter().cloned().collect(),
-                profits: vec![profit],
-                num_games: 1,
-                data: serde_json::to_string(&MinesState {
-                    state: revealed_tiles,
-                    mines,
-                    game_num: 1,
-                    current_multiplier: multiplier,
-                })
-                .unwrap(),
-                finished: true,
-            });
         }
-
-        None
+        return Some(GameResult {
+            total_profit: profit,
+            outcomes: random_numbers.iter().cloned().collect(),
+            profits: vec![profit],
+            num_games: parsed_state.game_num as u32 + 1,
+            data: serde_json::to_string(&parsed_state).unwrap(),
+            finished: true,
+        });
     }
 
     fn numbers_per_bet(&self) -> u64 {
