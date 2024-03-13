@@ -435,6 +435,20 @@ pub mod game {
                                         }
                                     }
 
+                                    WebsocketsIncommingMessage::GetUuid => {
+                                        if let Err(e) = ws_tx
+                                            .send(Message::text(
+                                                serde_json::to_string(&ResponseBody::Uuid(UuidToken { uuid: uuid.clone() }))
+                                                    .unwrap(),
+                                            ))
+                                            .await
+                                        {
+                                            error!("Error on socket `{:?}`: `{:?}`", ws_tx, e);
+                                            break;
+                                        }
+
+                                    }
+
                                 }
                             },
                             None => {
@@ -707,7 +721,7 @@ pub mod invoice {
 
         Ok(gen_arbitrary_response(ResponseBody::Invoice(Invoice {
             id: order_id.clone(),
-            merchant_id: "LDB3LVD7".into(),
+            merchant_id: "EVYWM38X".into(),
             order_id,
             create_date: Default::default(),
             status: result.status as i32,

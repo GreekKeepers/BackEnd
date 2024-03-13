@@ -679,6 +679,7 @@ pub mod json_requests {
         MakeBet(PropagatedBet),
         ContinueGame(ContinueGame),
         GetState(GetState),
+        GetUuid,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
