@@ -1,3 +1,4 @@
+use crate::config;
 // use crate::communication::WsDataFeedReceiver;
 // use crate::communication::WsDataFeedSender;
 use crate::config::PASSWORD_SALT;
@@ -167,6 +168,9 @@ async fn dex(headers: HeaderMap<HeaderValue>, _: DB) -> Result<bool, warp::Rejec
         .ok_or(ApiError::TheDexBadApiKey)?
         .to_str()
         .map_err(|_| ApiError::TheDexBadApiKey)?;
+    if !rec_api_key.eq(&(*config::X_EX_APIKEY)) {
+        return Err(ApiError::TheDexBadApiKey.into());
+    }
     Ok(true)
 }
 
