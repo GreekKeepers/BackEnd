@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS GameState(
     serverseed_id BIGSERIAL NOT NULL REFERENCES ServerSeed(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX state_unique_idx ON Bet(game_id, user_id, coin_id, userseed_id, serverseed_id);
+CREATE UNIQUE INDEX state_unique_idx ON GameState(game_id, user_id, coin_id, userseed_id, serverseed_id);
 
 
 CREATE TABLE IF NOT EXISTS Invoice(
