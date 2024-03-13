@@ -668,7 +668,7 @@ pub mod invoice {
                 CreateQuickInvoice {
                     amount: currency_amount,
                     pay_currency: data.currency.clone(),
-                    merchant_id: "LDB3LVD7".into(),
+                    merchant_id: "EVYWM38X".into(),
                     order_id: Some(order_id.clone()),
                     email: None,
                     client_id: Some(id.to_string()),
@@ -694,7 +694,7 @@ pub mod invoice {
 
         db.add_invoice(
             &order_id,
-            "LDB3LVD7",
+            "EVYWM38X",
             &order_id,
             result.status.clone() as i32,
             &result.purse,
