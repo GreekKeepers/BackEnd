@@ -161,9 +161,12 @@ fn with_auth(db: DB) -> impl Filter<Extract = (i64,), Error = warp::Rejection> +
 }
 
 async fn dex(headers: HeaderMap<HeaderValue>, _: DB) -> Result<bool, warp::Rejection> {
-    headers
+    debug!("headers {:?}", headers);
+    let rec_api_key = headers
         .get("X-EX-APIKEY")
-        .ok_or(ApiError::TheDexBadApiKey)?;
+        .ok_or(ApiError::TheDexBadApiKey)?
+        .to_str()
+        .map_err(|_| ApiError::TheDexBadApiKey)?;
     Ok(true)
 }
 
