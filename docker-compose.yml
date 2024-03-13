@@ -40,8 +40,8 @@ services:
       - '8585:8585'
     networks:
       - greekkeepersnet
-    # volumes:
-    #   - ./BicasCasino/src/public:/public
+    volumes:
+      - /home/yeahnotsewerside/Bicas/Casino/BicasCasino/public:/public
 
 
 networks:
