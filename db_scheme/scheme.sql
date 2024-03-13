@@ -78,7 +78,6 @@ CREATE TABLE IF NOT EXISTS Bet(
     serverseed_id BIGSERIAL NOT NULL REFERENCES ServerSeed(id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX bet_unique_idx ON Bet(userseed_id, serverseed_id, id);
 
 CREATE TABLE IF NOT EXISTS GameState(
     id BIGSERIAL PRIMARY KEY,
