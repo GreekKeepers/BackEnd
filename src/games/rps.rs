@@ -58,12 +58,7 @@ pub struct RPS {
 }
 
 impl GameEng for RPS {
-    fn play(
-        &self,
-        prev_bet: Option<&Bet>,
-        bet: &PropagatedBet,
-        random_numbers: &[u64],
-    ) -> Option<GameResult> {
+    fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
         let data: RPSData = serde_json::from_str(&bet.data)
             .map_err(|e| {
                 error!("Error parsing RPS data `{:?}`: {:?}", bet.data, e);

@@ -195,7 +195,7 @@ impl StatefulGameEng for Mines {
                 total_profit: profit,
                 outcomes: random_numbers.iter().cloned().collect(),
                 profits: vec![profit],
-                num_games: parsed_state.game_num as u32 + 1,
+                num_games: 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),
                 finished: true,
             });
@@ -265,7 +265,7 @@ impl StatefulGameEng for Mines {
                 total_profit: Decimal::ZERO,
                 outcomes: random_numbers.iter().cloned().collect(),
                 profits: vec![Decimal::ZERO],
-                num_games: parsed_state.game_num as u32 + 1,
+                num_games: 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),
                 finished: true,
             });
@@ -281,7 +281,7 @@ impl StatefulGameEng for Mines {
                 total_profit: profit,
                 outcomes: random_numbers.iter().cloned().collect(),
                 profits: vec![profit],
-                num_games: parsed_state.game_num as u32 + 1,
+                num_games: 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),
                 finished: false,
             });
@@ -290,7 +290,7 @@ impl StatefulGameEng for Mines {
             total_profit: profit,
             outcomes: random_numbers.iter().cloned().collect(),
             profits: vec![profit],
-            num_games: parsed_state.game_num as u32 + 1,
+            num_games: 1,
             data: serde_json::to_string(&parsed_state).unwrap(),
             finished: true,
         });

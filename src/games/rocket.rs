@@ -6,36 +6,58 @@ use crate::{
     },
 };
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use utoipa::ToSchema;
 
-use rust_decimal::Decimal;
+use rust_decimal::{
+    prelude::{FromPrimitive, ToPrimitive},
+    Decimal,
+};
 use tracing::error;
 
 use crate::games::GameEng;
 
+use lazy_static::lazy_static;
+
 use super::GameType;
+lazy_static! {
+    static ref DICE_LOWER_BOUNDARY: Decimal = Decimal::from_str("1.0421").unwrap();
+    static ref DICE_UPPER_BOUNDARY: Decimal = Decimal::from_str("99.9999").unwrap();
+    static ref DICE_MULT: Decimal = Decimal::from(10000);
+    static ref U64_UPPER_BOUNDARY: Decimal = Decimal::from(18446744073709551615u64);
+    static ref HUNDRED: Decimal = Decimal::from(100);
+    static ref NINTYNINE: Decimal = Decimal::from(99);
+}
 
-#[derive(Deserialize, Serialize, Clone, ToSchema)]
-pub struct RaceData {
-    pub car: u64,
+pub fn remap(
+    number: Decimal,
+    from: Decimal,
+    to: Decimal,
+    map_from: Decimal,
+    map_to: Decimal,
+) -> Decimal {
+    (number - from) / (to - from) * (map_to - map_from) + map_from
 }
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
-pub struct Race {
+pub struct RocketData {
+    pub multiplier: Decimal,
+}
+
+#[derive(Deserialize, Serialize, Clone, ToSchema)]
+pub struct Rocket {
     pub profit_coef: Decimal,
-    pub cars_amount: u64,
 }
 
-impl GameEng for Race {
+impl GameEng for Rocket {
     fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
-        let data: RaceData = serde_json::from_str(&bet.data)
+        let data: RocketData = serde_json::from_str(&bet.data)
             .map_err(|e| {
-                error!("Error parsing Race data `{:?}`: {:?}", bet.data, e);
+                error!("Error parsing Dice data `{:?}`: {:?}", bet.data, e);
                 e
             })
             .ok()?;
-
-        if data.car >= self.cars_amount {
+        if data.multiplier > *DICE_UPPER_BOUNDARY || data.multiplier < *DICE_LOWER_BOUNDARY {
             return None;
         }
 
@@ -43,15 +65,22 @@ impl GameEng for Race {
         let mut total_value = Decimal::ZERO;
         let mut games = 0;
 
-        let profit = bet.amount * self.profit_coef;
+        let number_to_roll = *HUNDRED - (*NINTYNINE / data.multiplier);
+        let profit = bet.amount * data.multiplier;
 
         let mut outcomes: Vec<u64> = Vec::with_capacity(random_numbers.len());
         let mut profits: Vec<Decimal> = Vec::with_capacity(random_numbers.len());
         for (game, number) in random_numbers.iter().enumerate() {
-            let winner_car = number % self.cars_amount;
-            outcomes.push(winner_car);
+            let number = remap(
+                Decimal::from_u64(*number).unwrap(),
+                Decimal::ZERO,
+                *U64_UPPER_BOUNDARY,
+                *DICE_LOWER_BOUNDARY,
+                *DICE_UPPER_BOUNDARY,
+            );
+            outcomes.push((number * *DICE_MULT).to_u64().unwrap());
 
-            if data.car == winner_car {
+            if number >= number_to_roll {
                 total_profit += profit;
                 total_value += profit;
                 profits.push(profit);

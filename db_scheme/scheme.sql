@@ -145,7 +145,23 @@ INSERT INTO Game(
     parameters
 ) VALUES (
     'Dice',
-    '{"profit_coef":"1.98"}'
+    '{"profit_coef":"1.94"}'
+);
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'Rocket',
+    '{"profit_coef":"1.94"}'
+);
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'Crash',
+    '{"profit_coef":"1.94"}'
 );
 
 INSERT INTO Game(
@@ -162,6 +178,14 @@ INSERT INTO Game(
 ) VALUES (
     'Race',
     '{"profit_coef":"4.9", "cars_amount":5}'
+);
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
+    'Thimbles',
+    '{"profit_coef":"2.82", "cars_amount":3}'
 );
 
 INSERT INTO Game(

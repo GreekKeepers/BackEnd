@@ -51,12 +51,7 @@ pub struct Dice {
 }
 
 impl GameEng for Dice {
-    fn play(
-        &self,
-        prev_bet: Option<&Bet>,
-        bet: &PropagatedBet,
-        random_numbers: &[u64],
-    ) -> Option<GameResult> {
+    fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
         let data: DiceData = serde_json::from_str(&bet.data)
             .map_err(|e| {
                 error!("Error parsing Dice data `{:?}`: {:?}", bet.data, e);

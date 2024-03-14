@@ -26,12 +26,7 @@ pub struct CoinFlip {
 }
 
 impl GameEng for CoinFlip {
-    fn play(
-        &self,
-        prev_bet: Option<&Bet>,
-        bet: &PropagatedBet,
-        random_numbers: &[u64],
-    ) -> Option<GameResult> {
+    fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult> {
         let data: CoinFlipData = serde_json::from_str(&bet.data)
             .map_err(|e| {
                 error!("Error parsing CoinFlip data `{:?}`: {:?}", bet.data, e);

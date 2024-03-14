@@ -22,6 +22,9 @@ pub use statefultest::*;
 mod mines;
 pub use mines::*;
 
+mod rocket;
+pub use rocket::*;
+
 use crate::{
     db::DB,
     models::{
@@ -31,12 +34,7 @@ use crate::{
 };
 
 pub trait GameEng {
-    fn play(
-        &self,
-        prev_bet: Option<&Bet>,
-        bet: &PropagatedBet,
-        random_numbers: &[u64],
-    ) -> Option<GameResult>;
+    fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult>;
 
     fn numbers_per_bet(&self) -> u64;
 

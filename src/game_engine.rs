@@ -1,4 +1,6 @@
-use crate::games::{CoinFlip, Dice, Mines, Race, StatefulGameEng, StatefullTest, Wheel, RPS};
+use crate::games::{
+    CoinFlip, Dice, Mines, Race, Rocket, StatefulGameEng, StatefullTest, Wheel, RPS,
+};
 use crate::models::db_models::GameState;
 use crate::models::json_responses::BetExpanded;
 use crate::tools::blake_hash_256_u64;
@@ -48,6 +50,28 @@ pub fn parse_stateless_game(
                 Err(e)
             }
         },
+        "Rocket" => match serde_json::from_str::<Rocket>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Rocket game: `{:?}`", e);
+                Err(e)
+            }
+        },
+        "Thimbles" => match serde_json::from_str::<Race>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Thimbles game: `{:?}`", e);
+                Err(e)
+            }
+        },
+        "Crash" => match serde_json::from_str::<Rocket>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Crash game: `{:?}`", e);
+                Err(e)
+            }
+        },
+
         _ => Ok(None),
     }
 }
@@ -57,13 +81,13 @@ pub fn parse_statefull_game(
     params: &str,
 ) -> Result<Option<Box<dyn StatefulGameEng>>, Error> {
     match game_name {
-        "StatefullTest" => match serde_json::from_str::<StatefullTest>(params) {
-            Ok(gm) => Ok(Some(Box::new(gm))),
-            Err(e) => {
-                error!("Error deserializing StatefullTest game: `{:?}`", e);
-                Err(e)
-            }
-        },
+        //"StatefullTest" => match serde_json::from_str::<StatefullTest>(params) {
+        //    Ok(gm) => Ok(Some(Box::new(gm))),
+        //    Err(e) => {
+        //        error!("Error deserializing StatefullTest game: `{:?}`", e);
+        //        Err(e)
+        //    }
+        //},
         "Mines" => match serde_json::from_str::<Mines>(params) {
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {
@@ -212,8 +236,7 @@ impl Engine {
                         game_eng.numbers_per_bet() * bet.num_games,
                     );
 
-                    let game_result = if let Some(res) = game_eng.play(None, &bet, &random_numbers)
-                    {
+                    let game_result = if let Some(res) = game_eng.play(&bet, &random_numbers) {
                         res
                     } else {
                         warn!("Couldn't proccess bet");
