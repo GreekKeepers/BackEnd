@@ -192,6 +192,14 @@ INSERT INTO Game(
     name,
     parameters
 ) VALUES (
+    'CarRace',
+    '{"profit_coef":"1.94", "cars_amount":2}'
+);
+
+INSERT INTO Game(
+    name,
+    parameters
+) VALUES (
     'StatefullTest',
     '{"multiplier":"1.98"}'
 );
