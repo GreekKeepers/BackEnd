@@ -1,7 +1,10 @@
 use crate::{
     config::DatabaseSettings,
     models::{
-        db_models::{Amount, Bet, Coin, Game, GameState, Invoice, ServerSeed, User, UserSeed},
+        db_models::{
+            Amount, Bet, Coin, Game, GameState, Invoice, ServerSeed, Totals, User, UserSeed,
+            UserTotals,
+        },
         json_responses::BetExpanded,
     },
     tools::blake_hash,
@@ -656,6 +659,202 @@ impl DB {
         .await?;
 
         Ok(res.rows_affected() > 0)
+    }
+
+    pub async fn fetch_totals(&self) -> Result<Totals, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Totals,
+            r#"
+            SELECT 
+            	COUNT(bet.id) as bets_amount,
+            	(SELECT COUNT(Users.id) FROM Users) as player_amount,
+            	SUM((Bet.amount*Bet.num_games)/Coin.price) as sum
+            FROM Bet
+            INNER JOIN Coin ON Coin.id=Bet.coin_id
+            "#
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn fetch_bets_for_user(
+        &self,
+        user_id: i64,
+        last_id: Option<i64>,
+        page_size: i64,
+    ) -> Result<Vec<BetExpanded>, sqlx::Error> {
+        if let Some(last_id) = last_id {
+            sqlx::query_as_unchecked!(
+                BetExpanded,
+                r#"
+            SELECT 
+                Bet.id,
+                Bet.timestamp,
+                Bet.amount,
+                Bet.profit,
+                Bet.num_games,
+                Bet.bet_info,
+                Bet.state,
+                Bet.uuid,
+                Bet.game_id,
+                Bet.user_id,
+                Users.username,
+                Bet.coin_id,
+                Bet.userseed_id,
+                Bet.serverseed_id,
+                Bet.outcomes,
+                Bet.profits
+            FROM Bet
+            INNER JOIN Users ON bet.user_id = Users.id
+            WHERE bet.user_id = $1 and bet.id < $3 
+            ORDER BY Bet.id DESC
+            LIMIT $2 
+            "#,
+                user_id,
+                page_size,
+                last_id
+            )
+            .fetch_all(&self.db_pool)
+            .await
+        } else {
+            sqlx::query_as_unchecked!(
+                BetExpanded,
+                r#"
+            SELECT 
+                Bet.id,
+                Bet.timestamp,
+                Bet.amount,
+                Bet.profit,
+                Bet.num_games,
+                Bet.bet_info,
+                Bet.state,
+                Bet.uuid,
+                Bet.game_id,
+                Bet.user_id,
+                Users.username,
+                Bet.coin_id,
+                Bet.userseed_id,
+                Bet.serverseed_id,
+                Bet.outcomes,
+                Bet.profits
+            FROM Bet
+            INNER JOIN Users ON bet.user_id = Users.id
+            WHERE bet.user_id = $1 
+            ORDER BY Bet.id DESC
+            LIMIT $2 
+            "#,
+                user_id,
+                page_size
+            )
+            .fetch_all(&self.db_pool)
+            .await
+        }
+    }
+
+    pub async fn fetch_bets_for_user_inc(
+        &self,
+        user_id: i64,
+        last_id: Option<i64>,
+        page_size: i64,
+    ) -> Result<Vec<BetExpanded>, sqlx::Error> {
+        if let Some(last_id) = last_id {
+            sqlx::query_as_unchecked!(
+                BetExpanded,
+                r#"
+            SELECT 
+                Bet.id,
+                Bet.timestamp,
+                Bet.amount,
+                Bet.profit,
+                Bet.num_games,
+                Bet.bet_info,
+                Bet.state,
+                Bet.uuid,
+                Bet.game_id,
+                Bet.user_id,
+                Users.username,
+                Bet.coin_id,
+                Bet.userseed_id,
+                Bet.serverseed_id,
+                Bet.outcomes,
+                Bet.profits
+            FROM Bet
+            INNER JOIN Users ON bet.user_id = Users.id
+            WHERE bet.user_id = $1 and bet.id > $3 
+            ORDER BY Bet.id ASC 
+            LIMIT $2 
+            "#,
+                user_id,
+                page_size,
+                last_id
+            )
+            .fetch_all(&self.db_pool)
+            .await
+        } else {
+            sqlx::query_as_unchecked!(
+                BetExpanded,
+                r#"
+            SELECT 
+                Bet.id,
+                Bet.timestamp,
+                Bet.amount,
+                Bet.profit,
+                Bet.num_games,
+                Bet.bet_info,
+                Bet.state,
+                Bet.uuid,
+                Bet.game_id,
+                Bet.user_id,
+                Users.username,
+                Bet.coin_id,
+                Bet.userseed_id,
+                Bet.serverseed_id,
+                Bet.outcomes,
+                Bet.profits
+            FROM Bet
+            INNER JOIN Users ON bet.user_id = Users.id
+            WHERE bet.user_id = $1 
+            ORDER BY Bet.id ASC 
+            LIMIT $2 
+            "#,
+                user_id,
+                page_size
+            )
+            .fetch_all(&self.db_pool)
+            .await
+        }
+    }
+
+    pub async fn latest_games(&self, user_id: i64) -> Result<Vec<String>, sqlx::Error> {
+        sqlx::query!(
+            r#"
+            SELECT game.name FROM game RIGHT JOIN 
+                (SELECT * from bet where bet.user_id=$1 ORDER BY timestamp DESC LIMIT 2) as bets ON bets.game_id = game.id
+            "#,
+            user_id
+        ).fetch_all(&self.db_pool).await.map(|rows| rows.into_iter().map(|row| row.name.unwrap()).collect())
+    }
+
+    pub async fn fetch_user_totals(&self, user_id: i64) -> Result<UserTotals, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            UserTotals,
+            r#"
+            SELECT
+	            COUNT(bet.id) AS bets_amount,
+	            COUNT(case when bet.amount*bet.num_games > bet.profit then 1 else null end) as lost_bets,
+	            COUNT(case when bet.amount*bet.num_games <= bet.profit then 1 else null end) as won_bets,
+	            SUM((bet.amount*num_games)/coin.price) as total_wagered_sum,
+	            SUM(bet.profit/coin.price) as gross_profit,
+	            SUM(bet.profit/coin.price) - SUM((bet.amount*num_games)/coin.price)as net_profit,
+	            MAX(bet.profit/coin.price) as highest_win
+            FROM Bet
+            INNER JOIN Coin ON Bet.coin_id=Coin.id
+            WHERE Bet.user_id=$1
+            "#,
+            user_id
+        )
+        .fetch_one(&self.db_pool)
+        .await
     }
 
     pub async fn place_bet(

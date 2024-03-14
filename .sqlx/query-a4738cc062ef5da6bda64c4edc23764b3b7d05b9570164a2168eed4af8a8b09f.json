@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n\t            COUNT(bet.id) AS bets_amount,\n\t            COUNT(case when bet.amount*bet.num_games > bet.profit then 1 else null end) as lost_bets,\n\t            COUNT(case when bet.amount*bet.num_games <= bet.profit then 1 else null end) as won_bets,\n\t            SUM((bet.amount*num_games)/coin.price) as total_wagered_sum,\n\t            SUM(bet.profit/coin.price) as gross_profit,\n\t            SUM(bet.profit/coin.price) - SUM((bet.amount*num_games)/coin.price)as net_profit,\n\t            MAX(bet.profit/coin.price) as highest_win\n            FROM Bet\n            INNER JOIN Coin ON Bet.coin_id=Coin.id\n            WHERE Bet.user_id=$1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "bets_amount",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "lost_bets",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "won_bets",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "total_wagered_sum",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 4,
+        "name": "gross_profit",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 5,
+        "name": "net_profit",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "highest_win",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "a4738cc062ef5da6bda64c4edc23764b3b7d05b9570164a2168eed4af8a8b09f"
+}

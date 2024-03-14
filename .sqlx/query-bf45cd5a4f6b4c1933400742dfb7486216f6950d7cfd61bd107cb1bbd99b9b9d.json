@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n            \tCOUNT(bet.id) as bets_amount,\n            \t(SELECT COUNT(Users.id) FROM Users) as player_amount,\n            \tSUM((Bet.amount*Bet.num_games)/Coin.price) as sum\n            FROM Bet\n            INNER JOIN Coin ON Coin.id=Bet.coin_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "bets_amount",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "player_amount",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "sum",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "bf45cd5a4f6b4c1933400742dfb7486216f6950d7cfd61bd107cb1bbd99b9b9d"
+}

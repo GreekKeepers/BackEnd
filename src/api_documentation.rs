@@ -34,7 +34,11 @@ use warp::{
             handlers::get_all_last_bets,
             handlers::get_all_games,
             handlers::get_all_coins,
-            handlers::crypto_prices
+            handlers::crypto_prices,
+            handlers::get_user_bets,
+            handlers::get_user_bets_inc,
+            handlers::get_latest_games,
+            handlers::get_users_totals
         ),
         components(schemas(
             //json_requests::User,
@@ -62,6 +66,7 @@ use warp::{
             json_responses::UserStripped,
             json_responses::Games,
             json_responses::Coins,
+            json_responses::LatestGames,
 
             db_models::User,
             db_models::Coin,
@@ -71,6 +76,8 @@ use warp::{
             db_models::ServerSeed,
             db_models::Bet,
             db_models::Invoice,
+            db_models::Totals,
+            db_models::UserTotals,
 
             LeaderboardType
 

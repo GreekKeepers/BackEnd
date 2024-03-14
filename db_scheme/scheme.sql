@@ -120,7 +120,7 @@ INSERT INTO Coin(
     price
 ) VALUES (
     'DraxBonus',
-    1
+    1000
 );
 INSERT INTO Coin(
     name,

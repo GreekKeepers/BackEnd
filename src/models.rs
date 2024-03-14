@@ -83,6 +83,13 @@ pub mod db_models {
         pub parameters: String,
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Totals {
+        pub bets_amount: i64,
+        pub player_amount: i64,
+        pub sum: Option<f64>,
+    }
+
     // #[derive(Deserialize, Serialize, Clone, ToSchema)]
     // pub enum GameParameters{
     //     CoinFlip()
@@ -159,6 +166,17 @@ pub mod db_models {
         pub serverseed_id: i64,
     }
 
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, Default)]
+    pub struct UserTotals {
+        pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
+        pub total_wagered_sum: Decimal,
+        pub gross_profit: Decimal,
+        pub net_profit: Decimal,
+        pub highest_win: Decimal,
+    }
+
     #[derive(Deserialize, Serialize, Clone, ToSchema, Default, Debug)]
     pub struct Invoice {
         pub id: String,
@@ -180,7 +198,7 @@ pub mod json_responses {
 
     use crate::WsData;
 
-    use self::db_models::{Amount, Bet, Coin, Game, GameState, Invoice};
+    use self::db_models::{Amount, Bet, Coin, Game, GameState, Invoice, Totals, UserTotals};
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -240,8 +258,8 @@ pub mod json_responses {
         State(GameState),
         ServerSeedHidden(Seed),
         // Abi(GameAbi),
-        // Totals(Totals),
-        // LatestGames(LatestGames),
+        Totals(Totals),
+        LatestGames(LatestGames),
         // PlayerTotals(PlayerTotals),
         // TokenPrice(TokenPrice),
         // PartnerInfo(PartnerInfo),
@@ -254,7 +272,7 @@ pub mod json_responses {
         // AmountClicksTimeMapped(ClicksTimeMapped),
         // ConnectedWallets(Vec<ConnectedWalletInfo>),
         AccessToken(AccessToken),
-        // PlayersTotals(PlayersTotals),
+        UserTotals(UserTotals),
         // Withdrawals(Vec<Withdrawal>),
     }
 
@@ -376,10 +394,10 @@ pub mod json_responses {
         pub message: String,
     }
 
-    // #[derive(Deserialize, Serialize, ToSchema)]
-    // pub struct LatestGames {
-    //     pub games: Vec<String>,
-    // }
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct LatestGames {
+        pub games: Vec<String>,
+    }
 
     // #[derive(Deserialize, Serialize, ToSchema)]
     // pub struct TokenPrice {

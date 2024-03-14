@@ -19,6 +19,7 @@ use crate::models::json_requests::{self, CreateInvoice, Login};
 // };
 // #[allow(unused_imports)]
 
+use crate::models::db_models::UserTotals;
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 // pub use abi::*;
 // pub use bets::*;
@@ -33,6 +34,7 @@ use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseB
 pub use bets::*;
 pub use coin::*;
 pub use game::*;
+pub use general::*;
 pub use invoice::*;
 pub use user::*;
 // pub use rpcs::*;
@@ -117,17 +119,63 @@ pub mod bets {
         Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
     }
 
-    // pub async fn get_network_bets(
-    //     netowork_id: i64,
-    //     db: DB,
-    // ) -> Result<WarpResponse, warp::Rejection> {
-    //     let bets = db
-    //         .query_bets_for_network(netowork_id, *config::PAGE_SIZE)
-    //         .await
-    //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+    /// Get player bets
+    ///
+    /// Gets bets of the player by player id, max amount of returned bets per call is 10
+    #[utoipa::path(
+        tag="bets",
+        get,
+        path = "/api/bets/user/{user_id}/{last_id}",
+        responses(
+            (status = 200, description = "User's bets", body = Bets),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("address" = String, Path, description = "User address"),
+            ("last_id" = Option<i64>, Path, description = "last bet id")
+        ),
+    )]
+    pub async fn get_user_bets(
+        user_id: i64,
+        last_id: Option<i64>,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let bets = db
+            .fetch_bets_for_user(user_id, last_id, *config::PAGE_SIZE)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-    //     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
-    // }
+        Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    }
+
+    /// Get player bets in increasing order
+    ///
+    /// Gets bets of the player by player id, max amount of returned bets per call is 10
+    #[utoipa::path(
+        tag="bets",
+        get,
+        path = "/api/bets/user/inc/{user_id}/{last_id}",
+        responses(
+            (status = 200, description = "User's bets", body = Bets),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("address" = String, Path, description = "User address"),
+            ("last_id" = Option<i64>, Path, description = "last bet id")
+        ),
+    )]
+    pub async fn get_user_bets_inc(
+        user_id: i64,
+        last_id: Option<i64>,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let bets = db
+            .fetch_bets_for_user_inc(user_id, last_id, *config::PAGE_SIZE)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+    }
 
     /// Get all last bets
     ///
@@ -761,7 +809,7 @@ pub mod invoice {
 
 pub mod user {
     use crate::jwt;
-    use crate::models::json_responses::{Amounts, Seed, UserStripped};
+    use crate::models::json_responses::{Amounts, LatestGames, Seed, UserStripped};
     use crate::tools::blake_hash;
     use crate::{config::PASSWORD_SALT, models::json_responses::AccessToken};
     use blake2::{Blake2b512, Digest};
@@ -900,6 +948,56 @@ pub mod user {
         })))
     }
 
+    /// Get user's latest games
+    ///
+    ///
+    #[utoipa::path(
+        tag="user",
+        get,
+        path = "/api/user/latest_games/{user_id}",
+        responses(
+            (status = 200, description = "Latest Games", body = LatestGames),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("user_id" = i64, Path, description = "User id")
+        )
+    )]
+    pub async fn get_latest_games(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let games = db
+            .latest_games(id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::LatestGames(
+            LatestGames { games },
+        )))
+    }
+
+    /// Get user's totals
+    ///
+    ///
+    #[utoipa::path(
+        tag="user",
+        get,
+        path = "/api/user/latest_games/{user_id}",
+        responses(
+            (status = 200, description = "User totals", body = UserTotals),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("user_id" = i64, Path, description = "User id")
+        )
+    )]
+    pub async fn get_users_totals(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let totals = db
+            .fetch_user_totals(id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::UserTotals(totals)))
+    }
+
     /// Change user's username
     ///
     /// requires user being logined
@@ -1001,6 +1099,30 @@ pub mod user {
                 seed: seed.server_seed,
             },
         )))
+    }
+}
+
+pub mod general {
+    use super::*;
+
+    /// Get totals
+    ///
+    ///
+    #[utoipa::path(
+        tag="general",
+        get,
+        path = "/api/general/totals",
+        responses(
+            (status = 200, description = "Get Total values", body = Seed),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_totals(db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let totals = db
+            .fetch_totals()
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        Ok(gen_arbitrary_response(ResponseBody::Totals(totals)))
     }
 }
 

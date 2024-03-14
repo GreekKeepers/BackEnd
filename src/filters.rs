@@ -228,6 +228,36 @@ pub fn coin(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     warp::path("coin").and(get_all_coins(db.clone()))
 }
 
+// BETS
+
+pub fn get_user_bets(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("user" / i64 / ..)
+        .and(
+            warp::path::param::<i64>()
+                .map(Some)
+                .or_else(|_| async { Ok::<(Option<i64>,), std::convert::Infallible>((None,)) }),
+        )
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_user_bets)
+}
+
+pub fn get_user_bets_inc(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("user" / "inc" / i64 / ..)
+        .and(
+            warp::path::param::<i64>()
+                .map(Some)
+                .or_else(|_| async { Ok::<(Option<i64>,), std::convert::Infallible>((None,)) }),
+        )
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_user_bets_inc)
+}
+
 pub fn get_all_last_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -246,10 +276,10 @@ pub fn get_bets_for_game(
 
 pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("bets").and(
-        //get_player_bets(db.clone())
-        //.or(get_game_bets(db.clone()))
-        //.or(get_network_bets(db.clone()))
-        get_all_last_bets(db.clone()).or(get_bets_for_game(db.clone())),
+        get_all_last_bets(db.clone())
+            .or(get_bets_for_game(db.clone()))
+            .or(get_user_bets(db.clone()))
+            .or(get_user_bets_inc(db)),
     )
 }
 
@@ -283,6 +313,24 @@ pub fn get_amounts(
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_amounts)
+}
+
+pub fn get_latest_games(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("latest_games" / i64)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::get_latest_games)
+}
+
+pub fn get_user_totals(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("totals" / i64)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::get_users_totals)
 }
 
 pub fn change_username(
@@ -346,7 +394,9 @@ pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
             .or(login_user(db.clone()))
             .or(get_amounts(db.clone()).or(change_username(db.clone())))
             .or(seed(db.clone()))
-            .or(get_logined_user(db)),
+            .or(get_logined_user(db.clone()))
+            .or(get_user_totals(db.clone()))
+            .or(get_latest_games(db)),
     )
 }
 
@@ -417,6 +467,20 @@ pub fn game(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     warp::path("game").and(list_games(db.clone()))
 }
 
+pub fn get_totals(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("totals")
+        .and(with_db(db.clone()))
+        .and_then(handlers::get_totals)
+}
+
+pub fn general(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("general").and(get_totals(db))
+}
+
 pub fn init_filters(
     db: DB,
     dex: TheDex, //bet_sender: WsDataFeedSender,
@@ -445,6 +509,7 @@ pub fn init_filters(
         .or(bets(db.clone()))
         .or(game(db.clone()))
         .or(coin(db.clone()))
+        .or(general(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))
