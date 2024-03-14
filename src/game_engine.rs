@@ -1,5 +1,5 @@
 use crate::games::{
-    CoinFlip, Dice, Mines, Poker, Race, Rocket, StatefulGameEng, StatefullTest, Wheel, RPS,
+    CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, StatefulGameEng, StatefullTest, Wheel, RPS,
 };
 use crate::models::db_models::GameState;
 use crate::models::json_responses::BetExpanded;
@@ -68,6 +68,13 @@ pub fn parse_stateless_game(
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {
                 error!("Error deserializing Crash game: `{:?}`", e);
+                Err(e)
+            }
+        },
+        "Plinko" => match serde_json::from_str::<Plinko>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Plinko game: `{:?}`", e);
                 Err(e)
             }
         },

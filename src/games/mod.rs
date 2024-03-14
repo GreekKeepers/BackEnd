@@ -25,6 +25,9 @@ pub use mines::*;
 mod rocket;
 pub use rocket::*;
 
+mod plinko;
+pub use plinko::*;
+
 use crate::{
     db::DB,
     models::{

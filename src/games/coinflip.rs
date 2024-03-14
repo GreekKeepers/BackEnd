@@ -54,7 +54,7 @@ impl GameEng for CoinFlip {
                 profits.push(Decimal::ZERO);
             }
 
-            games = game + 1;
+            games = games + 1;
 
             if (!bet.stop_win.is_zero() && total_value >= bet.stop_win)
                 || (!bet.stop_loss.is_zero() && total_value <= bet.stop_loss)

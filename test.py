@@ -88,7 +88,7 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[1,2,3,4,5,6,7,8,10,11]}')
+    ws.send('{"type":"SubscribeBets", "payload":[1,2,3,4,5,6,7,8,10,11,12]}')
 
     ws.send(
         '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcxMDQyNzczMSwiYXVkIjoiIn0.ioWWihcI8wx2AAoIVJf1siTs2krU5gFXA1TQZME5f3w"}'
@@ -170,6 +170,22 @@ def on_open(ws):
         "num_games": 100,
     }
     ws.send(json.dumps(bet_data))
+
+    # Plinko
+    bet_data = {
+        "type": "MakeBet",
+        "game_id": 12,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{"num_rows":16, "risk":0}',
+        "amount": "1",
+        "stop_loss": 0,
+        "stop_win": 0,
+        "num_games": 100,
+    }
+    ws.send(json.dumps(bet_data))
+
+    return
 
     # Statefull bet
     bet_data = {
