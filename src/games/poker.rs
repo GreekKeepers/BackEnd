@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     db::DB,
     models::{
-        db_models::{Bet, GameResult},
+        db_models::{Bet, Game, GameResult},
         json_requests::PropagatedBet,
     },
 };
@@ -20,8 +20,8 @@ pub struct PokerData {}
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct PokerContinueData {
-    pub tiles: Option<[bool; 25]>,
-    pub cashout: bool,
+    pub to_replace: Option<[bool; 5]>,
+    //pub cashout: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, ToSchema, Copy)]
@@ -66,7 +66,7 @@ impl StatefulGameEng for Poker {
             profits: vec![Decimal::ZERO],
             num_games: 1,
             data: serde_json::to_string(&PokerState { cards_in_hand }).unwrap(),
-            finished: true,
+            finished: false,
         });
     }
 
@@ -78,19 +78,208 @@ impl StatefulGameEng for Poker {
     ) -> Option<GameResult> {
         let data: PokerContinueData = serde_json::from_str(&bet.data)
             .map_err(|e| {
-                error!("Error parsing Mines data `{:?}`: {:?}", bet.data, e);
+                error!("Error parsing Poker data `{:?}`: {:?}", bet.data, e);
                 e
             })
             .ok()?;
         let mut parsed_state: PokerState = serde_json::from_str(&state.state)
             .map_err(|e| {
-                error!("Error parsing Mines state`{:?}`: {:?}", state.state, e);
+                error!("Error parsing Poker state`{:?}`: {:?}", state.state, e);
                 e
             })
             .ok()?;
+
+        if !data.to_replace.is_none() {
+            let mut deck = self.initial_deck.clone();
+
+            for (hand_card, to_replace) in parsed_state
+                .cards_in_hand
+                .iter()
+                .zip(data.to_replace.unwrap().iter())
+            {
+                if *to_replace {
+                    continue;
+                }
+
+                let last_card = deck[deck.len() - 1];
+
+                for deck_card in deck.iter_mut() {
+                    if deck_card.number == hand_card.number && deck_card.suit == hand_card.suit {
+                        *deck_card = last_card;
+                        deck.truncate(deck.len() - 1);
+                        break;
+                    }
+                }
+            }
+
+            for ((to_replace, rng), card_in_hand) in data
+                .to_replace
+                .unwrap()
+                .iter()
+                .zip(random_numbers.iter())
+                .zip(parsed_state.cards_in_hand.iter_mut())
+            {
+                if *to_replace {
+                    *card_in_hand = pick_card(*rng, &mut deck);
+                }
+            }
+        }
+
+        let (multiplier, outcome) = determine_payout(parsed_state.cards_in_hand);
+        let profit = state.amount * multiplier;
+        Some(GameResult {
+            total_profit: profit,
+            outcomes: vec![outcome as u64],
+            profits: vec![profit],
+            num_games: 1,
+            data: serde_json::to_string(&parsed_state).unwrap(),
+            finished: true,
+        })
     }
 
     fn numbers_per_bet(&self) -> u64 {
         5
     }
+}
+
+pub fn determine_payout(mut sorted_cards: [Card; 5]) -> (Decimal, u32) {
+    sorted_cards.sort_unstable_by(|card_left, card_right| {
+        match card_left.number.cmp(&card_right.number) {
+            std::cmp::Ordering::Less => std::cmp::Ordering::Greater,
+            std::cmp::Ordering::Equal => std::cmp::Ordering::Equal,
+            std::cmp::Ordering::Greater => std::cmp::Ordering::Less,
+        }
+    });
+
+    //check 4 of a kind
+    if (sorted_cards[1].number == sorted_cards[2].number
+        && sorted_cards[2].number == sorted_cards[3].number)
+    {
+        if (sorted_cards[1].number == sorted_cards[0].number
+            || sorted_cards[3].number == sorted_cards[4].number)
+        {
+            return (Decimal::from(30), 7);
+        }
+    }
+    //check full house -> 3 of a kind + pair
+    if (sorted_cards[1].number == sorted_cards[0].number
+        && sorted_cards[4].number == sorted_cards[3].number)
+    {
+        if (sorted_cards[1].number == sorted_cards[2].number
+            || sorted_cards[3].number == sorted_cards[2].number)
+        {
+            return (Decimal::from(8), 6);
+        }
+    }
+    //check royal flush + straight flush + flush
+    if (sorted_cards[0].suit == sorted_cards[1].suit
+        && sorted_cards[2].suit == sorted_cards[3].suit
+        && sorted_cards[0].suit == sorted_cards[4].suit
+        && sorted_cards[2].suit == sorted_cards[1].suit)
+    {
+        if (sorted_cards[0].number == 1 && sorted_cards[4].number == 13) {
+            if (sorted_cards[2].number == sorted_cards[3].number - 1
+                && sorted_cards[3].number == sorted_cards[4].number - 1
+                && sorted_cards[1].number == sorted_cards[2].number - 1)
+            {
+                return (Decimal::from(100), 9);
+            }
+        }
+        if (sorted_cards[0].number == 1 && sorted_cards[1].number == 2) {
+            if (sorted_cards[0].number == sorted_cards[1].number - 1
+                && sorted_cards[2].number == sorted_cards[3].number - 1
+                && sorted_cards[3].number == sorted_cards[4].number - 1
+                && sorted_cards[1].number == sorted_cards[2].number - 1)
+            {
+                return (Decimal::from(50), 8);
+            }
+        }
+        if (sorted_cards[0].number == sorted_cards[1].number - 1
+            && sorted_cards[2].number == sorted_cards[3].number - 1
+            && sorted_cards[3].number == sorted_cards[4].number - 1
+            && sorted_cards[1].number == sorted_cards[2].number - 1)
+        {
+            return (Decimal::from(50), 8);
+        }
+        return (Decimal::from(6), 5);
+    }
+
+    //check straight
+    if (sorted_cards[0].number == 1 && sorted_cards[1].number == 2) {
+        if (sorted_cards[0].number == sorted_cards[1].number - 1
+            && sorted_cards[2].number == sorted_cards[3].number - 1
+            && sorted_cards[3].number == sorted_cards[4].number - 1
+            && sorted_cards[1].number == sorted_cards[2].number - 1)
+        {
+            return (Decimal::from(5), 4);
+        }
+    }
+    if (sorted_cards[0].number == 1 && sorted_cards[4].number == 13) {
+        if (sorted_cards[2].number == sorted_cards[3].number - 1
+            && sorted_cards[3].number == sorted_cards[4].number - 1
+            && sorted_cards[1].number == sorted_cards[2].number - 1)
+        {
+            return (Decimal::from(5), 4);
+        }
+    }
+    if (sorted_cards[0].number == sorted_cards[1].number - 1
+        && sorted_cards[1].number == sorted_cards[2].number - 1
+        && sorted_cards[2].number == sorted_cards[3].number - 1
+        && sorted_cards[3].number == sorted_cards[4].number - 1)
+    {
+        return (Decimal::from(5), 4);
+    }
+    //check three of a kind
+    if (sorted_cards[0].number == sorted_cards[1].number
+        && sorted_cards[1].number == sorted_cards[2].number)
+    {
+        return (Decimal::from(3), 3);
+    }
+    if (sorted_cards[1].number == sorted_cards[2].number
+        && sorted_cards[2].number == sorted_cards[3].number)
+    {
+        return (Decimal::from(3), 3);
+    }
+    if (sorted_cards[2].number == sorted_cards[3].number
+        && sorted_cards[3].number == sorted_cards[4].number)
+    {
+        return (Decimal::from(3), 3);
+    }
+    //check two pair
+    if (sorted_cards[0].number == sorted_cards[1].number) {
+        if (sorted_cards[2].number == sorted_cards[3].number
+            || sorted_cards[3].number == sorted_cards[4].number)
+        {
+            return (Decimal::from(2), 2);
+        }
+    }
+
+    if (sorted_cards[1].number == sorted_cards[2].number) {
+        if (sorted_cards[3].number == sorted_cards[4].number) {
+            return (Decimal::from(2), 2);
+        }
+    }
+    //check one pair jacks or higher
+    if (sorted_cards[0].number == sorted_cards[1].number) {
+        if (sorted_cards[0].number > 10 || sorted_cards[0].number == 1) {
+            return (Decimal::from(1), 1);
+        }
+    }
+    if (sorted_cards[1].number == sorted_cards[2].number) {
+        if (sorted_cards[1].number > 10 || sorted_cards[1].number == 1) {
+            return (Decimal::from(1), 1);
+        }
+    }
+    if (sorted_cards[2].number == sorted_cards[3].number) {
+        if (sorted_cards[2].number > 10 || sorted_cards[2].number == 1) {
+            return (Decimal::from(1), 1);
+        }
+    }
+    if (sorted_cards[3].number == sorted_cards[4].number) {
+        if (sorted_cards[3].number > 10 || sorted_cards[3].number == 1) {
+            return (Decimal::from(1), 1);
+        }
+    }
+
+    (Decimal::ZERO, 0)
 }

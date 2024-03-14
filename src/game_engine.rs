@@ -1,5 +1,5 @@
 use crate::games::{
-    CoinFlip, Dice, Mines, Race, Rocket, StatefulGameEng, StatefullTest, Wheel, RPS,
+    CoinFlip, Dice, Mines, Poker, Race, Rocket, StatefulGameEng, StatefullTest, Wheel, RPS,
 };
 use crate::models::db_models::GameState;
 use crate::models::json_responses::BetExpanded;
@@ -95,6 +95,14 @@ pub fn parse_statefull_game(
                 Err(e)
             }
         },
+        "Poker" => match serde_json::from_str::<Poker>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Poker game: `{:?}`", e);
+                Err(e)
+            }
+        },
+
         _ => Ok(None),
     }
 }

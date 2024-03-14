@@ -4,10 +4,10 @@ import requests
 
 def main():
 
-    res = requests.post(
-        "http://127.0.0.1:8282/bets/game/CoinFlip",
-    )
-    print(res.content)
+    # res = requests.post(
+    #    "http://127.0.0.1:8282/api/game/CoinFlip",
+    # )
+    # print(res.content)
 
     res = requests.post(
         "http://127.0.0.1:8282/game/list",
@@ -30,36 +30,33 @@ def main():
 
     print(res.content)
 
-    res = requests.get(
-        "http://127.0.0.1:8282/user",
+    # res = requests.get(
+    #    "http://127.0.0.1:8282/user",
+    #    headers={
+    #        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
+    #    },
+    # )
+
+    # print(res.content)
+
+    # for i in range(10):
+    #    res = requests.get(
+    #        "http://127.0.0.1:8282/invoice/prices",
+    #        headers={
+    #            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
+    #        },
+    #        json={"amount": 10, "currency": "BTC_BITCOIN"},
+    #    )
+
+    #    print(res.content)
+
+    res = requests.post(
+        "https://game.greekkeepers.io/api/invoice/create",
         headers={
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcxMDM1NjcxNywiYXVkIjoiIn0.AmtAwkj-RDX1jDnxghHr_va_86BvSbZYIlP7bMQlNyg"
         },
+        json={"amount": 10, "currency": "BTC_BITCOIN"},
     )
-
-    print(res.content)
-
-    for i in range(10):
-        res = requests.get(
-            "http://127.0.0.1:8282/invoice/prices",
-            headers={
-                "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
-            },
-            json={"amount": 10, "currency": "BTC_BITCOIN"},
-        )
-
-        print(res.content)
-
-    return
-
-    for i in range(10):
-        res = requests.post(
-            "http://127.0.0.1:8282/invoice/create",
-            headers={
-                "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"
-            },
-            json={"amount": 10, "currency": "BTC_BITCOIN"},
-        )
 
     print(res.content)
 
@@ -91,10 +88,10 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[1,3,4,5,6,7,8]}')
+    ws.send('{"type":"SubscribeBets", "payload":[1,2,3,4,5,6,7,8,10,11]}')
 
     ws.send(
-        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MywiZXhwIjoxMDAsImlhdCI6MTcwOTExNzY0OCwiYXVkIjoiIn0.hZB78_osuq8nSCakxRWVfOiCuFWnckQJ4KEetUlFqO4"}'
+        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcxMDQyNzczMSwiYXVkIjoiIn0.ioWWihcI8wx2AAoIVJf1siTs2krU5gFXA1TQZME5f3w"}'
     )
 
     # creating user seed
@@ -229,6 +226,29 @@ def on_open(ws):
         "coin_id": 1,
         "user_id": 0,
         "data": '{ "cashout":false, "tiles": [false,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}',
+    }
+    ws.send(json.dumps(bet_data))
+
+    # Poker bet
+    bet_data = {
+        "type": "MakeBet",
+        "game_id": 11,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": "{}",  # always empty for poker
+        "amount": "1",
+        "stop_loss": 0,
+        "stop_win": 0,
+        "num_games": 1,
+    }
+    ws.send(json.dumps(bet_data))
+
+    bet_data = {
+        "type": "ContinueGame",
+        "game_id": 11,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": '{"to_replace":[false,false,true,false,false]}',
     }
     ws.send(json.dumps(bet_data))
 
