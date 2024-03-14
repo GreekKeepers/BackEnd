@@ -980,7 +980,7 @@ pub mod user {
     #[utoipa::path(
         tag="user",
         get,
-        path = "/api/user/latest_games/{user_id}",
+        path = "/api/user/totals/{user_id}",
         responses(
             (status = 200, description = "User totals", body = UserTotals),
             (status = 500, description = "Internal server error", body = ErrorText),
