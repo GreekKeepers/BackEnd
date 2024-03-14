@@ -78,7 +78,7 @@ pub fn parse_stateless_game(
                 Err(e)
             }
         },
-        "CarRace" => match serde_json::from_str::<Plinko>(params) {
+        "CarRace" => match serde_json::from_str::<Race>(params) {
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {
                 error!("Error deserializing CarRace game: `{:?}`", e);
