@@ -155,7 +155,7 @@ impl StatefulGameEng for Apples {
                 profits: vec![profit],
                 num_games: 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),
-                finished: false,
+                finished: parsed_state.state.len() == 9,
             })
         } else {
             parsed_state.current_multiplier = Decimal::ZERO;
