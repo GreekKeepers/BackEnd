@@ -28,6 +28,9 @@ pub use rocket::*;
 mod plinko;
 pub use plinko::*;
 
+mod apples;
+pub use apples::*;
+
 use crate::{
     db::DB,
     models::{

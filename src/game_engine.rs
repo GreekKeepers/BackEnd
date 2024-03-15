@@ -1,5 +1,6 @@
 use crate::games::{
-    CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, StatefulGameEng, StatefullTest, Wheel, RPS,
+    Apples, CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, StatefulGameEng, StatefullTest,
+    Wheel, RPS,
 };
 use crate::models::db_models::GameState;
 use crate::models::json_responses::BetExpanded;
@@ -113,6 +114,13 @@ pub fn parse_statefull_game(
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {
                 error!("Error deserializing Poker game: `{:?}`", e);
+                Err(e)
+            }
+        },
+        "Apples" => match serde_json::from_str::<Apples>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Apples game: `{:?}`", e);
                 Err(e)
             }
         },
@@ -630,7 +638,7 @@ impl StatefulGameEngine {
                                 .send(WsManagerEvent::PropagateState(GameState {
                                     id: 0,
                                     timestamp,
-                                    amount,
+                                    amount: bet.amount,
                                     bet_info: bet.data,
                                     state: game_result.data,
                                     uuid: bet.uuid.unwrap(),
