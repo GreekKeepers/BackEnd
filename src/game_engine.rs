@@ -231,7 +231,7 @@ impl Engine {
                         continue;
                     };
 
-                    if bet.amount > amount {
+                    if bet.amount * Decimal::from(bet.num_games) > amount {
                         continue;
                     }
 
