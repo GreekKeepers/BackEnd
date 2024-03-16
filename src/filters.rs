@@ -7,7 +7,9 @@ use crate::errors::ApiError;
 use crate::handlers;
 use crate::jwt;
 use crate::jwt::Payload;
+use crate::models::db_models::TimeBoundaries;
 use crate::models::json_requests;
+use crate::models::LeaderboardType;
 use crate::tools;
 use crate::EngineBetSender;
 
@@ -525,10 +527,18 @@ pub fn get_totals(
         .and_then(handlers::get_totals)
 }
 
+pub fn get_leaderboard(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("leaderboard" / LeaderboardType / TimeBoundaries)
+        .and(with_db(db))
+        .and_then(handlers::get_leaderboard)
+}
+
 pub fn general(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("general").and(get_totals(db))
+    warp::path("general").and(get_totals(db.clone()).or(get_leaderboard(db)))
 }
 
 pub fn init_filters(

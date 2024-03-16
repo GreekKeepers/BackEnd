@@ -52,6 +52,13 @@ pub mod db_models {
         }
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Leaderboard {
+        pub user_id: i64,
+        pub total: Decimal,
+        pub username: String,
+    }
+
     #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct User {
         pub id: i64,
@@ -198,7 +205,9 @@ pub mod json_responses {
 
     use crate::WsData;
 
-    use self::db_models::{Amount, Bet, Coin, Game, GameState, Invoice, Totals, UserTotals};
+    use self::db_models::{
+        Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, Totals, UserTotals,
+    };
 
     // use super::db_models::{
     //     AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
@@ -266,7 +275,7 @@ pub mod json_responses {
         // PartnerInfo(PartnerInfo),
         // PartnerContacts(Vec<PartnerContact>),
         // PartnerSiteInfo(Vec<PartnerSiteInfo>),
-        // Leaderboard(Vec<Leaderboard>),
+        Leaderboard(Vec<Leaderboard>),
         // Clicks(RefClicks),
         // AmountConnectedWallets(AmountConnectedWallets),
         // AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),

@@ -41,7 +41,8 @@ use warp::{
             handlers::get_users_totals,
             handlers::create_p2way_token,
             handlers::p2way_callback,
-            handlers::get_invoice
+            handlers::get_invoice,
+            handlers::get_leaderboard
         ),
         components(schemas(
             //json_requests::User,
@@ -82,6 +83,8 @@ use warp::{
             db_models::Invoice,
             db_models::Totals,
             db_models::UserTotals,
+            db_models::Leaderboard,
+            db_models::TimeBoundaries,
 
             LeaderboardType
 

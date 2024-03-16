@@ -2,8 +2,8 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, Coin, Game, GameState, Invoice, ServerSeed, Totals, User, UserSeed,
-            UserTotals,
+            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, ServerSeed, TimeBoundaries,
+            Totals, User, UserSeed, UserTotals,
         },
         json_responses::BetExpanded,
     },
@@ -940,5 +940,189 @@ impl DB {
         .fetch_one(&self.db_pool)
         .await
         .map(|v| v.id)
+    }
+
+    pub async fn fetch_leaderboard_volume(
+        &self,
+        time_boundaries: TimeBoundaries,
+        limit: i64,
+    ) -> Result<Vec<Leaderboard>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM((bet.amount*bet.num_games)/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        WHERE bet.timestamp > now() - interval '1 day'
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM((bet.amount*bet.num_games)/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        WHERE bet.timestamp > now() - interval '1 week'
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM((bet.amount*bet.num_games)/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        WHERE bet.timestamp > now() - interval '1 month'
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM((bet.amount*bet.num_games)/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1 
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    pub async fn fetch_leaderboard_profit(
+        &self,
+        time_boundaries: TimeBoundaries,
+        limit: i64,
+    ) -> Result<Vec<Leaderboard>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM(bet.profit/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        WHERE bet.timestamp > now() - interval '1 day'
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM(bet.profit/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        WHERE bet.timestamp > now() - interval '1 week'
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM(bet.profit/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        WHERE bet.timestamp > now() - interval '1 month'
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                    SELECT bet.user_id, bet.total, Users.username FROM (
+                        SELECT 
+                            bet.user_id, 
+                            SUM(bet.profit/Coin.price) as total
+                        FROM bet
+                        INNER JOIN Coin ON Coin.id=bet.coin_id
+                        GROUP BY bet.user_id) as bet
+                INNER JOIN Users ON Users.id=bet.user_id
+                ORDER BY total DESC
+                LIMIT $1 
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
     }
 }
