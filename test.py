@@ -8,6 +8,10 @@ def main():
     #    "http://127.0.0.1:8282/api/game/CoinFlip",
     # )
     # print(res.content)
+    res = requests.post(
+        "http://127.0.0.1:8282/general/leaderboard/volume/all",
+    )
+    print(res.content)
 
     res = requests.post(
         "http://127.0.0.1:8282/game/list",
@@ -326,4 +330,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    web_sockets()
+    main()

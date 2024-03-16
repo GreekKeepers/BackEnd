@@ -1211,7 +1211,9 @@ pub mod user {
 }
 
 pub mod general {
-    use crate::models::{db_models::TimeBoundaries, LeaderboardType};
+    use crate::models::{
+        db_models::TimeBoundaries, json_responses::LeaderboardResponse, LeaderboardType,
+    };
 
     use super::*;
 
@@ -1243,7 +1245,7 @@ pub mod general {
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::Leaderboard(
-            leaderboard,
+            LeaderboardResponse { leaderboard },
         )))
     }
 

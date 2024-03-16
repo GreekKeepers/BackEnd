@@ -275,7 +275,7 @@ pub mod json_responses {
         // PartnerInfo(PartnerInfo),
         // PartnerContacts(Vec<PartnerContact>),
         // PartnerSiteInfo(Vec<PartnerSiteInfo>),
-        Leaderboard(Vec<Leaderboard>),
+        Leaderboard(LeaderboardResponse),
         // Clicks(RefClicks),
         // AmountConnectedWallets(AmountConnectedWallets),
         // AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
@@ -284,6 +284,11 @@ pub mod json_responses {
         AccessToken(AccessToken),
         UserTotals(UserTotals),
         // Withdrawals(Vec<Withdrawal>),
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    pub struct LeaderboardResponse {
+        pub leaderboard: Vec<Leaderboard>,
     }
 
     impl From<WsData> for ResponseBody {
