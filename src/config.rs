@@ -24,8 +24,8 @@ lazy_static! {
     pub static ref X_EX_APIKEY: String = env::var("X_EX_APIKEY").unwrap();
     pub static ref X_EX_SECRETKEY: String = env::var("X_EX_SECRETKEY").unwrap();
 
-    //pub static ref P2WAY_APIKEY: String = env::var("P2WAY_APIKEY").unwrap();
-    //pub static ref P2WAY_SECRETKEY: String = env::var("P2WAY_SECRETKEY").unwrap();
+    pub static ref P2WAY_APIKEY: String = env::var("P2WAY_APIKEY").unwrap();
+    pub static ref P2WAY_SECRETKEY: String = env::var("P2WAY_SECRETKEY").unwrap();
 
     pub static ref ENGINES: u16 = env::var("ENGINES").unwrap().parse().unwrap();
 }

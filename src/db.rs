@@ -835,6 +835,24 @@ impl DB {
         ).fetch_all(&self.db_pool).await.map(|rows| rows.into_iter().map(|row| row.name.unwrap()).collect())
     }
 
+    pub async fn increase_amounts_by_usdt_amount(
+        &self,
+        user_id: i64,
+        amount: &Decimal,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"UPDATE Amount
+        SET amount = amount + ($2*(SELECT price FROM coin WHERE id=Amount.coin_id))
+        WHERE user_id = $1"#,
+            user_id,
+            amount
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn fetch_user_totals(&self, user_id: i64) -> Result<UserTotals, sqlx::Error> {
         sqlx::query_as_unchecked!(
             UserTotals,

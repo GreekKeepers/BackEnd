@@ -115,6 +115,11 @@ async fn main() {
         ]);
 
     let dex = TheDex::new(config::X_EX_APIKEY.clone(), config::X_EX_SECRETKEY.clone()).await;
+    let p2way = p2way::P2Way::new(
+        config::P2WAY_APIKEY.clone(),
+        config::P2WAY_SECRETKEY.clone(),
+        p2way::SANDBOX_URL,
+    );
 
     let (ws_manager_tx, ws_manager_rx) = unbounded_channel::<WsManagerEvent>();
     let ws_manager = Manager::new(ws_manager_rx, &db).await;
@@ -151,7 +156,7 @@ async fn main() {
         }
         _ = warp::serve(
             //filters::init_filters(db).recover(handle_rejection)
-            filters::init_filters(db, dex, ws_manager_tx, engine_tx).or(api_doc)
+            filters::init_filters(db, dex, p2way, ws_manager_tx, engine_tx).or(api_doc)
             .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},

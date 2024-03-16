@@ -260,6 +260,7 @@ pub mod json_responses {
         // Abi(GameAbi),
         Totals(Totals),
         LatestGames(LatestGames),
+        OneTimeToken(OneTimeToken),
         // PlayerTotals(PlayerTotals),
         // TokenPrice(TokenPrice),
         // PartnerInfo(PartnerInfo),
@@ -566,6 +567,11 @@ pub mod json_responses {
     //     pub profit: BigDecimal,
     //     //pub player_hand: Option<[Card; 5]>,
     // }
+
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, Default)]
+    pub struct OneTimeToken {
+        pub token: String,
+    }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, Default)]
     pub struct BetExpanded {

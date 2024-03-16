@@ -69,6 +69,12 @@ pub enum ApiError {
 
     #[error("UknownCurrency `{0}`")]
     UnknownCurrency(String),
+
+    #[error("Error with P2Way: {0}")]
+    P2WayError(p2way::errors::Error),
+
+    #[error("Error updating amounts")]
+    UpdateAmountsError,
 }
 
 impl reject::Reject for ApiError {}

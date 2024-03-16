@@ -563,12 +563,14 @@ pub mod coin {
 }
 
 pub mod invoice {
-    use crate::models::db_models::Invoice;
+    use crate::config;
     use crate::models::json_responses::Prices;
+    use crate::models::{db_models::Invoice, json_responses::OneTimeToken};
     use crate::tools::blake_hash;
 
     use self::json_requests::QrRequest;
 
+    use p2way::P2Way;
     use qrcode_generator::QrCodeEcc;
 
     use rust_decimal::prelude::FromPrimitive;
@@ -614,30 +616,11 @@ pub mod invoice {
                             error!("Error converting client_id: {:?}", invoice);
                             return Ok(gen_info_response("Ok"));
                         };
-                        if db
-                            .increase_balance(
-                                client_id,
-                                1,
-                                &(invoice.amount.ceil() * Decimal::from(1000)),
-                            )
+
+                        db.increase_amounts_by_usdt_amount(client_id, &invoice.amount.ceil())
                             .await
                             .map_err(|e| error!("Error updating invoice: {:?}", e))
-                            .is_err()
-                        {
-                            return Ok(gen_info_response("Ok"));
-                        }
-                        if db
-                            .increase_balance(
-                                client_id,
-                                2,
-                                &(invoice.amount.ceil() * Decimal::from(10)),
-                            )
-                            .await
-                            .map_err(|e| error!("Error updating invoice: {:?}", e))
-                            .is_err()
-                        {
-                            return Ok(gen_info_response("Ok"));
-                        }
+                            .map_err(|_| ApiError::UpdateAmountsError)?;
                     } else {
                         error!("Client id not found in invoice: {:?}", invoice);
                     }
@@ -804,6 +787,73 @@ pub mod invoice {
             qrcode_generator::to_png_to_vec(&invoice.pay_url, QrCodeEcc::Low, 1024)
                 .map_err(|_| ApiError::QrGenerationError(invoice_id))?,
         ))
+    }
+
+    /// Create a new p2p session token
+    ///
+    /// Creates a new p2p token
+    #[utoipa::path(
+        tag="invoice",
+        get,
+        path = "/api/p2way/ott",
+        responses(
+            (status = 200, description = "one time token", body = OneTimeToken),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn create_p2way_token(_: i64, p2way: P2Way) -> Result<WarpResponse, warp::Rejection> {
+        let token = p2way
+            .one_time_token_generation()
+            .await
+            .map_err(ApiError::P2WayError)?;
+
+        Ok(gen_arbitrary_response(ResponseBody::OneTimeToken(
+            OneTimeToken { token: token.token },
+        )))
+    }
+
+    /// Callback
+    ///
+    /// Callback
+    #[utoipa::path(
+        tag="invoice",
+        get,
+        path = "/api/p2way/callback",
+        responses(
+            (status = 200, description = "OK", body = OneTimeToken),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn p2way_callback(
+        data: p2way::models::CallbackResponse,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        if !data
+            .data
+            .merchant_secret_key
+            .eq(&config::P2WAY_SECRETKEY.clone())
+        {
+            return Err(reject::custom(ApiError::UpdateAmountsError));
+        }
+        match data.data.order_state {
+            p2way::OrderState::Success => db
+                .increase_amounts_by_usdt_amount(
+                    i64::from_str_radix(&data.data.user_id, 10).map_err(|e| {
+                        error!("Error on p2way callback: {:?}", e);
+                        ApiError::UpdateAmountsError
+                    })?,
+                    &data.data.amount_from_user_in_usdt,
+                )
+                .await
+                .map_err(|e| {
+                    error!("Error on p2way callback: {:?}", e);
+                    ApiError::UpdateAmountsError
+                })?,
+            p2way::OrderState::Canceled => {}
+            p2way::OrderState::CanceledByUser => {}
+        }
+
+        Ok(gen_info_response("Ok"))
     }
 }
 

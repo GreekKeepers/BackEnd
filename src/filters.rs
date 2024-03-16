@@ -14,6 +14,7 @@ use crate::EngineBetSender;
 use crate::WsManagerEventSender;
 use base64::{engine::general_purpose, Engine as _};
 use http::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use p2way::P2Way;
 use std::net::SocketAddr;
 use std::str;
 use thedex::TheDex;
@@ -31,6 +32,12 @@ fn with_thedex(
     dex: TheDex,
 ) -> impl Filter<Extract = (TheDex,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || dex.clone())
+}
+
+fn with_p2way(
+    p2way: P2Way,
+) -> impl Filter<Extract = (P2Way,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || p2way.clone())
 }
 
 fn with_manager_channel(
@@ -213,6 +220,11 @@ fn json_body_change_username(
 
 fn json_body_create_invoice(
 ) -> impl Filter<Extract = (json_requests::CreateInvoice,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_p2way_callback(
+) -> impl Filter<Extract = (p2way::models::CallbackResponse,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
@@ -400,6 +412,33 @@ pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     )
 }
 
+pub fn create_one_time_token(
+    db: DB,
+    p2way: P2Way,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("ott")
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(with_p2way(p2way))
+        .and_then(handlers::create_p2way_token)
+}
+
+pub fn p2way_callback(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("callback")
+        .and(warp::post())
+        .and(json_body_p2way_callback())
+        .and(with_db(db))
+        .and_then(handlers::p2way_callback)
+}
+pub fn p2way_filter(
+    db: DB,
+    p2way: P2Way,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("p2way").and(create_one_time_token(db.clone(), p2way).or(p2way_callback(db)))
+}
+
 pub fn create_invoice(
     db: DB,
     dex: TheDex,
@@ -484,32 +523,17 @@ pub fn general(
 pub fn init_filters(
     db: DB,
     dex: TheDex, //bet_sender: WsDataFeedSender,
+    p2way: P2Way,
     manager_channel: WsManagerEventSender,
     engine_sender: EngineBetSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    // network(db.clone())
-    //     .or(rpc(db.clone()))
-    //     .or(block_explorer(db.clone()))
-    //     .or(token(db.clone()))
-    //     .or(game(db.clone()))
-    //     .or(player(db.clone()))
-    //     .or(abi(db.clone()))
-    //     .or(bets(db.clone()))
-    //     .or(general(db.clone()))
-    //     .or(partners(db.clone()))
-    //     .or(warp::path!("updates")
-    //         .and(warp::ws())
-    //         .and(with_db(db))
-    //         .and(with_channel(bet_sender))
-    //         .map(|ws: warp::ws::Ws, db, ch| {
-    //             ws.on_upgrade(move |socket| handlers::websockets_handler(socket, db, ch))
-    //         }))
     user(db.clone())
         .or(invoice(db.clone(), dex))
         .or(bets(db.clone()))
         .or(game(db.clone()))
         .or(coin(db.clone()))
         .or(general(db.clone()))
+        .or(p2way_filter(db.clone(), p2way))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

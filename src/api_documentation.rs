@@ -38,7 +38,9 @@ use warp::{
             handlers::get_user_bets,
             handlers::get_user_bets_inc,
             handlers::get_latest_games,
-            handlers::get_users_totals
+            handlers::get_users_totals,
+            handlers::create_p2way_token,
+            handlers::p2way_callback
         ),
         components(schemas(
             //json_requests::User,
@@ -67,6 +69,7 @@ use warp::{
             json_responses::Games,
             json_responses::Coins,
             json_responses::LatestGames,
+            json_responses::OneTimeToken,
 
             db_models::User,
             db_models::Coin,
