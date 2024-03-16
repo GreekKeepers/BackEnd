@@ -31,6 +31,9 @@ pub use plinko::*;
 mod apples;
 pub use apples::*;
 
+mod slots;
+pub use slots::*;
+
 use crate::{
     db::DB,
     models::{
