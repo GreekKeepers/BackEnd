@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT bet.user_id, bet.total, Users.username FROM (\n                        SELECT \n                            bet.user_id, \n                            SUM(bet.profit/Coin.price) as total\n                        FROM bet\n                        INNER JOIN Coin ON Coin.id=bet.coin_id\n                        GROUP BY bet.user_id) as bet\n                INNER JOIN Users ON Users.id=bet.user_id\n                ORDER BY total DESC\n                LIMIT $1 \n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "total",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 2,
+        "name": "username",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "ae44a963807ae56357cba7db0902d64753986d3e6e621a86bf7b15165bd70707"
+}
