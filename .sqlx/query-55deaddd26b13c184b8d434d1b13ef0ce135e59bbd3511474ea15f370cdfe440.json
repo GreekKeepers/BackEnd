@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE Amount\n        SET amount = amount + ($2*(SELECT price FROM coin WHERE id=Amount.coin_id))\n        WHERE user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Numeric"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "55deaddd26b13c184b8d434d1b13ef0ce135e59bbd3511474ea15f370cdfe440"
+}
