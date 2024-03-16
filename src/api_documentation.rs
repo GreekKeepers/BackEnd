@@ -40,7 +40,8 @@ use warp::{
             handlers::get_latest_games,
             handlers::get_users_totals,
             handlers::create_p2way_token,
-            handlers::p2way_callback
+            handlers::p2way_callback,
+            handlers::get_invoice
         ),
         components(schemas(
             //json_requests::User,

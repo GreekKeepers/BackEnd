@@ -461,6 +461,16 @@ pub fn generate_qr(
         .and_then(handlers::generate_qr)
 }
 
+pub fn get_invoice(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!(String)
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::get_invoice)
+}
+
 pub fn crypto_prices(
     db: DB,
     dex: TheDex,
@@ -490,7 +500,8 @@ pub fn invoice(
     warp::path("invoice").and(
         create_invoice(db.clone(), dex.clone()).or(generate_qr(db.clone())
             .or(crypto_prices(db.clone(), dex))
-            .or(invoice_callback(db))),
+            .or(invoice_callback(db.clone()))
+            .or(get_invoice(db))),
     )
 }
 

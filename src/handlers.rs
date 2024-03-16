@@ -607,14 +607,14 @@ pub mod invoice {
                         .await
                     {
                         error!("Error updating invoice: {:?}", e);
-                        return Ok(gen_info_response("Ok"));
+                        return Err(reject::custom(ApiError::UpdateAmountsError));
                     }
                     if let Some(client_id) = &invoice.client_id {
                         let client_id = if let Ok(client_id) = i64::from_str_radix(&client_id, 10) {
                             client_id
                         } else {
                             error!("Error converting client_id: {:?}", invoice);
-                            return Ok(gen_info_response("Ok"));
+                            return Err(reject::custom(ApiError::UpdateAmountsError));
                         };
 
                         db.increase_amounts_by_usdt_amount(client_id, &invoice.amount.ceil())
@@ -623,9 +623,29 @@ pub mod invoice {
                             .map_err(|_| ApiError::UpdateAmountsError)?;
                     } else {
                         error!("Client id not found in invoice: {:?}", invoice);
+                        return Err(reject::custom(ApiError::UpdateAmountsError));
                     }
                 } else {
                     error!("Order id not found in invoice: {:?}", invoice);
+                    return Err(reject::custom(ApiError::UpdateAmountsError));
+                }
+            }
+            thedex::models::InvoiceStatus::Rejected | thedex::models::InvoiceStatus::Unpaid => {
+                debug!("Rejected invoice: {:?}", &invoice);
+                if let Some(order_id) = &invoice.order_id {
+                    if let Err(e) = db
+                        .invoice_update_status(order_id, invoice.status.clone() as i32)
+                        .await
+                    {
+                        error!("Error updating invoice: {:?}", e);
+                        return Err(reject::custom(ApiError::UpdateAmountsError));
+                    } else {
+                        error!("Client id not found in invoice: {:?}", invoice);
+                        return Err(reject::custom(ApiError::UpdateAmountsError));
+                    }
+                } else {
+                    error!("Order id not found in invoice: {:?}", invoice);
+                    return Err(reject::custom(ApiError::UpdateAmountsError));
                 }
             }
             _ => {
@@ -657,6 +677,44 @@ pub mod invoice {
 
         Ok(gen_arbitrary_response(ResponseBody::Prices(Prices {
             prices: response,
+        })))
+    }
+
+    /// Create a new invoice
+    ///
+    /// Creates a new invoice
+    #[utoipa::path(
+        tag="invoice",
+        get,
+        path = "/api/invoice/{invoice_id}",
+        responses(
+            (status = 200, description = "User account was created", body = Invoice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("invoice_id" = String, Path, description = "Id of the invoice, returned by the invoice creation endpoint")
+        )
+    )]
+    pub async fn get_invoice(
+        invoice_id: String,
+        id: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let invoice = db
+            .fetch_invoice(&invoice_id)
+            .await
+            .map_err(ApiError::DbError)?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Invoice(Invoice {
+            id: invoice_id,
+            merchant_id: "EVYWM38X".into(),
+            order_id: invoice.order_id,
+            create_date: invoice.create_date,
+            status: invoice.status,
+            pay_url: invoice.pay_url,
+            user_id: id,
+            amount: invoice.amount,
+            currency: invoice.currency,
         })))
     }
 
