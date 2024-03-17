@@ -550,6 +550,21 @@ impl StatefulGameEngine {
                     if game_result.finished {
                         // game finished
 
+                        if !game_result.total_profit.is_zero() {
+                            if let Err(e) = self
+                                .db
+                                .increase_balance(
+                                    bet.user_id.unwrap(),
+                                    bet.coin_id,
+                                    &game_result.total_profit,
+                                )
+                                .await
+                            {
+                                error!("Error decreasing amount for the bet {:?}: {:?}", bet, e);
+                                continue;
+                            }
+                        }
+
                         let outcomes = format!("{:?}", game_result.outcomes);
                         let profits = format!("{:?}", game_result.profits);
                         if let Err(e) = self
