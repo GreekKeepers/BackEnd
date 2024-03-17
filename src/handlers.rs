@@ -404,8 +404,18 @@ pub mod game {
                                             }
                                         }
                                     },
-                                    WebsocketsIncommingMessage::SubscribeAllBets => {},
-                                    WebsocketsIncommingMessage::UnsubscribeAllBets => {},
+                                    WebsocketsIncommingMessage::SubscribeAllBets => {
+                                        if let Err(_) = manager_writer.send(WsManagerEvent::SubscribeAllBets { id: uuid.clone() }){
+                                            break;
+                                        }
+
+                                    },
+                                    WebsocketsIncommingMessage::UnsubscribeAllBets => {
+                                        if let Err(_) = manager_writer.send(WsManagerEvent::UnsubscribeAllBets { id: uuid.clone() }){
+                                            break;
+                                        }
+
+                                    },
                                     WebsocketsIncommingMessage::Ping => {
                                         if let Err(e) = ws_tx.send(Message::text(serde_json::to_string(&WebsocketsIncommingMessage::Ping).unwrap())).await{
                                             error!("Error on socket `{:?}`: `{:?}`",ws_tx,e);

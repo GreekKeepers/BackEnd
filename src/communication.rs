@@ -63,6 +63,8 @@ pub enum WsManagerEvent {
     UnsubscribeFeed(String),
     SubscribeChannel { id: String, channel: ChannelType },
     UnsubscribeChannel { id: String, channel: ChannelType },
+    SubscribeAllBets { id: String },
+    UnsubscribeAllBets { id: String },
     PropagateBet(BetExpanded),
     PropagateState(GameState),
 }
@@ -178,6 +180,34 @@ impl Manager {
                 self.propagate_bet(bet)?;
             }
             WsManagerEvent::PropagateState(state) => self.propagate_state(state)?,
+            WsManagerEvent::SubscribeAllBets { id } => {
+                if !self.feeds.contains_key(id) {
+                    return Err(ManagerError::FeedDoesntExist(id.to_owned()));
+                }
+
+                for (channel, subs) in self.subscriptions.iter_mut() {
+                    match channel {
+                        ChannelType::Bets(_) => {
+                            subs.insert(id.to_owned());
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            WsManagerEvent::UnsubscribeAllBets { id } => {
+                if !self.feeds.contains_key(id) {
+                    return Err(ManagerError::FeedDoesntExist(id.to_owned()));
+                }
+
+                for (channel, subs) in self.subscriptions.iter_mut() {
+                    match channel {
+                        ChannelType::Bets(_) => {
+                            subs.remove(id);
+                        }
+                        _ => {}
+                    }
+                }
+            }
         }
         Ok(())
     }
