@@ -1,5 +1,5 @@
 use crate::games::{
-    Apples, CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, Slots, StatefulGameEng,
+    Apples, CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, Roulette, Slots, StatefulGameEng,
     StatefullTest, Wheel, RPS,
 };
 use crate::models::db_models::GameState;
@@ -93,6 +93,13 @@ pub fn parse_stateless_game(
                 Err(e)
             }
         },
+        "Roulette" => match serde_json::from_str::<Roulette>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing Roulette game: `{:?}`", e);
+                Err(e)
+            }
+        },
 
         _ => Ok(None),
     }
@@ -103,13 +110,6 @@ pub fn parse_statefull_game(
     params: &str,
 ) -> Result<Option<Box<dyn StatefulGameEng>>, Error> {
     match game_name {
-        //"StatefullTest" => match serde_json::from_str::<StatefullTest>(params) {
-        //    Ok(gm) => Ok(Some(Box::new(gm))),
-        //    Err(e) => {
-        //        error!("Error deserializing StatefullTest game: `{:?}`", e);
-        //        Err(e)
-        //    }
-        //},
         "Mines" => match serde_json::from_str::<Mines>(params) {
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {

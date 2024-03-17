@@ -34,6 +34,9 @@ pub use apples::*;
 mod slots;
 pub use slots::*;
 
+mod roulette;
+pub use roulette::*;
+
 use crate::{
     db::DB,
     models::{
