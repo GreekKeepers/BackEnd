@@ -231,7 +231,7 @@ impl Engine {
                         continue;
                     };
 
-                    if bet.amount * Decimal::from(bet.num_games) > amount {
+                    if !bet.amount.is_zero() && bet.amount * Decimal::from(bet.num_games) > amount {
                         continue;
                     }
 
@@ -488,7 +488,7 @@ impl StatefulGameEngine {
                         continue;
                     };
 
-                    if bet.amount > amount {
+                    if !bet.amount.is_zero() && bet.amount > amount {
                         continue;
                     }
 
