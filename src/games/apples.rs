@@ -122,20 +122,16 @@ impl StatefulGameEng for Apples {
         let mut row = vec![false; difficulty.total_spaces as usize];
 
         let rng = random_numbers[0];
-        let mut mask = 0x8000000000000000u64;
-        let mut mines_amount = difficulty.mines;
-        for r in row.iter_mut() {
-            if mines_amount == 0 {
-                break;
+
+        if difficulty.mines == 1 {
+            let mine_index = rng % difficulty.total_spaces as u64;
+            row[mine_index as usize] = true;
+        } else {
+            for r in row.iter_mut() {
+                *r = true;
             }
-            let res = if rng & mask > 0 {
-                mines_amount -= 1;
-                true
-            } else {
-                false
-            };
-            mask >>= 1;
-            *r = res;
+            let empty_index = rng % difficulty.total_spaces as u64;
+            row[empty_index as usize] = false;
         }
 
         let won = !row[picked_tile as usize];
