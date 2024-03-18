@@ -448,6 +448,20 @@ impl DB {
         .await
     }
 
+    pub async fn fetch_coin_by_id(&self, id: i64) -> Result<Option<Coin>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Coin,
+            r#"
+            SELECT * 
+            FROM Coin
+            WHERE id=$1
+            "#,
+            id
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
     pub async fn fetch_amounts(&self, id: i64) -> Result<Vec<Amount>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Amount,

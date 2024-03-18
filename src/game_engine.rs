@@ -221,6 +221,17 @@ impl Engine {
                             continue;
                         };
 
+                    let coin = if let Ok(Some(coin)) = self.db.fetch_coin_by_id(bet.coin_id).await {
+                        coin
+                    } else {
+                        continue;
+                    };
+
+                    if (bet.amount * Decimal::from(bet.num_games)) / coin.price > Decimal::from(50)
+                    {
+                        continue;
+                    }
+
                     let amount = if let Ok(Some(amount)) = self
                         .db
                         .fetch_amount(bet.user_id.unwrap(), bet.coin_id)
@@ -468,6 +479,16 @@ impl StatefulGameEngine {
                             warn!("Statefull game `{:?}` not found", bet.game_id);
                             continue;
                         };
+
+                    let coin = if let Ok(Some(coin)) = self.db.fetch_coin_by_id(bet.coin_id).await {
+                        coin
+                    } else {
+                        continue;
+                    };
+
+                    if bet.amount / coin.price > Decimal::from(50) {
+                        continue;
+                    }
 
                     if let Ok(Some(state)) = self
                         .db
