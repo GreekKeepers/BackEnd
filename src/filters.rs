@@ -328,6 +328,15 @@ pub fn login_user(
         .and_then(handlers::login_user)
 }
 
+pub fn refresh_token(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("refresh" / String)
+        .and(warp::post())
+        .and(with_db(db))
+        .and_then(handlers::refresh_token)
+}
+
 pub fn get_amounts(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -421,6 +430,7 @@ pub fn user(
             .or(seed(db.clone()))
             .or(get_logined_user(db.clone()))
             .or(get_user_totals(db.clone()))
+            .or(refresh_token(db.clone()))
             .or(get_latest_games(db)),
     )
 }

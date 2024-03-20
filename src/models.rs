@@ -70,6 +70,14 @@ pub mod db_models {
         pub password: String,
     }
 
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
+    pub struct RefreshToken {
+        pub token: String,
+        #[serde(with = "ts_seconds")]
+        pub creation_date: DateTime<Utc>,
+        pub user_id: i64,
+    }
+
     #[derive(Deserialize, Serialize, Clone, ToSchema, Debug)]
     pub struct Coin {
         pub id: i64,

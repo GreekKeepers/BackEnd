@@ -156,7 +156,6 @@ async fn main() {
             warn!("WS Manager stopped: `{:?}`", r);
         }
         _ = warp::serve(
-            //filters::init_filters(db).recover(handle_rejection)
             filters::init_filters(db, dex, p2way, ws_manager_tx, engine_tx, hcap).or(api_doc)
             .or(swagger_ui).recover(handle_rejection).with(cors),
         )

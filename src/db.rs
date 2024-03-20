@@ -2,8 +2,8 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, ServerSeed, TimeBoundaries,
-            Totals, User, UserSeed, UserTotals,
+            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, RefreshToken, ServerSeed,
+            TimeBoundaries, Totals, User, UserSeed, UserTotals,
         },
         json_responses::BetExpanded,
     },
@@ -511,6 +511,62 @@ impl DB {
         )
         .fetch_optional(&self.db_pool)
         .await
+    }
+
+    pub async fn new_refresh_token(&self, user_id: i64, token: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO RefreshToken(
+                token, user_id
+                ) VALUES (
+                    $1,
+                    $2
+                )
+            "#,
+            token,
+            user_id
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn fetch_refresh_token(
+        &self,
+        token: &str,
+        user_id: i64,
+    ) -> Result<RefreshToken, sqlx::Error> {
+        let token = sqlx::query_as_unchecked!(
+            RefreshToken,
+            r#"
+            SELECT * FROM RefreshToken WHERE token=$1 AND user_id=$2
+            "#,
+            token,
+            user_id
+        )
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        Ok(token)
+    }
+
+    pub async fn remove_refresh_token(
+        &self,
+        token: &str,
+        user_id: i64,
+    ) -> Result<bool, sqlx::Error> {
+        let res = sqlx::query!(
+            r#"
+            DELETE FROM RefreshToken WHERE token=$1 AND user_id=$2
+            "#,
+            token,
+            user_id
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(res.rows_affected() != 0)
     }
 
     pub async fn init_amount(

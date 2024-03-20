@@ -1,36 +1,9 @@
-// use std::collections::HashSet;
-// use std::sync::atomic::{AtomicBool, Ordering};
-// use std::sync::Arc;
-
-// use crate::communication::WsDataFeedReceiver;
-// use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
-// #[allow(unused_imports)]
-// use crate::models::db_models::{
-//     GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals, RefClicks,
-//     Withdrawal,
-// };
 use crate::models::json_requests::{self, CreateInvoice, Login};
-// #[allow(unused_imports)]
-// use crate::models::json_requests::{
-//     AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ChangePasswordRequest, ConnectWallet,
-//     DeletePartnerContacts, Login, RegisterPartner, SetNickname, SubmitError, SubmitQuestion,
-// };
-// #[allow(unused_imports)]
 
 use crate::models::db_models::UserTotals;
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
-// pub use abi::*;
-// pub use bets::*;
-// pub use block_explorers::*;
-// use futures::stream::SplitStream;
-// use futures::{SinkExt, StreamExt};
-// pub use game::*;
-// pub use general::*;
-// pub use network::*;
-// pub use nickname::*;
-// pub use partner::*;
 pub use bets::*;
 pub use coin::*;
 pub use game::*;
@@ -930,6 +903,7 @@ pub mod user {
     use crate::models::json_responses::{Amounts, LatestGames, Seed, UserStripped};
     use crate::tools::blake_hash;
     use crate::{config::PASSWORD_SALT, models::json_responses::AccessToken};
+    use base64::{engine::general_purpose, Engine as _};
     use blake2::{Blake2b512, Digest};
 
     use hex::ToHex;
@@ -938,6 +912,8 @@ pub mod user {
     use tracing::debug;
 
     use self::json_requests::ChangeNickname;
+    use crate::tools;
+    use std::str;
 
     use super::*;
     use hcaptcha;
@@ -1003,6 +979,103 @@ pub mod user {
         Ok(gen_info_response("User account has been created"))
     }
 
+    /// Refresh Token
+    ///
+    /// Refreshes the auth token, removed used refresh token
+    #[utoipa::path(
+        tag="user",
+        post,
+        path = "/api/user/refresh/{refresh_token}",
+        responses(
+            (status = 200, description = "Access token", body = AccessToken),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("refresh_token" = String, Path, description = "Refresh token")
+        )
+
+    )]
+    pub async fn refresh_token(token: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let parts = token.split('.').collect::<Vec<&str>>();
+        if parts.len() != 3 {
+            return Err(reject::custom(ApiError::MalformedToken));
+        }
+        let decoded = serde_json::from_str::<jwt::Payload>(
+            str::from_utf8(
+                &general_purpose::STANDARD_NO_PAD
+                    .decode(parts[1])
+                    .map_err(|_| ApiError::MalformedToken)?,
+            )
+            .map_err(|_| ApiError::MalformedToken)?,
+        )
+        .map_err(|_| ApiError::MalformedToken)?;
+
+        let user = db
+            .fetch_user(decoded.sub)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?
+            .ok_or(ApiError::ArbitraryError("Malformed token".into()))?;
+
+        let _token_serialized = tools::serialize_token(
+            &token,
+            &format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat),
+        )
+        .map_err(|_| reject::custom(ApiError::MalformedToken))?;
+
+        let start = SystemTime::now();
+        let current_time = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs();
+
+        if !decoded.aud.eq("Refresh") || current_time > decoded.exp {
+            return Err(reject::custom(ApiError::MalformedToken));
+        }
+
+        if !db
+            .remove_refresh_token(&token, user.id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?
+        {
+            return Err(reject::custom(ApiError::MalformedToken));
+        }
+
+        let token = jwt::generate_token(
+            &jwt::Payload {
+                iss: None,
+                sub: user.id,
+                exp: current_time + 600,
+                iat: current_time,
+                aud: "Auth".into(),
+            },
+            &format!("{}{}{}", *PASSWORD_SALT, user.password, current_time),
+        );
+
+        let refresh_token = jwt::generate_token(
+            &jwt::Payload {
+                iss: None,
+                sub: user.id,
+                exp: current_time + 3000,
+                iat: current_time,
+                aud: "Refresh".into(),
+            },
+            &format!("{}{}{}", *PASSWORD_SALT, user.password, current_time),
+        );
+
+        db.new_refresh_token(user.id, &refresh_token)
+            .await
+            .map_err(ApiError::DbError)?;
+
+        Ok(gen_arbitrary_response(ResponseBody::AccessToken(
+            AccessToken {
+                access_token: token.clone(),
+                token_type: "Bearer".into(),
+                expires_in: 600,
+                refresh_token,
+            },
+        )))
+    }
+
     /// Login user
     ///
     /// Logins user with provided login/password
@@ -1034,19 +1107,34 @@ pub mod user {
             &jwt::Payload {
                 iss: None,
                 sub: user.id,
-                exp: 100,
+                exp: iat + 600,
                 iat,
-                aud: "".into(),
+                aud: "Auth".into(),
             },
             &format!("{}{}{}", *PASSWORD_SALT, hashed_password, iat),
         );
+
+        let refresh_token = jwt::generate_token(
+            &jwt::Payload {
+                iss: None,
+                sub: user.id,
+                exp: iat + 3000,
+                iat,
+                aud: "Refresh".into(),
+            },
+            &format!("{}{}{}", *PASSWORD_SALT, hashed_password, iat),
+        );
+
+        db.new_refresh_token(user.id, &refresh_token)
+            .await
+            .map_err(ApiError::DbError)?;
 
         Ok(gen_arbitrary_response(ResponseBody::AccessToken(
             AccessToken {
                 access_token: token.clone(),
                 token_type: "Bearer".into(),
-                expires_in: 100,
-                refresh_token: token,
+                expires_in: 600,
+                refresh_token,
             },
         )))
     }
