@@ -19,6 +19,7 @@ use http::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use p2way::P2Way;
 use std::net::SocketAddr;
 use std::str;
+use std::time::{SystemTime, UNIX_EPOCH};
 use thedex::TheDex;
 use tracing::debug;
 use warp::filters::header::headers_cloned;
@@ -140,6 +141,17 @@ fn extract_token(headers: &HeaderMap<HeaderValue>) -> Result<(String, Payload), 
         .map_err(|_| ApiError::MalformedToken)?,
     )
     .map_err(|_| ApiError::MalformedToken)?;
+
+    let start = SystemTime::now();
+    let current_time = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs();
+
+    if !decoded.aud.eq("Auth") || decoded.exp < current_time {
+        return Err(ApiError::MalformedToken);
+    }
+
     Ok((
         auth_header.trim_start_matches("Bearer ").to_owned(),
         decoded,
