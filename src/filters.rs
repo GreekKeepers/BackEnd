@@ -42,6 +42,12 @@ fn with_p2way(
     warp::any().map(move || p2way.clone())
 }
 
+fn with_hcap(
+    hcap: hcaptcha::HCaptcha,
+) -> impl Filter<Extract = (hcaptcha::HCaptcha,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || hcap.clone())
+}
+
 fn with_manager_channel(
     ch: WsManagerEventSender,
 ) -> impl Filter<Extract = (WsManagerEventSender,), Error = std::convert::Infallible> + Clone {
@@ -301,12 +307,14 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 
 pub fn register_user(
     db: DB,
+    hcap: hcaptcha::HCaptcha,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path!("register")
         .and(warp::post())
         .and(json_body_register_user())
         //.and_then(with_signature_partner)
         .and(with_db(db))
+        .and(with_hcap(hcap))
         .and_then(handlers::register_user)
 }
 
@@ -401,10 +409,13 @@ pub fn seed(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     warp::path("seed").and(get_client_seed(db.clone()).or(get_server_seed(db)))
 }
 
-pub fn user(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+pub fn user(
+    db: DB,
+    hcap: hcaptcha::HCaptcha,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("user").and(
         get_user(db.clone())
-            .or(register_user(db.clone()))
+            .or(register_user(db.clone(), hcap.clone()))
             .or(login_user(db.clone()))
             .or(get_amounts(db.clone()).or(change_username(db.clone())))
             .or(seed(db.clone()))
@@ -547,8 +558,9 @@ pub fn init_filters(
     p2way: P2Way,
     manager_channel: WsManagerEventSender,
     engine_sender: EngineBetSender,
+    hcap: hcaptcha::HCaptcha,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    user(db.clone())
+    user(db.clone(), hcap)
         .or(invoice(db.clone(), dex))
         .or(bets(db.clone()))
         .or(game(db.clone()))

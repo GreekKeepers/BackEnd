@@ -1,10 +1,4 @@
-use crate::{
-    db::DB,
-    models::{
-        db_models::{Bet, GameResult},
-        json_requests::PropagatedBet,
-    },
-};
+use crate::models::{db_models::GameResult, json_requests::PropagatedBet};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -12,8 +6,6 @@ use rust_decimal::Decimal;
 use tracing::error;
 
 use crate::games::GameEng;
-
-use super::GameType;
 
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 #[serde(tag = "type", content = "data")]
@@ -151,9 +143,5 @@ impl GameEng for Roulette {
 
     fn numbers_per_bet(&self) -> u64 {
         1
-    }
-
-    fn get_type(&self) -> GameType {
-        todo!()
     }
 }

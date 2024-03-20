@@ -27,6 +27,8 @@ lazy_static! {
     pub static ref P2WAY_APIKEY: String = env::var("P2WAY_APIKEY").unwrap();
     pub static ref P2WAY_SECRETKEY: String = env::var("P2WAY_SECRETKEY").unwrap();
 
+    pub static ref HCAPTCHA_SECRET: String = env::var("HCAPTCHA_SECRET").unwrap();
+
     pub static ref ENGINES: u16 = env::var("ENGINES").unwrap().parse().unwrap();
 }
 

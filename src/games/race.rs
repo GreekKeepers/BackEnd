@@ -13,8 +13,6 @@ use tracing::error;
 
 use crate::games::GameEng;
 
-use super::GameType;
-
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct RaceData {
     pub car: u64,
@@ -85,9 +83,5 @@ impl GameEng for Race {
 
     fn numbers_per_bet(&self) -> u64 {
         1
-    }
-
-    fn get_type(&self) -> GameType {
-        GameType::Stateless
     }
 }

@@ -49,8 +49,6 @@ pub trait GameEng {
     fn play(&self, bet: &PropagatedBet, random_numbers: &[u64]) -> Option<GameResult>;
 
     fn numbers_per_bet(&self) -> u64;
-
-    fn get_type(&self) -> GameType;
 }
 
 pub trait StatefulGameEng {
@@ -64,9 +62,4 @@ pub trait StatefulGameEng {
     ) -> Option<GameResult>;
 
     fn numbers_per_bet(&self) -> u64;
-}
-
-pub enum GameType {
-    Stateful,
-    Stateless,
 }

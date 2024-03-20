@@ -75,6 +75,12 @@ pub enum ApiError {
 
     #[error("Error updating amounts")]
     UpdateAmountsError,
+
+    #[error("Error with HCaptcha: {0}")]
+    HCaptchaError(hcaptcha::errors::Error),
+
+    #[error("Bad captcha")]
+    BadCaptcha,
 }
 
 impl reject::Reject for ApiError {}

@@ -13,8 +13,6 @@ use tracing::error;
 
 use crate::games::GameEng;
 
-use super::GameType;
-
 #[derive(Deserialize, Serialize, Clone, ToSchema)]
 pub struct PlinkoData {
     pub num_rows: u64,
@@ -122,9 +120,5 @@ impl GameEng for Plinko {
 
     fn numbers_per_bet(&self) -> u64 {
         1
-    }
-
-    fn get_type(&self) -> GameType {
-        GameType::Stateless
     }
 }
