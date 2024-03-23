@@ -43,7 +43,8 @@ use warp::{
             handlers::p2way_callback,
             handlers::get_invoice,
             handlers::get_leaderboard,
-            handlers::refresh_token
+            handlers::refresh_token,
+            handlers::get_totals
         ),
         components(schemas(
             //json_requests::User,
