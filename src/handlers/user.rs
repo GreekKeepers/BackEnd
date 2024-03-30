@@ -113,7 +113,7 @@ pub async fn register_referal_link(
 /// Registers new referal for the referal link
 #[utoipa::path(
         tag="user",
-        post,
+        get,
         path = "/api/user/referal/{link_name}",
         responses(
             (status = 200, description = "Link has been registered", body = InfoText),

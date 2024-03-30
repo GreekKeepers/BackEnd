@@ -357,7 +357,7 @@ pub fn register_referal(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path!("referal" / String)
-        .and(warp::post())
+        .and(warp::get())
         .and(with_auth(db.clone()))
         .and(with_db(db))
         .and_then(handlers::register_referal)
