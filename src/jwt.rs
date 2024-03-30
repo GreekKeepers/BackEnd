@@ -12,7 +12,7 @@ type HS256 = Hmac<Sha256>;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Payload {
     /// issuer
-    pub iss: Option<String>,
+    pub iss: String,
     /// user login
     pub sub: i64,
     /// expiration time

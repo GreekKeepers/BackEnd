@@ -36,6 +36,7 @@ pub struct GoogleUserResult {
     pub locale: String,
 }
 
+#[derive(Clone)]
 pub struct GoogleOauth {
     client: Arc<reqwest::Client>,
 }

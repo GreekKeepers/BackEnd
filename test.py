@@ -1,3 +1,8 @@
+import json
+import rel
+import time
+import _thread
+import websocket
 import asyncio
 import requests
 
@@ -8,15 +13,15 @@ def main():
     #    "http://127.0.0.1:8282/api/game/CoinFlip",
     # )
     # print(res.content)
-    res = requests.post(
-        "http://127.0.0.1:8282/general/leaderboard/volume/all",
-    )
-    print(res.content)
+    # res = requests.post(
+    #    "http://127.0.0.1:8282/general/leaderboard/volume/all",
+    # )
+    # print(res.content)
 
-    res = requests.post(
-        "http://127.0.0.1:8282/game/list",
-    )
-    print(res.content)
+    # res = requests.post(
+    #    "http://127.0.0.1:8282/game/list",
+    # )
+    # print(res.content)
 
     res = requests.post(
         "http://127.0.0.1:8282/user/register",
@@ -71,13 +76,6 @@ def main():
     print(res.content)
 
 
-import websocket
-import _thread
-import time
-import rel
-import json
-
-
 def on_message(ws, message):
     print(message)
 
@@ -119,7 +117,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## DICE bet
+    # DICE bet
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 3,
@@ -133,7 +131,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## RPS bet
+    # RPS bet
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 4,
@@ -147,7 +145,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## Race bet
+    # Race bet
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 5,
@@ -161,7 +159,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## Wheel bet
+    # Wheel bet
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 6,
@@ -175,7 +173,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## Plinko
+    # Plinko
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 12,
@@ -189,7 +187,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## Slots
+    # Slots
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 14,
@@ -217,7 +215,7 @@ def on_open(ws):
     # }
     # ws.send(json.dumps(bet_data))
 
-    ## Apples bet
+    # Apples bet
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 13,
@@ -276,7 +274,7 @@ def on_open(ws):
     }
     ws.send(json.dumps(bet_data))
 
-    ## Poker bet
+    # Poker bet
     # bet_data = {
     #    "type": "MakeBet",
     #    "game_id": 11,
@@ -319,4 +317,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    web_sockets()
+    main()

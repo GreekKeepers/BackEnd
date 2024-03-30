@@ -10,6 +10,7 @@ use crate::jwt::Payload;
 use crate::models::db_models::TimeBoundaries;
 use crate::models::json_requests;
 use crate::models::LeaderboardType;
+use crate::oauth_providers;
 use crate::tools;
 use crate::EngineBetSender;
 
@@ -29,6 +30,13 @@ use warp::Filter;
 
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
+}
+
+fn with_google(
+    google: oauth_providers::google::GoogleOauth,
+) -> impl Filter<Extract = (oauth_providers::google::GoogleOauth,), Error = std::convert::Infallible>
+       + Clone {
+    warp::any().map(move || google.clone())
 }
 
 fn with_thedex(
@@ -60,60 +68,6 @@ fn with_engine_channel(
 ) -> impl Filter<Extract = (EngineBetSender,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || ch.clone())
 }
-
-// async fn with_signature_nickname<'a>(
-//     credentials: json_requests::SetNickname,
-// ) -> Result<json_requests::SetNickname, warp::Rejection> {
-//     if tools::verify_signature(
-//         &credentials.address,
-//         &credentials.nickname,
-//         &credentials.signature,
-//     ) {
-//         Ok(credentials)
-//     } else {
-//         Err(reject::custom(ApiError::BadSignature(
-//             credentials.address.to_string(),
-//             credentials.nickname.to_string(),
-//             credentials.signature,
-//         )))
-//     }
-// }
-
-// async fn with_signature_referal<'a>(
-//     credentials: json_requests::CreateReferal,
-// ) -> Result<json_requests::CreateReferal, warp::Rejection> {
-//     let msg = format!("{} {}", &credentials.refer_to, &credentials.referal);
-//     if tools::verify_signature(&credentials.referal, &msg, &credentials.signature) {
-//         Ok(credentials)
-//     } else {
-//         Err(reject::custom(ApiError::BadSignature(
-//             credentials.referal.to_string(),
-//             msg.to_string(),
-//             credentials.signature,
-//         )))
-//     }
-// }
-
-// async fn with_signature_connect_wallet<'a>(
-//     credentials: json_requests::ConnectWallet,
-// ) -> Result<json_requests::ConnectWallet, warp::Rejection> {
-//     let msg = format!(
-//         "CONNECT WALLET {} {} {} {}",
-//         &credentials.partner_wallet,
-//         &credentials.user_wallet,
-//         &credentials.site_id,
-//         &credentials.sub_id,
-//     );
-//     if tools::verify_signature(&credentials.user_wallet, &msg, &credentials.signature) {
-//         Ok(credentials)
-//     } else {
-//         Err(reject::custom(ApiError::BadSignature(
-//             credentials.user_wallet.to_string(),
-//             msg.to_string(),
-//             credentials.signature,
-//         )))
-//     }
-// }
 
 fn extract_token(headers: &HeaderMap<HeaderValue>) -> Result<(String, Payload), ApiError> {
     let header = match headers.get(AUTHORIZATION) {
@@ -169,11 +123,13 @@ async fn auth_verified(headers: HeaderMap<HeaderValue>, db: DB) -> Result<i64, w
                 .ok_or(ApiError::ArbitraryError(
                     "Wrong username or password".into(),
                 ))?;
-            let _token_serialized = tools::serialize_token(
-                &token,
-                &format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat),
-            )
-            .map_err(|_| reject::custom(ApiError::MalformedToken))?;
+            let key = if decoded.iss.eq("Local") {
+                format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat)
+            } else {
+                format!("{}{}", *PASSWORD_SALT, decoded.iat)
+            };
+            let _token_serialized = tools::serialize_token(&token, &key)
+                .map_err(|_| reject::custom(ApiError::MalformedToken))?;
 
             Ok(user.id)
         }
@@ -340,6 +296,18 @@ pub fn login_user(
         .and_then(handlers::login_user)
 }
 
+pub fn login_user_google(
+    db: DB,
+    google: oauth_providers::google::GoogleOauth,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("login" / "google")
+        .and(warp::query::<oauth_providers::google::CodeResponse>())
+        .and(warp::get())
+        .and(with_db(db))
+        .and(with_google(google))
+        .and_then(handlers::login_google)
+}
+
 pub fn refresh_token(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -433,6 +401,7 @@ pub fn seed(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 pub fn user(
     db: DB,
     hcap: hcaptcha::HCaptcha,
+    google: oauth_providers::google::GoogleOauth,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("user").and(
         get_user(db.clone())
@@ -443,6 +412,7 @@ pub fn user(
             .or(get_logined_user(db.clone()))
             .or(get_user_totals(db.clone()))
             .or(refresh_token(db.clone()))
+            .or(login_user_google(db.clone(), google))
             .or(get_latest_games(db)),
     )
 }
@@ -576,13 +546,14 @@ pub fn general(
 
 pub fn init_filters(
     db: DB,
-    dex: TheDex, //bet_sender: WsDataFeedSender,
+    dex: TheDex,
     p2way: P2Way,
     manager_channel: WsManagerEventSender,
     engine_sender: EngineBetSender,
     hcap: hcaptcha::HCaptcha,
+    google: oauth_providers::google::GoogleOauth,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    user(db.clone(), hcap)
+    user(db.clone(), hcap, google)
         .or(invoice(db.clone(), dex))
         .or(bets(db.clone()))
         .or(game(db.clone()))

@@ -59,7 +59,16 @@ pub mod db_models {
         pub username: String,
     }
 
-    #[derive(Deserialize, Serialize, Clone, ToSchema)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, sqlx::Type, PartialEq, PartialOrd)]
+    #[sqlx(type_name = "oauth_provider", rename_all = "lowercase")]
+    pub enum OauthProvider {
+        Local,
+        Google,
+        Facebook,
+        Twitter,
+    }
+
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug)]
     pub struct User {
         pub id: i64,
         #[serde(with = "ts_seconds")]
@@ -68,7 +77,7 @@ pub mod db_models {
         pub login: String,
         pub username: String,
         pub password: String,
-        pub provider: String,
+        pub provider: OauthProvider,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema)]

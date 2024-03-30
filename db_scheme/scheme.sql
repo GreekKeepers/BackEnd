@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS ServerSeed CASCADE;
 DROP TABLE IF EXISTS Bet CASCADE;
 DROP TABLE IF EXISTS GameState CASCADE;
 
+CREATE TYPE oauth_provider AS ENUM ('local', 'google', 'facebook', 'twitter');
+
 CREATE TABLE IF NOT EXISTS Users(
     id BIGSERIAL PRIMARY KEY,
     registration_time TIMESTAMP DEFAULT NOW(),
@@ -14,7 +16,7 @@ CREATE TABLE IF NOT EXISTS Users(
     login TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL,
     password char(128) NOT NULL,
-    provider TEXT DEFAULT 'local'
+    provider oauth_provider DEFAULT 'local'
 );
 
 CREATE TABLE IF NOT EXISTS RefreshToken (

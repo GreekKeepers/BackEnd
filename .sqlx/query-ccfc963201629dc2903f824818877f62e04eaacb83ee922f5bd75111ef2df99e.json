@@ -31,7 +31,19 @@
       {
         "ordinal": 5,
         "name": "provider",
-        "type_info": "Text"
+        "type_info": {
+          "Custom": {
+            "name": "oauth_provider",
+            "kind": {
+              "Enum": [
+                "local",
+                "google",
+                "facebook",
+                "twitter"
+              ]
+            }
+          }
+        }
       }
     ],
     "parameters": {
@@ -45,7 +57,7 @@
       false,
       false,
       false,
-      false
+      true
     ]
   },
   "hash": "ccfc963201629dc2903f824818877f62e04eaacb83ee922f5bd75111ef2df99e"

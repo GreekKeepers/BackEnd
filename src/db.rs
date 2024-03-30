@@ -2,8 +2,8 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, RefreshToken, ServerSeed,
-            TimeBoundaries, Totals, User, UserSeed, UserTotals,
+            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, OauthProvider, RefreshToken,
+            ServerSeed, TimeBoundaries, Totals, User, UserSeed, UserTotals,
         },
         json_responses::BetExpanded,
     },
@@ -414,35 +414,30 @@ impl DB {
     pub async fn register_user(
         &self,
         login: &str,
+        username: &str,
+        provider: OauthProvider,
         password_hash: &str,
     ) -> Result<User, sqlx::Error> {
-        sqlx::query!(
+        sqlx::query_as_unchecked!(
+            User,
             r#"
             INSERT INTO Users(
                 login,
                 username,
+                provider,
                 password
             ) VALUES (
                 $1,
-                $1,
-                $2
+                $2,
+                $3,
+                $4
             )
+            RETURNING id, registration_time, login, username, password, provider 
             "#,
             login,
-            password_hash
-        )
-        .execute(&self.db_pool)
-        .await?;
-
-        sqlx::query_as_unchecked!(
-            User,
-            r#"
-            SELECT *
-            FROM Users
-            WHERE Users.login=$1
-            LIMIT 1
-            "#,
-            login,
+            username,
+            provider,
+            password_hash,
         )
         .fetch_one(&self.db_pool)
         .await

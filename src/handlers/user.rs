@@ -1,4 +1,5 @@
 use crate::jwt;
+use crate::models::db_models::OauthProvider;
 use crate::models::json_responses::{Amounts, LatestGames, Seed, UserStripped};
 use crate::tools::blake_hash;
 use crate::{config::PASSWORD_SALT, models::json_responses::AccessToken};
@@ -53,7 +54,7 @@ pub async fn register_user(
 
     debug!("res {:?}", res);
     let user = db
-        .register_user(&data.username, &res)
+        .register_user(&data.username, &data.username, OauthProvider::Local, &res)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
@@ -107,15 +108,15 @@ pub async fn register_referal_link(
     Ok(gen_info_response("Link has been registered"))
 }
 
-/// Register referal link
+/// Login via google/register
 ///
-/// Registers new referal link for the loged in user
+/// Logins a user via google, if the account didn't exist, creates a new one
 #[utoipa::path(
         tag="user",
         get,
         path = "/api/user/login/google",
         responses(
-            (status = 200, description = "Link has been registered", body = InfoText),
+            (status = 200, description = "An access token", body = AccessToken),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
 
@@ -129,7 +130,7 @@ pub async fn login_google(
         code
     } else {
         error!("Error on logging in with google: {:?}", query);
-        return Ok(gen_info_response("Error"));
+        return Ok(gen_info_response("Error logging in with google"));
     };
 
     let token = google.request_token(&code).await?;
@@ -141,7 +142,98 @@ pub async fn login_google(
         .fetch_user_by_login(&google_user.email)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-    Ok(gen_info_response("No Error"))
+
+    let user_id = match user {
+        Some(user) => {
+            debug!("Google user found {:?}", user);
+            if user.provider != OauthProvider::Google {
+                error!(
+                    "User with email: `{}` has provider: `{:?}` instead of google",
+                    &google_user.email, user.provider
+                );
+
+                return Ok(gen_info_response(
+                    "Error user was registered under different provider",
+                ));
+            }
+            user.id
+        }
+        None => {
+            let user = db
+                .register_user(
+                    &google_user.email,
+                    &google_user.name,
+                    OauthProvider::Google,
+                    "",
+                )
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+            let coins = db
+                .fetch_coins()
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+            debug!("Coins {:?}", coins);
+
+            for coin in coins {
+                if coin.id == 1 {
+                    db.init_amount(user.id, coin.id, Decimal::from_u64(1000).unwrap())
+                        .await
+                        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+                } else {
+                    db.init_amount(user.id, coin.id, Decimal::from_u64(0).unwrap())
+                        .await
+                        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+                }
+            }
+
+            user.id
+        }
+    };
+
+    let start = SystemTime::now();
+    let iat = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs();
+
+    let key = format!("{}{}", *PASSWORD_SALT, iat);
+
+    let token = jwt::generate_token(
+        &jwt::Payload {
+            iss: "Google".into(),
+            sub: user_id,
+            exp: iat + 600,
+            iat,
+            aud: "Auth".into(),
+        },
+        &key,
+    );
+
+    let refresh_token = jwt::generate_token(
+        &jwt::Payload {
+            iss: "Google".into(),
+            sub: user_id,
+            exp: iat + 3000,
+            iat,
+            aud: "Refresh".into(),
+        },
+        &key,
+    );
+
+    db.new_refresh_token(user_id, &refresh_token)
+        .await
+        .map_err(ApiError::DbError)?;
+
+    Ok(gen_arbitrary_response(ResponseBody::AccessToken(
+        AccessToken {
+            access_token: token.clone(),
+            token_type: "Bearer".into(),
+            expires_in: 600,
+            refresh_token,
+        },
+    )))
 }
 
 /// Refresh Token
@@ -181,11 +273,14 @@ pub async fn refresh_token(token: String, db: DB) -> Result<WarpResponse, warp::
         .map_err(|e| reject::custom(ApiError::DbError(e)))?
         .ok_or(ApiError::ArbitraryError("Malformed token".into()))?;
 
-    let _token_serialized = tools::serialize_token(
-        &token,
-        &format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat),
-    )
-    .map_err(|_| reject::custom(ApiError::MalformedToken))?;
+    let key = if decoded.iss.eq("Local") {
+        format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat)
+    } else {
+        format!("{}{}", *PASSWORD_SALT, decoded.iat)
+    };
+
+    let _token_serialized = tools::serialize_token(&token, &key)
+        .map_err(|_| reject::custom(ApiError::MalformedToken))?;
 
     let start = SystemTime::now();
     let current_time = start
@@ -207,24 +302,24 @@ pub async fn refresh_token(token: String, db: DB) -> Result<WarpResponse, warp::
 
     let token = jwt::generate_token(
         &jwt::Payload {
-            iss: None,
+            iss: "Local".into(),
             sub: user.id,
             exp: current_time + 600,
             iat: current_time,
             aud: "Auth".into(),
         },
-        &format!("{}{}{}", *PASSWORD_SALT, user.password, current_time),
+        &key,
     );
 
     let refresh_token = jwt::generate_token(
         &jwt::Payload {
-            iss: None,
+            iss: "Local".into(),
             sub: user.id,
             exp: current_time + 3000,
             iat: current_time,
             aud: "Refresh".into(),
         },
-        &format!("{}{}{}", *PASSWORD_SALT, user.password, current_time),
+        &key,
     );
 
     db.new_refresh_token(user.id, &refresh_token)
@@ -268,26 +363,28 @@ pub async fn login_user(login: Login, db: DB) -> Result<WarpResponse, warp::Reje
         .expect("Time went backwards")
         .as_secs();
 
+    let key = format!("{}{}{}", *PASSWORD_SALT, hashed_password, iat);
+
     let token = jwt::generate_token(
         &jwt::Payload {
-            iss: None,
+            iss: "Local".into(),
             sub: user.id,
             exp: iat + 600,
             iat,
             aud: "Auth".into(),
         },
-        &format!("{}{}{}", *PASSWORD_SALT, hashed_password, iat),
+        &key,
     );
 
     let refresh_token = jwt::generate_token(
         &jwt::Payload {
-            iss: None,
+            iss: "Local".into(),
             sub: user.id,
             exp: iat + 3000,
             iat,
             aud: "Refresh".into(),
         },
-        &format!("{}{}{}", *PASSWORD_SALT, hashed_password, iat),
+        &key,
     );
 
     db.new_refresh_token(user.id, &refresh_token)

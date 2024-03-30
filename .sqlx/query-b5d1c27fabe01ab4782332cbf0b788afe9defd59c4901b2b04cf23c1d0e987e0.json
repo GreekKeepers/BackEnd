@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * \n            FROM Users\n            WHERE login=$1 AND password=$2\n            LIMIT 1\n            ",
+  "query": "\n            INSERT INTO Users(\n                login,\n                username,\n                provider,\n                password\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4\n            )\n            RETURNING id, registration_time, login, username, password, provider \n            ",
   "describe": {
     "columns": [
       {
@@ -49,6 +49,20 @@
     "parameters": {
       "Left": [
         "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "oauth_provider",
+            "kind": {
+              "Enum": [
+                "local",
+                "google",
+                "facebook",
+                "twitter"
+              ]
+            }
+          }
+        },
         "Bpchar"
       ]
     },
@@ -61,5 +75,5 @@
       true
     ]
   },
-  "hash": "a161f2c52bf24df915e327b2a0b2160b569391bd5259ce174eb629768d033be6"
+  "hash": "b5d1c27fabe01ab4782332cbf0b788afe9defd59c4901b2b04cf23c1d0e987e0"
 }
