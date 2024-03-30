@@ -2,6 +2,7 @@ use crate::db::DB;
 use crate::errors::ApiError;
 use crate::models::json_requests::{self, CreateInvoice, Login};
 
+use crate::communication::EnginePropagatedBet;
 use crate::models::db_models::UserTotals;
 use crate::models::json_responses::{ErrorText, InfoText, JsonResponse, ResponseBody, Status};
 pub use bets::*;
@@ -9,17 +10,10 @@ pub use coin::*;
 pub use game::*;
 pub use general::*;
 pub use invoice::*;
-pub use user::*;
-// pub use rpcs::*;
 use serde::Serialize;
-// pub use token::*;
-// use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
-// use tokio::time::{sleep, Duration};
-// use tracing::{debug, error};
-use warp::http::StatusCode;
-// use warp::ws::{Message, WebSocket};
-use crate::communication::EnginePropagatedBet;
 use std::time::{SystemTime, UNIX_EPOCH};
+pub use user::*;
+use warp::http::StatusCode;
 use warp::Reply;
 use warp::{http::Response as HttpResponse, reject, reply::Response as WarpResponse};
 
@@ -977,6 +971,34 @@ pub mod user {
         }
 
         Ok(gen_info_response("User account has been created"))
+    }
+
+    /// Register referal link
+    ///
+    /// Registers new referal link for the loged in user
+    #[utoipa::path(
+        tag="user",
+        post,
+        path = "/api/user/register_ref/{link_name}",
+        responses(
+            (status = 200, description = "Link has been registered", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("link_name" = String, Path, description = "Name for the referal link")
+        )
+
+    )]
+    pub async fn register_referal_link(
+        link_name: String,
+        referal: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.create_referal_link(referal, &link_name)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Link has been registered"))
     }
 
     /// Refresh Token

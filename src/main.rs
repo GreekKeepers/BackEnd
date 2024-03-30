@@ -29,6 +29,7 @@ mod games;
 mod handlers;
 mod jwt;
 mod models;
+mod oauth_providers;
 mod rejection_handler;
 mod tools;
 

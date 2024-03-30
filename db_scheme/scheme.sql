@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS Users(
 
     login TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL,
-    password char(128) NOT NULL
+    password char(128) NOT NULL,
+    provider TEXT DEFAULT 'local'
 );
 
 CREATE TABLE IF NOT EXISTS RefreshToken (
@@ -116,6 +117,20 @@ CREATE TABLE IF NOT EXISTS Invoice(
     currency TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS Referal(
+    id BIGSERIAL PRIMARY KEY,
+    refer_to BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE UNIQUE,
+    link_name VARCHAR(8) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS Referals(
+    id BIGSERIAL PRIMARY KEY,
+    refer_to BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    refer_name BIGSERIAL NOT NULL REFERENCES Referal(id) ON DELETE CASCADE,
+    referal BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    create_date TIMESTAMP DEFAULT NOW()
+);
+CREATE UNIQUE INDEX referals_unique_idx ON Referals(refer_to, referal);
 
 -- DATA
 

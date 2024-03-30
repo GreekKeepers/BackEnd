@@ -1,8 +1,3 @@
-//pub use tokio::sync::broadcast::{channel, Receiver, Sender};
-
-// use crate::models::db_models::{Bet, TokenPrice};
-// use crate::models::json_responses::BetInfoResponse;
-
 use crate::db::DB;
 use crate::models::db_models::{Bet, GameState};
 use crate::models::json_requests::{ContinueGame, PropagatedBet};
@@ -13,21 +8,6 @@ pub use std::collections::{HashMap, HashSet};
 
 pub use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tracing::{debug, error, info};
-// pub struct DbPropagatedBet {
-//     pub bet: Bet,
-//     pub block_id: u64,
-// }
-
-// pub type DbReceiver = UnboundedReceiver<DbMessage>;
-// pub type DbSender = UnboundedSender<DbMessage>;
-
-// pub type BetReceiver = Receiver<PropagatedBet>;
-// pub type BetSender = Sender<PropagatedBet>;
-
-// pub enum DbMessage {
-//     PlaceBet(DbPropagatedBet),
-//     NewPrice(TokenPrice),
-// }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 pub enum ChannelType {

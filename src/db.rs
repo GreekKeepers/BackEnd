@@ -259,6 +259,20 @@ impl DB {
         .await
     }
 
+    pub async fn fetch_user_by_login(&self, login: &str) -> Result<Option<User>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            User,
+            r#"
+            SELECT * 
+            FROM Users
+            WHERE login=$1
+            "#,
+            login
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
     pub async fn fetch_all_games(&self) -> Result<Vec<Game>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Game,
@@ -511,6 +525,54 @@ impl DB {
         )
         .fetch_optional(&self.db_pool)
         .await
+    }
+
+    pub async fn create_referal_link(
+        &self,
+        refer_to: i64,
+        link_name: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Referal(
+                refer_to,
+                link_name
+                ) VALUES (
+                    $1,
+                    $2
+                )
+            ON CONFLICT (refer_to) DO UPDATE
+            SET link_name=$2
+            "#,
+            refer_to,
+            link_name
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn new_referal(&self, refer_to: i64, referal: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Referals(
+                refer_to,
+                referal,
+		refer_name
+                ) VALUES (
+                    $1,
+                    $2,
+		    (SELECT id FROM referal WHERE refer_to=$1)
+                );
+            "#,
+            refer_to,
+            referal
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn new_refresh_token(&self, user_id: i64, token: &str) -> Result<(), sqlx::Error> {

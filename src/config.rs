@@ -30,6 +30,9 @@ lazy_static! {
     pub static ref HCAPTCHA_SECRET: String = env::var("HCAPTCHA_SECRET").unwrap();
 
     pub static ref ENGINES: u16 = env::var("ENGINES").unwrap().parse().unwrap();
+
+    pub static ref GOOGLE_CLIENT_ID: String = env::var("GOOGLE_CLIENT_ID").unwrap();
+    pub static ref GOOGLE_SECRET_KEY: String = env::var("GOOGLE_SECRET_KEY").unwrap();
 }
 
 #[derive(Debug, Deserialize)]

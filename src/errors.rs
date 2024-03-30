@@ -1,4 +1,5 @@
 use crate::communication::ChannelType;
+use reqwest::Error as ReqwestError;
 use thedex::errors::Error as TheDexError;
 use thiserror::Error;
 use warp::reject;
@@ -29,11 +30,6 @@ pub enum ApiError {
     #[error("{0}")]
     ArbitraryError(String),
 
-    // #[error("The auth signature is too old")]
-    // OldSignature,
-
-    // #[error("The wallet {0} is not registered")]
-    // NotRegistered(String),
     #[error("Bad range/step provided")]
     BadRange,
 
@@ -81,6 +77,12 @@ pub enum ApiError {
 
     #[error("Bad captcha")]
     BadCaptcha,
+
+    #[error("Error with reqwest: {0}")]
+    ReqwestError(ReqwestError),
+
+    #[error("Error with google api: {0}")]
+    GoogleApiError(String),
 }
 
 impl reject::Reject for ApiError {}

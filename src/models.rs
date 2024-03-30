@@ -68,6 +68,7 @@ pub mod db_models {
         pub login: String,
         pub username: String,
         pub password: String,
+        pub provider: String,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema)]

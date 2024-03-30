@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Referals(\n                refer_to,\n                referal,\n\t\trefer_name\n                ) VALUES (\n                    $1,\n                    $2,\n\t\t    (SELECT id FROM referal WHERE refer_to=$1)\n                );\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b60533ae42b3eddc861195111a1d6e8ccb5faa94dee89524c12fa9ceabeeb311"
+}

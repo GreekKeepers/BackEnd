@@ -45,3 +45,4 @@ hcaptcha = { git = "https://github.com/GreekKeepers/hCaptcha", branch = "main" }
 hex = "0.4.3"
 async-channel = "2.2.0"
 uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }
+reqwest = { version = "0.12.2", features = ["json"]}

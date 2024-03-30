@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Referal(\n                refer_to,\n                link_name\n                ) VALUES (\n                    $1,\n                    $2\n                )\n            ON CONFLICT (refer_to) DO UPDATE\n            SET link_name=$2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "905a52f0872b597c53f46634aae03b504cf9c7ca2b23acc54700cbf6caae94ee"
+}
