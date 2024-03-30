@@ -108,6 +108,39 @@ pub async fn register_referal_link(
     Ok(gen_info_response("Link has been registered"))
 }
 
+/// Register referal
+///
+/// Registers new referal for the referal link
+#[utoipa::path(
+        tag="user",
+        post,
+        path = "/api/user/referal/{link_name}",
+        responses(
+            (status = 200, description = "Link has been registered", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("link_name" = String, Path, description = "Name for the referal link")
+        )
+
+    )]
+pub async fn register_referal(
+    link_name: String,
+    referal: i64,
+    db: DB,
+) -> Result<WarpResponse, warp::Rejection> {
+    let referal_link = db
+        .fetch_referal_link(&link_name)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    db.new_referal(referal_link.refer_to, referal)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_info_response("Referal as been registered"))
+}
+
 /// Login via google/register
 ///
 /// Logins a user via google, if the account didn't exist, creates a new one

@@ -44,7 +44,9 @@ use warp::{
             handlers::get_invoice,
             handlers::get_leaderboard,
             handlers::refresh_token,
-            handlers::get_totals
+            handlers::get_totals,
+            handlers::register_referal_link,
+            handlers::register_referal
         ),
         components(schemas(
             //json_requests::User,

@@ -2,8 +2,8 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, OauthProvider, RefreshToken,
-            ServerSeed, TimeBoundaries, Totals, User, UserSeed, UserTotals,
+            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, OauthProvider, ReferalLink,
+            RefreshToken, ServerSeed, TimeBoundaries, Totals, User, UserSeed, UserTotals,
         },
         json_responses::BetExpanded,
     },
@@ -546,6 +546,20 @@ impl DB {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn fetch_referal_link(&self, link_name: &str) -> Result<ReferalLink, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            ReferalLink,
+            r#"
+            SELECT *
+            FROM Referal
+            WHERE link_name=$1
+            "#,
+            link_name
+        )
+        .fetch_one(&self.db_pool)
+        .await
     }
 
     pub async fn new_referal(&self, refer_to: i64, referal: i64) -> Result<(), sqlx::Error> {

@@ -138,6 +138,13 @@ pub mod db_models {
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema)]
+    pub struct ReferalLink {
+        pub id: i64,
+        pub refer_to: i64,
+        pub link_name: String,
+    }
+
+    #[derive(Deserialize, Serialize, Clone, ToSchema)]
     pub struct ServerSeed {
         pub id: i64,
         //pub relative_id: i64,

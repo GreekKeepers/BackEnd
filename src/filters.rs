@@ -1,6 +1,4 @@
 use crate::config;
-// use crate::communication::WsDataFeedReceiver;
-// use crate::communication::WsDataFeedSender;
 use crate::config::PASSWORD_SALT;
 use crate::db::DB;
 use crate::errors::ApiError;
@@ -163,16 +161,6 @@ fn with_dex_response(db: DB) -> impl Filter<Extract = (bool,), Error = warp::Rej
         .and(with_db(db))
         .and_then(dex)
 }
-
-// fn json_body_set_nickname(
-// ) -> impl Filter<Extract = (json_requests::SetNickname,), Error = warp::Rejection> + Clone {
-//     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
-// }
-
-// fn json_body_subscribe_referal(
-// ) -> impl Filter<Extract = (json_requests::CreateReferal,), Error = warp::Rejection> + Clone {
-//     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
-// }
 
 fn json_body_invoice_callback(
 ) -> impl Filter<Extract = (thedex::models::Invoice,), Error = warp::Rejection> + Clone {
@@ -355,6 +343,26 @@ pub fn change_username(
         .and_then(handlers::change_username)
 }
 
+pub fn register_referal_link(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("register_ref" / String)
+        .and(warp::post())
+        .and(with_auth(db.clone()))
+        .and(with_db(db))
+        .and_then(handlers::register_referal_link)
+}
+
+pub fn register_referal(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("referal" / String)
+        .and(warp::post())
+        .and(with_auth(db.clone()))
+        .and(with_db(db))
+        .and_then(handlers::register_referal)
+}
+
 pub fn get_user(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -413,6 +421,8 @@ pub fn user(
             .or(get_user_totals(db.clone()))
             .or(refresh_token(db.clone()))
             .or(login_user_google(db.clone(), google))
+            .or(register_referal_link(db.clone()))
+            .or(register_referal(db.clone()))
             .or(get_latest_games(db)),
     )
 }
