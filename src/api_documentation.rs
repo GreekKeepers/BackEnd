@@ -58,6 +58,7 @@ use warp::{
             json_requests::AddPartnerSubid,
             json_requests::ConnectWallet,
             json_requests::Login,
+            json_requests::RegisterUser,
             json_requests::WithdrawRequest,
             json_requests::ChangePasswordRequest,
             json_requests::SubmitQuestion,
