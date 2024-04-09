@@ -411,6 +411,22 @@ impl DB {
         Ok(())
     }
 
+    pub async fn change_password(&self, id: i64, password_hash: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE Users
+            SET password = $1
+            WHERE id = $2
+            "#,
+            password_hash,
+            id
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn register_user(
         &self,
         login: &str,

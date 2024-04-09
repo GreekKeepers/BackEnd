@@ -46,7 +46,8 @@ use warp::{
             handlers::refresh_token,
             handlers::get_totals,
             handlers::register_referal_link,
-            handlers::register_referal
+            handlers::register_referal,
+            handlers::change_password
         ),
         components(schemas(
             //json_requests::User,
@@ -60,7 +61,8 @@ use warp::{
             json_requests::Login,
             json_requests::RegisterUser,
             json_requests::WithdrawRequest,
-            json_requests::ChangePasswordRequest,
+            json_requests::ChangePassword,
+            json_requests::ChangeNickname,
             json_requests::SubmitQuestion,
             json_requests::QrRequest,
             json_requests::InvoiceAmount,

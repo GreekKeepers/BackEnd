@@ -11,13 +11,12 @@ use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use tracing::{debug, error};
 
-use self::json_requests::ChangeNickname;
+use self::json_requests::{ChangeNickname, ChangePassword};
 use crate::tools;
 use std::str;
 
 use super::*;
 use crate::oauth_providers;
-use hcaptcha;
 
 /// Register new user account
 ///
@@ -533,6 +532,36 @@ pub async fn change_username(
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
     Ok(gen_info_response("Username was changed"))
+}
+
+/// Change user's password
+///
+/// requires user being logined
+#[utoipa::path(
+        tag="user",
+        patch,
+        path = "/api/user/password",
+        request_body = ChangePassword,
+        responses(
+            (status = 200, description = "Password was changed", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+pub async fn change_password(
+    data: ChangePassword,
+    id: i64,
+    db: DB,
+) -> Result<WarpResponse, warp::Rejection> {
+    let mut hasher = Blake2b512::new();
+
+    hasher.update(data.new_password.as_bytes());
+
+    let res: String = hasher.finalize().encode_hex();
+    db.change_password(id, &res)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_info_response("Password was changed"))
 }
 
 /// Get user info

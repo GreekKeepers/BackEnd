@@ -182,6 +182,11 @@ fn json_body_change_username(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_change_password(
+) -> impl Filter<Extract = (json_requests::ChangePassword,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 fn json_body_create_invoice(
 ) -> impl Filter<Extract = (json_requests::CreateInvoice,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -343,6 +348,17 @@ pub fn change_username(
         .and_then(handlers::change_username)
 }
 
+pub fn change_password(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("password")
+        .and(warp::patch())
+        .and(json_body_change_password())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::change_password)
+}
+
 pub fn register_referal_link(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -415,7 +431,9 @@ pub fn user(
         get_user(db.clone())
             .or(register_user(db.clone(), hcap.clone()))
             .or(login_user(db.clone()))
-            .or(get_amounts(db.clone()).or(change_username(db.clone())))
+            .or(get_amounts(db.clone())
+                .or(change_username(db.clone()))
+                .or(change_password(db.clone())))
             .or(seed(db.clone()))
             .or(get_logined_user(db.clone()))
             .or(get_user_totals(db.clone()))
