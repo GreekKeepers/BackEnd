@@ -6,6 +6,10 @@ DROP TABLE IF EXISTS UserSeed CASCADE;
 DROP TABLE IF EXISTS ServerSeed CASCADE;
 DROP TABLE IF EXISTS Bet CASCADE;
 DROP TABLE IF EXISTS GameState CASCADE;
+DROP TABLE IF EXISTS Achievement CASCADE;
+DROP TYPE IF EXISTS oauth_provider;
+DROP TABLE IF EXISTS Referal CASCADE;
+DROP TABLE IF EXISTS Referals CASCADE;
 
 CREATE TYPE oauth_provider AS ENUM ('local', 'google', 'facebook', 'twitter');
 
@@ -17,9 +21,18 @@ CREATE TABLE IF NOT EXISTS Users(
     username TEXT NOT NULL,
     password char(128) NOT NULL,
     provider oauth_provider DEFAULT 'local',
-    level SMALLINT DEFAULT 1
+    user_level BIGINT DEFAULT 1
 );
 
+CREATE TABLE IF NOT EXISTS Achievement(
+    id BIGSERIAL PRIMARY KEY,
+
+    achieving_time TIMESTAMP DEFAULT NOW(),
+    user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+
+    achievement_name TEXT NOT NULL,
+    level_cost SMALLINT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS RefreshToken (
     token TEXT PRIMARY KEY,

@@ -306,6 +306,27 @@ pub async fn websockets_handler(
 
                                 }
 
+                                WebsocketsIncommingMessage::NewMessage(message) => {
+                                    if let Some(user_id) = user_id {
+                                        // TODO: cache user
+                                        if let Ok(Some(user)) = db.fetch_user(user_id).await{
+                                            if let Err(_) = manager_writer.send(
+                                                        WsManagerEvent::SendMessage{
+                                                            id:uuid.clone(),
+                                                            user_id,
+                                                            username: user.username,
+                                                            message,
+                                                            level: user.user_level as i64,
+                                                            avatar: None,
+                                                            mentions: Vec::with_capacity(0)
+                                                    }){
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                }
+
                             }
                         },
                         None => {

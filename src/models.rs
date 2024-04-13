@@ -77,6 +77,7 @@ pub mod db_models {
         pub login: String,
         pub username: String,
         pub password: String,
+        pub user_level: i64,
         pub provider: OauthProvider,
     }
 
@@ -308,6 +309,7 @@ pub mod json_responses {
         // ConnectedWallets(Vec<ConnectedWalletInfo>),
         AccessToken(AccessToken),
         UserTotals(UserTotals),
+        ChatMessage(PropagatedChatMessage),
         // Withdrawals(Vec<Withdrawal>),
     }
 
@@ -322,6 +324,7 @@ pub mod json_responses {
                 WsData::NewBet(bet) => ResponseBody::Bet(bet),
                 WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden(Seed { seed }),
                 WsData::StateUpdate(state) => ResponseBody::State(state),
+                WsData::NewMessage(m) => ResponseBody::ChatMessage(m),
             }
         }
     }
@@ -334,6 +337,7 @@ pub mod json_responses {
                     ResponseBody::ServerSeedHidden(Seed { seed: seed.clone() })
                 }
                 WsData::StateUpdate(state) => ResponseBody::State(state.clone()),
+                WsData::NewMessage(m) => ResponseBody::ChatMessage(m.clone()),
             }
         }
     }
@@ -641,6 +645,18 @@ pub mod json_responses {
     pub struct Bets {
         pub bets: Vec<BetExpanded>,
     }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct PropagatedChatMessage {
+        pub room_id: i64,
+        pub user_id: i64,
+        pub username: String,
+        pub level: i64,
+        pub avatar: Option<String>,
+        pub message: String,
+        pub attached_media: Option<String>,
+        pub mentions: Vec<i64>,
+    }
 }
 
 pub mod json_requests {
@@ -720,6 +736,14 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct ChatMessage {
+        pub message: String,
+        pub attached_media: Option<String>,
+        pub mentions: Vec<String>,
+        pub chat_room: i64,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct ContinueGame {
         pub game_id: i64,
         pub coin_id: i64,
@@ -743,6 +767,7 @@ pub mod json_requests {
         ContinueGame(ContinueGame),
         GetState(GetState),
         GetUuid,
+        NewMessage(ChatMessage),
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]

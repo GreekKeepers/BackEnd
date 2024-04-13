@@ -249,7 +249,14 @@ impl DB {
         sqlx::query_as_unchecked!(
             User,
             r#"
-            SELECT * 
+            SELECT  
+                id,
+                registration_time,
+                login,
+                username,
+                password,
+                user_level,
+                provider
             FROM Users
             WHERE id=$1
             "#,
@@ -448,7 +455,7 @@ impl DB {
                 $3,
                 $4
             )
-            RETURNING id, registration_time, login, username, password, provider 
+            RETURNING id, registration_time, login, username, password, provider, user_level 
             "#,
             login,
             username,

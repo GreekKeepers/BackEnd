@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO Users(\n                login,\n                username,\n                provider,\n                password\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4\n            )\n            RETURNING id, registration_time, login, username, password, provider \n            ",
+  "query": "\n            SELECT  \n                id,\n                registration_time,\n                login,\n                username,\n                password,\n                user_level,\n                provider\n            FROM Users\n            WHERE id=$1\n            ",
   "describe": {
     "columns": [
       {
@@ -30,6 +30,11 @@
       },
       {
         "ordinal": 5,
+        "name": "user_level",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
         "name": "provider",
         "type_info": {
           "Custom": {
@@ -48,22 +53,7 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
-        {
-          "Custom": {
-            "name": "oauth_provider",
-            "kind": {
-              "Enum": [
-                "local",
-                "google",
-                "facebook",
-                "twitter"
-              ]
-            }
-          }
-        },
-        "Bpchar"
+        "Int8"
       ]
     },
     "nullable": [
@@ -72,8 +62,9 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "b5d1c27fabe01ab4782332cbf0b788afe9defd59c4901b2b04cf23c1d0e987e0"
+  "hash": "5a84755ace84a20d0c9d572ac23c4acfb03a5e1c7ec74e30de92ee57f1bd6964"
 }

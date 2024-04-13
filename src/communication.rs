@@ -1,7 +1,7 @@
 use crate::db::DB;
-use crate::models::db_models::{Bet, GameState};
-use crate::models::json_requests::{ContinueGame, PropagatedBet};
-use crate::models::json_responses::BetExpanded;
+use crate::models::db_models::GameState;
+use crate::models::json_requests::{ChatMessage, ContinueGame, PropagatedBet};
+use crate::models::json_responses::{BetExpanded, PropagatedChatMessage};
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
 pub use async_channel::{Receiver, Sender};
 pub use std::collections::{HashMap, HashSet};
@@ -12,12 +12,15 @@ use tracing::{debug, error, info};
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 pub enum ChannelType {
     Bets(i64),
+    ChatRoom(i64),
 }
 
+#[derive(Debug, Clone)]
 pub enum WsData {
     NewBet(BetExpanded),
     ServerSeed(String),
     StateUpdate(GameState),
+    NewMessage(PropagatedChatMessage),
 }
 
 pub type WsDataFeedReceiver = UnboundedReceiver<WsData>;
@@ -39,12 +42,35 @@ pub type StatefulEngineBetSender = UnboundedSender<EnginePropagatedBet>;
 
 #[derive(Debug)]
 pub enum WsManagerEvent {
-    SubscribeFeed { id: String, feed: WsDataFeedSender },
+    SubscribeFeed {
+        id: String,
+        feed: WsDataFeedSender,
+    },
     UnsubscribeFeed(String),
-    SubscribeChannel { id: String, channel: ChannelType },
-    UnsubscribeChannel { id: String, channel: ChannelType },
-    SubscribeAllBets { id: String },
-    UnsubscribeAllBets { id: String },
+    SubscribeChannel {
+        id: String,
+        channel: ChannelType,
+    },
+    UnsubscribeChannel {
+        id: String,
+        channel: ChannelType,
+    },
+    SubscribeAllBets {
+        id: String,
+    },
+    UnsubscribeAllBets {
+        id: String,
+    },
+    SendMessage {
+        id: String,
+        user_id: i64,
+        username: String,
+
+        message: ChatMessage,
+        level: i64,
+        avatar: Option<String>,
+        mentions: Vec<i64>,
+    },
     PropagateBet(BetExpanded),
     PropagateState(GameState),
 }
@@ -54,7 +80,8 @@ pub type WsManagerEventSender = UnboundedSender<WsManagerEvent>;
 
 pub struct Manager {
     feeds: HashMap<String, WsDataFeedSender>,
-    subscriptions: HashMap<ChannelType, HashSet<String>>,
+    subscriptions_bets: HashMap<ChannelType, HashSet<String>>,
+    subscriptions_chat: HashMap<ChannelType, HashSet<String>>,
     manager_rx: WsManagerEventReceiver,
 }
 
@@ -63,19 +90,20 @@ impl Manager {
         let games = db.fetch_all_games().await.expect("Unable to fetch games");
         let mut subscriptions: HashMap<ChannelType, HashSet<String>> =
             HashMap::with_capacity(games.len());
-        for game in games {
+        for game in games.iter() {
             subscriptions.insert(ChannelType::Bets(game.id), Default::default());
         }
 
         Self {
             feeds: Default::default(),
-            subscriptions,
+            subscriptions_bets: subscriptions.clone(),
+            subscriptions_chat: subscriptions,
             manager_rx,
         }
     }
 
     fn propagate_bet(&self, bet: &BetExpanded) -> Result<(), ManagerError> {
-        match self.subscriptions.get(&ChannelType::Bets(bet.game_id)) {
+        match self.subscriptions_bets.get(&ChannelType::Bets(bet.game_id)) {
             Some(subs) => {
                 for sub in subs.iter() {
                     if let Some(feed) = self.feeds.get(sub) {
@@ -94,8 +122,52 @@ impl Manager {
         Ok(())
     }
 
+    fn propagate_chat_message(
+        &self,
+        message: &ChatMessage,
+        user_id: i64,
+        username: String,
+        level: i64,
+        avatar: Option<String>,
+        mentions: Vec<i64>,
+    ) -> Result<(), ManagerError> {
+        match self
+            .subscriptions_chat
+            .get(&ChannelType::ChatRoom(message.chat_room))
+        {
+            Some(subs) => {
+                let msg = WsData::NewMessage(PropagatedChatMessage {
+                    room_id: message.chat_room,
+                    user_id,
+                    username: username.clone(),
+                    level,
+                    avatar,
+                    message: message.message.clone(),
+                    attached_media: message.attached_media.clone(),
+                    mentions,
+                });
+                for sub in subs.iter() {
+                    if let Some(feed) = self.feeds.get(sub) {
+                        if let Err(e) = feed.send(msg.clone()) {
+                            error!("Error propagating message to feed `{:?}`: `{:?}`", sub, e);
+                        }
+                    }
+                }
+            }
+            None => {
+                return Err(ManagerError::ChannelIsNotPresent(ChannelType::ChatRoom(
+                    message.chat_room,
+                )))
+            }
+        }
+        Ok(())
+    }
+
     fn propagate_state(&self, state: &GameState) -> Result<(), ManagerError> {
-        match self.subscriptions.get(&ChannelType::Bets(state.game_id)) {
+        match self
+            .subscriptions_bets
+            .get(&ChannelType::Bets(state.game_id))
+        {
             Some(subs) => {
                 for sub in subs.iter() {
                     if let Some(feed) = self.feeds.get(sub) {
@@ -121,7 +193,7 @@ impl Manager {
                 match self.feeds.insert(id.to_owned(), feed.clone()) {
                     Some(_) => {
                         //debug!("Channel for ip `{:?}` got removed", id);
-                        self.subscriptions.iter_mut().for_each(|(_, ids)| {
+                        self.subscriptions_bets.iter_mut().for_each(|(_, ids)| {
                             ids.remove(id);
                         });
                     }
@@ -129,7 +201,7 @@ impl Manager {
                 }
             }
             WsManagerEvent::UnsubscribeFeed(id) => {
-                self.subscriptions.iter_mut().for_each(|(_, ids)| {
+                self.subscriptions_bets.iter_mut().for_each(|(_, ids)| {
                     ids.remove(id);
                 });
                 self.feeds.remove(id);
@@ -138,7 +210,7 @@ impl Manager {
                 if !self.feeds.contains_key(id) {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
-                match self.subscriptions.get_mut(channel) {
+                match self.subscriptions_bets.get_mut(channel) {
                     Some(subs) => {
                         subs.insert(id.to_owned());
                     }
@@ -149,7 +221,7 @@ impl Manager {
                 if !self.feeds.contains_key(id) {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
-                match self.subscriptions.get_mut(channel) {
+                match self.subscriptions_bets.get_mut(channel) {
                     Some(subs) => {
                         subs.remove(id);
                     }
@@ -165,7 +237,7 @@ impl Manager {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
 
-                for (channel, subs) in self.subscriptions.iter_mut() {
+                for (channel, subs) in self.subscriptions_bets.iter_mut() {
                     match channel {
                         ChannelType::Bets(_) => {
                             subs.insert(id.to_owned());
@@ -179,7 +251,7 @@ impl Manager {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
 
-                for (channel, subs) in self.subscriptions.iter_mut() {
+                for (channel, subs) in self.subscriptions_bets.iter_mut() {
                     match channel {
                         ChannelType::Bets(_) => {
                             subs.remove(id);
@@ -187,6 +259,27 @@ impl Manager {
                         _ => {}
                     }
                 }
+            }
+            WsManagerEvent::SendMessage {
+                id,
+                user_id,
+                message,
+                username,
+                level,
+                avatar,
+                mentions,
+            } => {
+                if !self.feeds.contains_key(id) {
+                    return Err(ManagerError::FeedDoesntExist(id.to_owned()));
+                }
+                self.propagate_chat_message(
+                    message,
+                    *user_id,
+                    username.clone(),
+                    *level,
+                    avatar.clone(),
+                    mentions.to_vec(),
+                )?;
             }
         }
         Ok(())

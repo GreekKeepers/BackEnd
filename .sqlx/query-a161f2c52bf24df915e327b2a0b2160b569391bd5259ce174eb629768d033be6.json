@@ -44,6 +44,11 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "user_level",
+        "type_info": "Int8"
       }
     ],
     "parameters": {
@@ -58,6 +63,7 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
