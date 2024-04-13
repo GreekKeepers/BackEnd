@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS Users(
     login TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL,
     password char(128) NOT NULL,
-    provider oauth_provider DEFAULT 'local'
+    provider oauth_provider DEFAULT 'local',
+    level SMALLINT DEFAULT 1
 );
+
 
 CREATE TABLE IF NOT EXISTS RefreshToken (
     token TEXT PRIMARY KEY,
