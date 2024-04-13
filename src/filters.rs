@@ -100,7 +100,9 @@ fn extract_token(headers: &HeaderMap<HeaderValue>) -> Result<(String, Payload), 
         .expect("Time went backwards")
         .as_secs();
 
-    if !decoded.aud.eq("Auth") || decoded.exp < current_time {
+    // TODO: add this back, frontend team asked to remove it for some time
+    //if !decoded.aud.eq("Auth") || decoded.exp < current_time {
+    if !decoded.aud.eq("Auth") {
         return Err(ApiError::MalformedToken);
     }
 

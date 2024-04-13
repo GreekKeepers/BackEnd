@@ -1,4 +1,3 @@
-
 use std::{
     net::SocketAddr,
     sync::{
@@ -82,6 +81,12 @@ async fn auth(db: &DB, token: &str) -> Result<i64, ApiError> {
         .map_err(|_| ApiError::MalformedToken)?,
     )
     .map_err(|_| ApiError::MalformedToken)?;
+
+    // TODO: add this back, frontend team asked to remove it for some time
+    //if !decoded.aud.eq("Auth") || decoded.exp < current_time {
+    if !decoded.aud.eq("Auth") {
+        return Err(ApiError::MalformedToken);
+    }
 
     let user = db
         .fetch_user(decoded.sub)
