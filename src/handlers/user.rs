@@ -11,7 +11,7 @@ use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use tracing::{debug, error};
 
-use self::json_requests::{ChangeNickname, ChangePassword};
+use self::json_requests::{ChangeNickname, ChangePasswordRequest};
 use crate::tools;
 use std::str;
 
@@ -541,17 +541,32 @@ pub async fn change_username(
         tag="user",
         patch,
         path = "/api/user/password",
-        request_body = ChangePassword,
+        request_body = ChangePasswordRequest,
         responses(
             (status = 200, description = "Password was changed", body = InfoText),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
     )]
 pub async fn change_password(
-    data: ChangePassword,
+    data: ChangePasswordRequest,
     id: i64,
     db: DB,
 ) -> Result<WarpResponse, warp::Rejection> {
+    let mut hasher = Blake2b512::new();
+
+    hasher.update(data.old_password.as_bytes());
+    let old_password_hash: String = hasher.finalize().encode_hex();
+
+    let user = db
+        .fetch_user(id)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?
+        .ok_or(reject::custom(ApiError::UserDoesntExist))?;
+
+    if !user.password.eq(&old_password_hash) {
+        return Err(reject::custom(ApiError::BadPassword));
+    }
+
     let mut hasher = Blake2b512::new();
 
     hasher.update(data.new_password.as_bytes());

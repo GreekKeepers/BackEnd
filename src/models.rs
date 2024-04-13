@@ -684,11 +684,6 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
-    pub struct ChangePassword {
-        pub new_password: String,
-    }
-
-    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Login {
         pub login: String,
         pub password: String,

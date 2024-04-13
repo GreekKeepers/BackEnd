@@ -61,7 +61,7 @@ use warp::{
             json_requests::Login,
             json_requests::RegisterUser,
             json_requests::WithdrawRequest,
-            json_requests::ChangePassword,
+            json_requests::ChangePasswordRequest,
             json_requests::ChangeNickname,
             json_requests::SubmitQuestion,
             json_requests::QrRequest,

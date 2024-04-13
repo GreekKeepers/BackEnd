@@ -185,7 +185,8 @@ fn json_body_change_username(
 }
 
 fn json_body_change_password(
-) -> impl Filter<Extract = (json_requests::ChangePassword,), Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = (json_requests::ChangePasswordRequest,), Error = warp::Rejection> + Clone
+{
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
