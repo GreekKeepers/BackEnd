@@ -9,6 +9,7 @@ use utoipa_swagger_ui::Config;
 use crate::handlers;
 use crate::models::{db_models, json_requests, json_responses, LeaderboardType};
 
+use crate::oauth_providers;
 use std::sync::Arc;
 use warp::{
     http::Uri,
@@ -47,7 +48,8 @@ use warp::{
             handlers::get_totals,
             handlers::register_referal_link,
             handlers::register_referal,
-            handlers::change_password
+            handlers::change_password,
+            handlers::login_google
         ),
         components(schemas(
             //json_requests::User,
@@ -92,6 +94,8 @@ use warp::{
             db_models::UserTotals,
             db_models::Leaderboard,
             db_models::TimeBoundaries,
+
+            oauth_providers::google::CodeResponse,
 
             LeaderboardType
 

@@ -1,5 +1,6 @@
 use crate::errors::ApiError;
 use reqwest;
+use utoipa::ToSchema;
 
 use crate::config;
 use chrono::serde::ts_seconds;
@@ -7,13 +8,13 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct CodeResponse {
     pub code: Option<String>,
     pub error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct OauthTokenResponse {
     pub access_token: String,
     #[serde(with = "ts_seconds")]
@@ -24,7 +25,7 @@ pub struct OauthTokenResponse {
     pub id_token: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 pub struct GoogleUserResult {
     pub id: String,
     pub email: String,
