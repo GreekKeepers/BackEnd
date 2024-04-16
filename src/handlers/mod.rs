@@ -59,3 +59,13 @@ pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
     )
     .into_response()
 }
+
+pub fn gen_redirect_response(info: ResponseBody, location: &str) -> WarpResponse {
+    HttpResponse::builder()
+        .status(302)
+        .header("Content-Type", "application/json")
+        .header("location", location)
+        .body(serde_json::to_string(&info).unwrap())
+        .unwrap()
+        .into_response()
+}

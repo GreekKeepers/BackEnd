@@ -258,14 +258,15 @@ pub async fn login_google(
         .await
         .map_err(ApiError::DbError)?;
 
-    Ok(gen_arbitrary_response(ResponseBody::AccessToken(
-        AccessToken {
+    Ok(gen_redirect_response(
+        ResponseBody::AccessToken(AccessToken {
             access_token: token.clone(),
             token_type: "Bearer".into(),
             expires_in: 600,
             refresh_token,
-        },
-    )))
+        }),
+        "https://rew.greekkeepers.io/",
+    ))
 }
 
 /// Refresh Token
