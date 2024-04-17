@@ -1,4 +1,3 @@
-
 use crate::config;
 use crate::models::json_responses::Prices;
 use crate::models::{db_models::Invoice, json_responses::OneTimeToken};
@@ -26,7 +25,7 @@ use super::*;
         path = "/api/invoice/callback",
         request_body = CreateInvoice,
         responses(
-            (status = 200, description = "Prices", body = Invoice),
+            (status = 200, description = "Answer", body = Invoice),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
     )]
@@ -94,14 +93,13 @@ pub async fn invoice_callback(
 
 /// Get prices
 ///
-/// Gets prices
+/// Gets prices, requires authentication
 #[utoipa::path(
         tag="invoice",
         get,
         path = "/api/invoice/prices",
-        request_body = CreateInvoice,
         responses(
-            (status = 200, description = "Prices", body = Invoice),
+            (status = 200, description = "Prices", body = Prices),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
     )]
@@ -116,9 +114,9 @@ pub async fn crypto_prices(_: i64, mut dex: TheDex) -> Result<WarpResponse, warp
     })))
 }
 
-/// Create a new invoice
+/// Gets an existing invoice
 ///
-/// Creates a new invoice
+/// Gets an existing invoice
 #[utoipa::path(
         tag="invoice",
         get,
