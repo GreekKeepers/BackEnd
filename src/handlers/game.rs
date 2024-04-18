@@ -324,7 +324,32 @@ pub async fn websockets_handler(
                                             }
                                         }
                                     }
+                                }
 
+                                WebsocketsIncommingMessage::SubscribeInvoice => {
+                                    if let Some(user_id) = user_id {
+                                        if let Err(_) = manager_writer.send(
+                                            WsManagerEvent::SubscribeChannel {
+                                            id: uuid.clone(),
+                                            channel: ChannelType::Invoice(user_id)
+                                        })
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }
+
+                            WebsocketsIncommingMessage::UnsubscribeInvoice => {
+                                if let Some(user_id) = user_id {
+                                        if let Err(_) = manager_writer.send(
+                                            WsManagerEvent::UnsubscribeChannel {
+                                            id: uuid.clone(),
+                                            channel: ChannelType::Invoice(user_id)
+                                        })
+                                        {
+                                            break;
+                                        }
+                                    }
                                 }
 
                             }

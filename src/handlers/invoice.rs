@@ -1,9 +1,7 @@
-use crate::config;
 use crate::models::json_responses::Prices;
 use crate::models::{db_models::Invoice, json_responses::OneTimeToken};
 use crate::tools::blake_hash;
-
-use self::json_requests::QrRequest;
+use crate::{config, WsManagerEvent, WsManagerEventSender};
 
 use p2way::P2Way;
 use qrcode_generator::QrCodeEcc;
@@ -33,6 +31,7 @@ pub async fn invoice_callback(
     _: bool,
     invoice: thedex::models::Invoice,
     db: DB,
+    manager_writer: WsManagerEventSender,
 ) -> Result<WarpResponse, warp::Rejection> {
     match invoice.status {
         thedex::models::InvoiceStatus::Successful => {
@@ -88,6 +87,7 @@ pub async fn invoice_callback(
         }
     }
 
+    manager_writer.send(WsManagerEvent::PropagateInvoice(invoice.into()));
     Ok(gen_info_response("Ok"))
 }
 
@@ -250,7 +250,7 @@ pub async fn create_invoice(
         status: result.status as i32,
         pay_url: result.purse,
         user_id: id,
-        amount: amount,
+        amount,
         currency: data.currency,
     })))
 }

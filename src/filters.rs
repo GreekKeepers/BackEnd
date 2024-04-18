@@ -520,23 +520,26 @@ pub fn crypto_prices(
 
 pub fn invoice_callback(
     db: DB,
+    ch: WsManagerEventSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path!("callback")
         .and(warp::post())
         .and(with_dex_response(db.clone()))
         .and(json_body_invoice_callback())
         .and(with_db(db))
+        .and(with_manager_channel(ch))
         .and_then(handlers::invoice_callback)
 }
 
 pub fn invoice(
     db: DB,
     dex: TheDex,
+    ch: WsManagerEventSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("invoice").and(
         create_invoice(db.clone(), dex.clone()).or(generate_qr(db.clone())
             .or(crypto_prices(db.clone(), dex))
-            .or(invoice_callback(db.clone()))
+            .or(invoice_callback(db.clone(), ch))
             .or(get_invoice(db))),
     )
 }
@@ -585,7 +588,7 @@ pub fn init_filters(
     google: oauth_providers::google::GoogleOauth,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     user(db.clone(), hcap, google)
-        .or(invoice(db.clone(), dex))
+        .or(invoice(db.clone(), dex, manager_channel.clone()))
         .or(bets(db.clone()))
         .or(game(db.clone()))
         .or(coin(db.clone()))

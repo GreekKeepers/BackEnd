@@ -223,6 +223,23 @@ pub mod db_models {
         pub amount: Decimal,
         pub currency: String,
     }
+
+    impl Into<Invoice> for thedex::models::Invoice {
+        fn into(self) -> Invoice {
+            Invoice {
+                id: self.order_id.clone().unwrap_or_default(),
+                merchant_id: self.merchant_id,
+                order_id: self.order_id.unwrap_or_default(),
+                create_date: Default::default(),
+                status: self.status as i32,
+                pay_url: self.purse,
+                user_id: i64::from_str_radix(&self.unique_user_id.unwrap_or_default(), 10)
+                    .unwrap_or_default(),
+                amount: self.amount,
+                currency: self.currency,
+            }
+        }
+    }
 }
 
 pub mod json_responses {
@@ -325,6 +342,7 @@ pub mod json_responses {
                 WsData::ServerSeed(seed) => ResponseBody::ServerSeedHidden(Seed { seed }),
                 WsData::StateUpdate(state) => ResponseBody::State(state),
                 WsData::NewMessage(m) => ResponseBody::ChatMessage(m),
+                WsData::Invoice(invoice) => ResponseBody::Invoice(invoice),
             }
         }
     }
@@ -338,6 +356,7 @@ pub mod json_responses {
                 }
                 WsData::StateUpdate(state) => ResponseBody::State(state.clone()),
                 WsData::NewMessage(m) => ResponseBody::ChatMessage(m.clone()),
+                WsData::Invoice(invoice) => ResponseBody::Invoice(invoice.clone()),
             }
         }
     }
@@ -758,6 +777,8 @@ pub mod json_requests {
         Auth { token: String },
         SubscribeBets { payload: Vec<i64> },
         UnsubscribeBets { payload: Vec<i64> },
+        SubscribeInvoice,
+        UnsubscribeInvoice,
         SubscribeAllBets,
         UnsubscribeAllBets,
         Ping,

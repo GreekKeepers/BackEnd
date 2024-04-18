@@ -1,5 +1,5 @@
 use crate::db::DB;
-use crate::models::db_models::GameState;
+use crate::models::db_models::{GameState, Invoice};
 use crate::models::json_requests::{ChatMessage, ContinueGame, PropagatedBet};
 use crate::models::json_responses::{BetExpanded, PropagatedChatMessage};
 use crate::{errors::ManagerError, models::json_requests::WebsocketsIncommingMessage};
@@ -13,6 +13,7 @@ use tracing::{debug, error, info};
 pub enum ChannelType {
     Bets(i64),
     ChatRoom(i64),
+    Invoice(i64),
 }
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,7 @@ pub enum WsData {
     ServerSeed(String),
     StateUpdate(GameState),
     NewMessage(PropagatedChatMessage),
+    Invoice(Invoice),
 }
 
 pub type WsDataFeedReceiver = UnboundedReceiver<WsData>;
@@ -73,6 +75,7 @@ pub enum WsManagerEvent {
     },
     PropagateBet(BetExpanded),
     PropagateState(GameState),
+    PropagateInvoice(Invoice),
 }
 
 pub type WsManagerEventReceiver = UnboundedReceiver<WsManagerEvent>;
@@ -80,30 +83,31 @@ pub type WsManagerEventSender = UnboundedSender<WsManagerEvent>;
 
 pub struct Manager {
     feeds: HashMap<String, WsDataFeedSender>,
-    subscriptions_bets: HashMap<ChannelType, HashSet<String>>,
-    subscriptions_chat: HashMap<ChannelType, HashSet<String>>,
+    subscriptions_bets: HashMap<i64, HashSet<String>>,
+    subscriptions_chat: HashMap<i64, HashSet<String>>,
+    subscriptions_invoices: HashMap<i64, HashSet<String>>,
     manager_rx: WsManagerEventReceiver,
 }
 
 impl Manager {
     pub async fn new(manager_rx: WsManagerEventReceiver, db: &DB) -> Self {
         let games = db.fetch_all_games().await.expect("Unable to fetch games");
-        let mut subscriptions: HashMap<ChannelType, HashSet<String>> =
-            HashMap::with_capacity(games.len());
+        let mut subscriptions: HashMap<i64, HashSet<String>> = HashMap::with_capacity(games.len());
         for game in games.iter() {
-            subscriptions.insert(ChannelType::Bets(game.id), Default::default());
+            subscriptions.insert(game.id, Default::default());
         }
 
         Self {
             feeds: Default::default(),
             subscriptions_bets: subscriptions.clone(),
             subscriptions_chat: subscriptions,
+            subscriptions_invoices: HashMap::default(),
             manager_rx,
         }
     }
 
     fn propagate_bet(&self, bet: &BetExpanded) -> Result<(), ManagerError> {
-        match self.subscriptions_bets.get(&ChannelType::Bets(bet.game_id)) {
+        match self.subscriptions_bets.get(&bet.game_id) {
             Some(subs) => {
                 for sub in subs.iter() {
                     if let Some(feed) = self.feeds.get(sub) {
@@ -131,10 +135,7 @@ impl Manager {
         avatar: Option<String>,
         mentions: Vec<i64>,
     ) -> Result<(), ManagerError> {
-        match self
-            .subscriptions_chat
-            .get(&ChannelType::ChatRoom(message.chat_room))
-        {
+        match self.subscriptions_chat.get(&message.chat_room) {
             Some(subs) => {
                 let msg = WsData::NewMessage(PropagatedChatMessage {
                     room_id: message.chat_room,
@@ -164,10 +165,7 @@ impl Manager {
     }
 
     fn propagate_state(&self, state: &GameState) -> Result<(), ManagerError> {
-        match self
-            .subscriptions_bets
-            .get(&ChannelType::Bets(state.game_id))
-        {
+        match self.subscriptions_bets.get(&state.game_id) {
             Some(subs) => {
                 for sub in subs.iter() {
                     if let Some(feed) = self.feeds.get(sub) {
@@ -180,6 +178,26 @@ impl Manager {
             None => {
                 return Err(ManagerError::ChannelIsNotPresent(ChannelType::Bets(
                     state.game_id,
+                )))
+            }
+        }
+        Ok(())
+    }
+
+    fn propagate_invoice(&self, invoice: &Invoice) -> Result<(), ManagerError> {
+        match self.subscriptions_invoices.get(&invoice.user_id) {
+            Some(subs) => {
+                for sub in subs.iter() {
+                    if let Some(feed) = self.feeds.get(sub) {
+                        if let Err(e) = feed.send(WsData::Invoice(invoice.clone())) {
+                            error!("Error propagating invoice to feed `{:?}`: `{:?}`", sub, e);
+                        }
+                    }
+                }
+            }
+            None => {
+                return Err(ManagerError::ChannelIsNotPresent(ChannelType::Invoice(
+                    invoice.user_id,
                 )))
             }
         }
@@ -210,22 +228,68 @@ impl Manager {
                 if !self.feeds.contains_key(id) {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
-                match self.subscriptions_bets.get_mut(channel) {
-                    Some(subs) => {
-                        subs.insert(id.to_owned());
+                match channel {
+                    ChannelType::Bets(channel_id) => {
+                        match self.subscriptions_bets.get_mut(channel_id) {
+                            Some(subs) => {
+                                subs.insert(id.to_owned());
+                            }
+                            None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
+                        }
                     }
-                    None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
+                    ChannelType::ChatRoom(channel_id) => {
+                        match self.subscriptions_chat.get_mut(channel_id) {
+                            Some(subs) => {
+                                subs.insert(id.to_owned());
+                            }
+                            None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
+                        }
+                    }
+                    ChannelType::Invoice(user_id) => {
+                        self.subscriptions_invoices
+                            .entry(*user_id)
+                            .and_modify(|subs| {
+                                subs.insert(id.clone());
+                            })
+                            .or_insert(HashSet::from([id.clone()]));
+                    }
                 }
             }
             WsManagerEvent::UnsubscribeChannel { id, channel } => {
                 if !self.feeds.contains_key(id) {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
-                match self.subscriptions_bets.get_mut(channel) {
-                    Some(subs) => {
-                        subs.remove(id);
+                match channel {
+                    ChannelType::Bets(channel_id) => {
+                        match self.subscriptions_bets.get_mut(channel_id) {
+                            Some(subs) => {
+                                subs.remove(id);
+                            }
+                            None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
+                        }
                     }
-                    None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
+                    ChannelType::ChatRoom(channel_id) => {
+                        match self.subscriptions_chat.get_mut(channel_id) {
+                            Some(subs) => {
+                                subs.remove(id);
+                            }
+                            None => return Err(ManagerError::ChannelIsNotPresent(channel.clone())),
+                        }
+                    }
+                    ChannelType::Invoice(user_id) => {
+                        let mut remove = false;
+                        self.subscriptions_invoices
+                            .entry(*user_id)
+                            .and_modify(|subs| {
+                                subs.remove(id);
+                                if subs.len() == 0 {
+                                    remove = true;
+                                }
+                            });
+                        if remove {
+                            self.subscriptions_invoices.remove(&user_id);
+                        }
+                    }
                 }
             }
             WsManagerEvent::PropagateBet(bet) => {
@@ -237,13 +301,8 @@ impl Manager {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
 
-                for (channel, subs) in self.subscriptions_bets.iter_mut() {
-                    match channel {
-                        ChannelType::Bets(_) => {
-                            subs.insert(id.to_owned());
-                        }
-                        _ => {}
-                    }
+                for (_channel, subs) in self.subscriptions_bets.iter_mut() {
+                    subs.insert(id.to_owned());
                 }
             }
             WsManagerEvent::UnsubscribeAllBets { id } => {
@@ -251,13 +310,8 @@ impl Manager {
                     return Err(ManagerError::FeedDoesntExist(id.to_owned()));
                 }
 
-                for (channel, subs) in self.subscriptions_bets.iter_mut() {
-                    match channel {
-                        ChannelType::Bets(_) => {
-                            subs.remove(id);
-                        }
-                        _ => {}
-                    }
+                for (_channel, subs) in self.subscriptions_bets.iter_mut() {
+                    subs.remove(id);
                 }
             }
             WsManagerEvent::SendMessage {
@@ -280,6 +334,9 @@ impl Manager {
                     avatar.clone(),
                     mentions.to_vec(),
                 )?;
+            }
+            WsManagerEvent::PropagateInvoice(invoice) => {
+                self.propagate_invoice(invoice)?;
             }
         }
         Ok(())
@@ -304,6 +361,5 @@ impl Manager {
 
             events.clear();
         }
-        //Ok(())
     }
 }
