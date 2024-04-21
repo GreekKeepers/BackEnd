@@ -1,4 +1,6 @@
-use crate::models::json_responses::Prices;
+use std::net::SocketAddr;
+
+use crate::models::json_responses::{BillineCreateInvoiceResponse, Prices};
 use crate::models::{db_models::Invoice, json_responses::OneTimeToken};
 use crate::tools::blake_hash;
 use crate::{config, WsManagerEvent, WsManagerEventSender};
@@ -11,6 +13,8 @@ use rust_decimal::Decimal;
 use thedex::models::CreateQuickInvoice;
 use thedex::TheDex;
 use tracing::{debug, error, warn};
+
+use self::json_requests::CreateBillineInvoice;
 
 use super::*;
 
@@ -255,6 +259,76 @@ pub async fn create_invoice(
     })))
 }
 
+/// Create a new billine invoice
+///
+/// Creates a new billine invoice `https://billline.net/ru/api-ru/#iframe-primary-request`
+#[utoipa::path(
+        tag="invoice",
+        post,
+        path = "/api/invoice/billine/create",
+        request_body = CreateBillineInvoice,
+        responses(
+            (status = 200, description = "Invoice was created", body = BillineCreateInvoiceResponse),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+pub async fn billine_create_invoice(
+    data: CreateBillineInvoice,
+    id: i64,
+    db: DB,
+    address: SocketAddr,
+) -> Result<WarpResponse, warp::Rejection> {
+    let order_id = blake_hash(&format!(
+        "{}{}{}{}",
+        id,
+        data.amount.clone(),
+        &data.currency,
+        chrono::offset::Utc::now().timestamp_millis()
+    ));
+    let item_name = format!(
+        "Purchasing for {} {} from GreekKeepers",
+        data.amount, &data.currency
+    );
+
+    db.add_billine_invoice(
+        &order_id,
+        "EVYWM38X",
+        &order_id,
+        id,
+        data.amount,
+        &data.currency,
+    )
+    .await
+    .map_err(ApiError::DbError)?;
+
+    let data = billine::RequestIframe {
+        merchant: config::BILLINE_MERCHANT.to_string(),
+        order: order_id.clone(),
+        amount: data.amount,
+        currency: data.currency,
+        item_name,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        user_id: id.to_string(),
+        payment_url: "https://game.greekkeepers.io".to_string(),
+        country: data.country,
+        ip: address.ip().to_string(),
+        custom: "".to_string(),
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        post_code: data.post_code,
+        region: data.region,
+        lang: billine::Language::En,
+        cpf: None,
+    };
+    let sign = billine::sha256_signature(&data, &config::BILLINE_SECRET);
+
+    Ok(gen_arbitrary_response(ResponseBody::BillineCreateInvoice(
+        BillineCreateInvoiceResponse { data, sign },
+    )))
+}
 /// Generate qr code
 ///
 /// Generates qr code from the specified data

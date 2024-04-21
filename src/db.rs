@@ -2,8 +2,9 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, OauthProvider, ReferalLink,
-            RefreshToken, ServerSeed, TimeBoundaries, Totals, User, UserSeed, UserTotals,
+            Amount, Bet, BillineInvoiceStatus, Coin, Game, GameState, Invoice, Leaderboard,
+            OauthProvider, ReferalLink, RefreshToken, ServerSeed, TimeBoundaries, Totals, User,
+            UserSeed, UserTotals,
         },
         json_responses::BetExpanded,
     },
@@ -360,6 +361,47 @@ impl DB {
             order_id,
             status,
             pay_url,
+            user_id,
+            amount,
+            currency
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    /// pending success failed
+    pub async fn add_billine_invoice(
+        &self,
+        id: &str,
+        merchant_id: &str,
+        order_id: &str,
+        user_id: i64,
+        amount: Decimal,
+        currency: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO InvoiceBilline(
+                id,
+                merchant_id,
+                order_id,
+                user_id,
+                amount,
+                currency
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6
+            )
+            "#,
+            id,
+            merchant_id,
+            order_id,
             user_id,
             amount,
             currency

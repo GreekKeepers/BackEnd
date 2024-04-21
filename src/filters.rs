@@ -195,6 +195,12 @@ fn json_body_create_invoice(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_create_billine_invoice(
+) -> impl Filter<Extract = (json_requests::CreateBillineInvoice,), Error = warp::Rejection> + Clone
+{
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 fn json_body_p2way_callback(
 ) -> impl Filter<Extract = (p2way::models::CallbackResponse,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -488,6 +494,18 @@ pub fn create_invoice(
         .and_then(handlers::create_invoice)
 }
 
+pub fn create_billine_invoice(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("create")
+        .and(warp::post())
+        .and(json_body_create_billine_invoice())
+        .and(with_auth(db.clone()))
+        .and(with_db(db.clone()))
+        .and(warp::header::header::<SocketAddr>("X-Forwarded-For"))
+        .and_then(handlers::billine_create_invoice)
+}
+
 pub fn generate_qr(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -537,10 +555,12 @@ pub fn invoice(
     ch: WsManagerEventSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("invoice").and(
-        create_invoice(db.clone(), dex.clone()).or(generate_qr(db.clone())
+        create_invoice(db.clone(), dex.clone())
+            .or(generate_qr(db.clone()))
             .or(crypto_prices(db.clone(), dex))
             .or(invoice_callback(db.clone(), ch))
-            .or(get_invoice(db))),
+            .or(get_invoice(db.clone()))
+            .or(create_billine_invoice(db)),
     )
 }
 

@@ -134,6 +134,19 @@ CREATE TABLE IF NOT EXISTS Invoice(
     currency TEXT NOT NULL
 );
 
+CREATE TYPE billine_status AS ENUM ('pending', 'success', 'failed' );
+
+CREATE TABLE IF NOT EXISTS InvoiceBilline(
+    id TEXT NOT NULL PRIMARY KEY,
+    merchant_id TEXT NOT NULL,
+    order_id TEXT NOT NULL UNIQUE,
+    create_date TIMESTAMP DEFAULT NOW(),
+    status billine_status DEFAULT 'pending',
+    user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    amount NUMERIC(1000, 4),
+    currency TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS Referal(
     id BIGSERIAL PRIMARY KEY,
     refer_to BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE UNIQUE,

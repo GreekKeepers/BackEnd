@@ -33,6 +33,10 @@ lazy_static! {
 
     pub static ref GOOGLE_CLIENT_ID: String = env::var("GOOGLE_CLIENT_ID").unwrap();
     pub static ref GOOGLE_SECRET_KEY: String = env::var("GOOGLE_SECRET_KEY").unwrap();
+
+
+    pub static ref BILLINE_MERCHANT: String = env::var("BILLINE_MERCHANT").unwrap();
+    pub static ref BILLINE_SECRET: String = env::var("BILLINE_SECRET").unwrap();
 }
 
 #[derive(Debug, Deserialize)]

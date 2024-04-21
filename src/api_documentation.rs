@@ -49,7 +49,8 @@ use warp::{
             handlers::register_referal_link,
             handlers::register_referal,
             handlers::change_password,
-            handlers::login_google
+            handlers::login_google,
+            handlers::billine_create_invoice
         ),
         components(schemas(
             //json_requests::User,
@@ -69,6 +70,7 @@ use warp::{
             json_requests::QrRequest,
             json_requests::InvoiceAmount,
             json_requests::CreateInvoice,
+            json_requests::CreateBillineInvoice,
 
             json_responses::JsonResponse,
             json_responses::ResponseBody,
@@ -81,6 +83,7 @@ use warp::{
             json_responses::Coins,
             json_responses::LatestGames,
             json_responses::OneTimeToken,
+            json_responses::BillineCreateInvoiceResponse,
 
             db_models::User,
             db_models::Coin,
@@ -94,6 +97,8 @@ use warp::{
             db_models::UserTotals,
             db_models::Leaderboard,
             db_models::TimeBoundaries,
+            db_models::BillineInvoice,
+            db_models::BillineInvoiceStatus,
 
             oauth_providers::google::CodeResponse,
 

@@ -224,6 +224,27 @@ pub mod db_models {
         pub currency: String,
     }
 
+    #[derive(Deserialize, Serialize, Clone, ToSchema, sqlx::Type, Debug)]
+    #[sqlx(type_name = "billine_status", rename_all = "lowercase")]
+    pub enum BillineInvoiceStatus {
+        Pending,
+        Success,
+        Failed,
+    }
+
+    #[derive(Deserialize, Serialize, Clone, ToSchema, Debug)]
+    pub struct BillineInvoice {
+        pub id: String,
+        pub merchant_id: String,
+        pub order_id: String,
+        #[serde(with = "ts_seconds")]
+        pub create_date: DateTime<Utc>,
+        pub status: BillineInvoiceStatus,
+        pub user_id: i64,
+        pub amount: Decimal,
+        pub currency: String,
+    }
+
     impl Into<Invoice> for thedex::models::Invoice {
         fn into(self) -> Invoice {
             Invoice {
@@ -327,7 +348,7 @@ pub mod json_responses {
         AccessToken(AccessToken),
         UserTotals(UserTotals),
         ChatMessage(PropagatedChatMessage),
-        // Withdrawals(Vec<Withdrawal>),
+        BillineCreateInvoice(BillineCreateInvoiceResponse), // Withdrawals(Vec<Withdrawal>),
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -676,6 +697,12 @@ pub mod json_responses {
         pub attached_media: Option<String>,
         pub mentions: Vec<i64>,
     }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct BillineCreateInvoiceResponse {
+        pub data: billine::RequestIframe,
+        pub sign: String,
+    }
 }
 
 pub mod json_requests {
@@ -711,6 +738,21 @@ pub mod json_requests {
     pub struct CreateInvoice {
         pub amount: InvoiceAmount,
         pub currency: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Clone)]
+    pub struct CreateBillineInvoice {
+        pub amount: Decimal,
+        pub currency: String,
+        pub first_name: String,
+        pub last_name: String,
+        pub country: String,
+        pub email: String,
+        pub phone: String,
+        pub address: String,
+        pub city: String,
+        pub post_code: String,
+        pub region: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
