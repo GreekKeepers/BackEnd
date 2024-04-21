@@ -1,10 +1,12 @@
 use std::net::SocketAddr;
 
+use crate::models::db_models::BillineInvoiceStatus;
 use crate::models::json_responses::{BillineCreateInvoiceResponse, Prices};
 use crate::models::{db_models::Invoice, json_responses::OneTimeToken};
 use crate::tools::blake_hash;
 use crate::{config, WsManagerEvent, WsManagerEventSender};
 
+use billine::CallbackIframe;
 use p2way::P2Way;
 use qrcode_generator::QrCodeEcc;
 
@@ -12,7 +14,7 @@ use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use thedex::models::CreateQuickInvoice;
 use thedex::TheDex;
-use tracing::{debug, error, warn};
+use tracing::{debug, error, info, warn};
 
 use self::json_requests::CreateBillineInvoice;
 
@@ -93,6 +95,81 @@ pub async fn invoice_callback(
 
     manager_writer.send(WsManagerEvent::PropagateInvoice(invoice.into()));
     Ok(gen_info_response("Ok"))
+}
+
+/// Callback
+///
+/// Callback
+#[utoipa::path(
+        tag="invoice",
+        post,
+        path = "/api/invoice/billine/callback",
+        request_body = CreateInvoice,
+        responses(
+            (status = 200, description = "Answer", body = CallbackIframe),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+pub async fn invoice_billine_callback(
+    invoice: CallbackIframe,
+    db: DB,
+) -> Result<WarpResponse, warp::Rejection> {
+    info!("Billine Callback: {:?}", invoice);
+    let calc_signature = billine::md5_signature(&invoice, &config::BILLINE_SECRET);
+    if !calc_signature.eq(&invoice.co_sign) {
+        error!(
+            "Billine signatire is wrong: {:?} != {:?}",
+            calc_signature, invoice.co_sign
+        );
+        return Err(reject::custom(ApiError::UpdateAmountsError));
+    }
+    match invoice.co_inv_st {
+        billine::Status::Success => {
+            db.billine_invoice_update_status(&invoice.co_order_no, BillineInvoiceStatus::Success)
+                .await
+                .map_err(|e| {
+                    error!("Billine callback update status: {:?}", e);
+                    e
+                })
+                .map_err(ApiError::DbError)?;
+            let stored_invoice = db
+                .fetch_billine_invoice(&invoice.co_order_no)
+                .await
+                .map_err(|e| {
+                    error!("Billine fetching invoice: {:?}", e);
+                    e
+                })
+                .map_err(ApiError::DbError)?;
+
+            // TODO: calculate amount in USD from currency
+            let amount_in_usd = invoice
+                .co_amount
+                .ok_or(ApiError::UpdateAmountsError)
+                .map_err(|e| {
+                    error!(
+                        "Error increasing amount for user {:?}: {:?}",
+                        stored_invoice, invoice
+                    );
+                    e
+                })?
+                .ceil();
+
+            db.increase_amounts_by_usdt_amount(stored_invoice.user_id, &amount_in_usd)
+                .await
+                .map_err(|e| error!("Error updating invoice: {:?}", e))
+                .map_err(|_| ApiError::UpdateAmountsError)?;
+        }
+        billine::Status::Fail => {
+            db.billine_invoice_update_status(&invoice.co_order_no, BillineInvoiceStatus::Failed)
+                .await
+                .map_err(|e| {
+                    error!("Billine callback update status: {:?}", e);
+                    e
+                })
+                .map_err(ApiError::DbError)?;
+        }
+    }
+    Ok(gen_raw_text_response("OK"))
 }
 
 /// Get prices
@@ -419,5 +496,5 @@ pub async fn p2way_callback(
         p2way::OrderState::CanceledByUser => {}
     }
 
-    Ok(gen_info_response("Ok"))
+    Ok(gen_raw_text_response("Ok"))
 }

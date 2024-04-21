@@ -201,6 +201,11 @@ fn json_body_create_billine_invoice(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_billine_callback(
+) -> impl Filter<Extract = (billine::CallbackIframe,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 fn json_body_p2way_callback(
 ) -> impl Filter<Extract = (p2way::models::CallbackResponse,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -274,7 +279,6 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 }
 
 // USER
-
 pub fn register_user(
     db: DB,
     hcap: hcaptcha::HCaptcha,
@@ -494,16 +498,27 @@ pub fn create_invoice(
         .and_then(handlers::create_invoice)
 }
 
+// TODO: Unite functions under same route "billine"
 pub fn create_billine_invoice(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("create")
+    warp::path!("billine" / "create")
         .and(warp::post())
         .and(json_body_create_billine_invoice())
         .and(with_auth(db.clone()))
         .and(with_db(db.clone()))
         .and(warp::header::header::<SocketAddr>("X-Forwarded-For"))
         .and_then(handlers::billine_create_invoice)
+}
+//invoice_billine_callback
+pub fn billine_invoice_callback(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("billine" / "callback")
+        .and(warp::post())
+        .and(json_body_billine_callback())
+        .and(with_db(db.clone()))
+        .and_then(handlers::invoice_billine_callback)
 }
 
 pub fn generate_qr(
@@ -560,7 +575,8 @@ pub fn invoice(
             .or(crypto_prices(db.clone(), dex))
             .or(invoice_callback(db.clone(), ch))
             .or(get_invoice(db.clone()))
-            .or(create_billine_invoice(db)),
+            .or(create_billine_invoice(db.clone()))
+            .or(billine_invoice_callback(db)),
     )
 }
 

@@ -224,11 +224,14 @@ pub mod db_models {
         pub currency: String,
     }
 
-    #[derive(Deserialize, Serialize, Clone, ToSchema, sqlx::Type, Debug)]
+    #[derive(Deserialize, Serialize, Clone, ToSchema, sqlx::Type, Debug, strum::Display)]
     #[sqlx(type_name = "billine_status", rename_all = "lowercase")]
     pub enum BillineInvoiceStatus {
+        #[strum(to_string = "pending")]
         Pending,
+        #[strum(to_string = "success")]
         Success,
+        #[strum(to_string = "failed")]
         Failed,
     }
 

@@ -49,6 +49,14 @@ pub fn gen_info_response(info: &str) -> WarpResponse {
     .into_response()
 }
 
+pub fn gen_raw_text_response(info: &'static str) -> WarpResponse {
+    HttpResponse::builder()
+        .status(200)
+        .body(info)
+        .unwrap()
+        .into_response()
+}
+
 pub fn gen_arbitrary_response(info: ResponseBody) -> WarpResponse {
     get_response_status_json(
         StatusCode::OK,

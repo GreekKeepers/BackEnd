@@ -2,9 +2,9 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, BillineInvoiceStatus, Coin, Game, GameState, Invoice, Leaderboard,
-            OauthProvider, ReferalLink, RefreshToken, ServerSeed, TimeBoundaries, Totals, User,
-            UserSeed, UserTotals,
+            Amount, Bet, BillineInvoice, BillineInvoiceStatus, Coin, Game, GameState, Invoice,
+            Leaderboard, OauthProvider, ReferalLink, RefreshToken, ServerSeed, TimeBoundaries,
+            Totals, User, UserSeed, UserTotals,
         },
         json_responses::BetExpanded,
     },
@@ -410,6 +410,40 @@ impl DB {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn billine_invoice_update_status(
+        &self,
+        id: &str,
+        status: BillineInvoiceStatus,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE InvoiceBilline
+            SET status = ($1::text)::billine_status
+            WHERE id=$2
+            "#,
+            status.to_string(),
+            id
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn fetch_billine_invoice(&self, id: &str) -> Result<BillineInvoice, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            BillineInvoice,
+            r#"
+            SELECT * 
+            FROM InvoiceBilline
+            WHERE id=$1
+            "#,
+            id
+        )
+        .fetch_one(&self.db_pool)
+        .await
     }
 
     pub async fn fetch_coins(&self) -> Result<Vec<Coin>, sqlx::Error> {
