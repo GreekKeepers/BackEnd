@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO InvoiceBilline(\n                id,\n                merchant_id,\n                order_id,\n                user_id,\n                amount,\n                currency\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4,\n                $5,\n                $6\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Numeric",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "83638fb3e911952ae61a2f780892d4bbad3c9ae5d9e42d9120fbcd6b6232dd96"
+}

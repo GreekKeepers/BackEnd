@@ -1,0 +1,75 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT * \n            FROM InvoiceBilline\n            WHERE id=$1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "merchant_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "order_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "create_date",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 4,
+        "name": "status",
+        "type_info": {
+          "Custom": {
+            "name": "billine_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "success",
+                "failed"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "amount",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 7,
+        "name": "currency",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "29f116be510430bfcceaf386c364e9cd5beda53c044bd6c4afac3238c186bb37"
+}

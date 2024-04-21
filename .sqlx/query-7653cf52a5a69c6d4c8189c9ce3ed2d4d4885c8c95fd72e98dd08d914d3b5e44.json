@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE InvoiceBilline\n            SET status = ($1::text)::billine_status\n            WHERE id=$2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7653cf52a5a69c6d4c8189c9ce3ed2d4d4885c8c95fd72e98dd08d914d3b5e44"
+}
