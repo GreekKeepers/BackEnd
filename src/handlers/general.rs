@@ -1,6 +1,7 @@
-
 use crate::models::{
-    db_models::TimeBoundaries, json_responses::LeaderboardResponse, LeaderboardType,
+    db_models::TimeBoundaries,
+    json_responses::{LeaderboardResponse, PromTokens},
+    LeaderboardType,
 };
 
 use super::*;
@@ -34,6 +35,36 @@ pub async fn get_leaderboard(
 
     Ok(gen_arbitrary_response(ResponseBody::Leaderboard(
         LeaderboardResponse { leaderboard },
+    )))
+}
+
+/// Get tokens data
+///
+/// Gets the tokens data
+#[utoipa::path(
+        tag="general",
+        get,
+        path = "/api/general/promtokens",
+        responses(
+            (status = 200, description = "Tokens", body = PromTokens),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+pub async fn get_prom_tokens(
+    mut dexs: dexscreener::DexScreener,
+    db: DB,
+) -> Result<WarpResponse, warp::Rejection> {
+    let tokens = db
+        .fetch_tokens_to_track()
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    let tokens = dexs
+        .fetch_pairs_raw(&tokens)
+        .await
+        .map_err(|e| reject::custom(ApiError::DexScreener(e)))?;
+    Ok(gen_arbitrary_response(ResponseBody::PromTokens(
+        PromTokens { tokens: &tokens },
     )))
 }
 

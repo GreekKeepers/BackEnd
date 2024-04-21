@@ -123,6 +123,7 @@ async fn main() {
     );
     let hcap = hcaptcha::HCaptcha::new(config::HCAPTCHA_SECRET.clone());
     let google = oauth_providers::google::GoogleOauth::new();
+    let dexs = dexscreener::DexScreener::new();
 
     let (ws_manager_tx, ws_manager_rx) = unbounded_channel::<WsManagerEvent>();
     let ws_manager = Manager::new(ws_manager_rx, &db).await;
@@ -158,7 +159,7 @@ async fn main() {
             warn!("WS Manager stopped: `{:?}`", r);
         }
         _ = warp::serve(
-            filters::init_filters(db, dex, p2way, ws_manager_tx, engine_tx, hcap, google).or(api_doc)
+            filters::init_filters(db, dex, p2way, ws_manager_tx, engine_tx, hcap, google, dexs).or(api_doc)
             .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},

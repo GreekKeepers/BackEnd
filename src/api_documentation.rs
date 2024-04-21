@@ -50,7 +50,8 @@ use warp::{
             handlers::register_referal,
             handlers::change_password,
             handlers::login_google,
-            handlers::billine_create_invoice
+            handlers::billine_create_invoice,
+            handlers::get_prom_tokens
         ),
         components(schemas(
             //json_requests::User,
@@ -84,6 +85,7 @@ use warp::{
             json_responses::LatestGames,
             json_responses::OneTimeToken,
             json_responses::BillineCreateInvoiceResponse,
+            json_responses::PromTokens,
 
             db_models::User,
             db_models::Coin,
@@ -101,6 +103,13 @@ use warp::{
             db_models::BillineInvoiceStatus,
 
             oauth_providers::google::CodeResponse,
+            dexscreener::models::Token,
+            dexscreener::models::OrderBook,
+            dexscreener::models::Transactions,
+            dexscreener::models::TimeChange,
+            dexscreener::models::Liquidity,
+            dexscreener::models::Pair,
+            dexscreener::models::Pairs,
 
             LeaderboardType
 

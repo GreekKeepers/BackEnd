@@ -43,6 +43,12 @@ fn with_thedex(
     warp::any().map(move || dex.clone())
 }
 
+fn with_dexscreener(
+    dex: dexscreener::DexScreener,
+) -> impl Filter<Extract = (dexscreener::DexScreener,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || dex.clone())
+}
+
 fn with_p2way(
     p2way: P2Way,
 ) -> impl Filter<Extract = (P2Way,), Error = std::convert::Infallible> + Clone {
@@ -600,6 +606,16 @@ pub fn get_totals(
         .and_then(handlers::get_totals)
 }
 
+pub fn get_prom_tokens(
+    dexs: dexscreener::DexScreener,
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("promtokens")
+        .and(with_dexscreener(dexs.clone()))
+        .and(with_db(db.clone()))
+        .and_then(handlers::get_prom_tokens)
+}
+
 pub fn get_leaderboard(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -609,9 +625,14 @@ pub fn get_leaderboard(
 }
 
 pub fn general(
+    dexs: dexscreener::DexScreener,
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("general").and(get_totals(db.clone()).or(get_leaderboard(db)))
+    warp::path("general").and(
+        get_totals(db.clone())
+            .or(get_leaderboard(db.clone()))
+            .or(get_prom_tokens(dexs, db)),
+    )
 }
 
 pub fn init_filters(
@@ -622,13 +643,14 @@ pub fn init_filters(
     engine_sender: EngineBetSender,
     hcap: hcaptcha::HCaptcha,
     google: oauth_providers::google::GoogleOauth,
+    dexs: dexscreener::DexScreener,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     user(db.clone(), hcap, google)
         .or(invoice(db.clone(), dex, manager_channel.clone()))
         .or(bets(db.clone()))
         .or(game(db.clone()))
         .or(coin(db.clone()))
-        .or(general(db.clone()))
+        .or(general(dexs, db.clone()))
         .or(p2way_filter(db.clone(), p2way))
         .or(warp::path!("updates")
             .and(warp::ws())

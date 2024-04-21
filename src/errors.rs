@@ -18,6 +18,9 @@ pub enum ApiError {
     #[error("Db Error: {0}")]
     DbError(sqlx::Error),
 
+    #[error("Dexscreener Error: {0}")]
+    DexScreener(dexscreener::errors::Error),
+
     #[error("The game `{0}` for network `{1}` wasn't found")]
     GameDoesntExist(i64, String),
 

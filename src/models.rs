@@ -303,15 +303,15 @@ pub mod json_responses {
         pub message: String,
     }
 
-    #[derive(Serialize, Deserialize, ToSchema)]
-    pub struct JsonResponse {
+    #[derive(Serialize, ToSchema)]
+    pub struct JsonResponse<'a> {
         pub status: Status,
-        pub body: ResponseBody,
+        pub body: ResponseBody<'a>,
     }
 
-    #[derive(Serialize, Deserialize, ToSchema)]
+    #[derive(Serialize, ToSchema)]
     #[serde(tag = "type")]
-    pub enum ResponseBody {
+    pub enum ResponseBody<'a> {
         ErrorText(ErrorText),
         InfoText(InfoText),
         Amounts(Amounts),
@@ -352,6 +352,13 @@ pub mod json_responses {
         UserTotals(UserTotals),
         ChatMessage(PropagatedChatMessage),
         BillineCreateInvoice(BillineCreateInvoiceResponse), // Withdrawals(Vec<Withdrawal>),
+        // TODO: idk, fix that
+        PromTokens(PromTokens<'a>),
+    }
+
+    #[derive(Serialize, Clone, ToSchema)]
+    pub struct PromTokens<'a> {
+        pub tokens: &'a [dexscreener::models::Pair],
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -359,7 +366,7 @@ pub mod json_responses {
         pub leaderboard: Vec<Leaderboard>,
     }
 
-    impl From<WsData> for ResponseBody {
+    impl<'a> From<WsData> for ResponseBody<'a> {
         fn from(value: WsData) -> Self {
             match value {
                 WsData::NewBet(bet) => ResponseBody::Bet(bet),
@@ -371,7 +378,7 @@ pub mod json_responses {
         }
     }
 
-    impl From<&WsData> for ResponseBody {
+    impl<'a> From<&WsData> for ResponseBody<'a> {
         fn from(value: &WsData) -> Self {
             match value {
                 WsData::NewBet(bet) => ResponseBody::Bet(bet.clone()),

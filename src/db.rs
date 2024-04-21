@@ -307,6 +307,19 @@ impl DB {
         .await
     }
 
+    pub async fn fetch_tokens_to_track(&self) -> Result<String, sqlx::Error> {
+        let res = sqlx::query!(
+            r#"
+            SELECT *
+            FROM TokensToTrack
+            LIMIT 1
+            "#,
+        )
+        .fetch_one(&self.db_pool)
+        .await?;
+        Ok(res.tokens)
+    }
+
     pub async fn invoice_update_status(&self, id: &str, status: i32) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"

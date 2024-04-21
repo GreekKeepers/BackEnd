@@ -39,6 +39,7 @@ jwt = "0.16.0"
 http = "0.2.8"
 base64 = "0.21"
 qrcode-generator = "4.1.9"
+dexscreener = { git = "https://github.com/GreekKeepers/dexscreener.git", branch = "main" }
 thedex = { git = "https://github.com/GreekKeepers/TheDex", branch = "main" }
 p2way = { git = "https://github.com/GreekKeepers/P2Way", branch = "main" }
 hcaptcha = { git = "https://github.com/GreekKeepers/hCaptcha", branch = "main" }
