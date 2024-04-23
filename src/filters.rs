@@ -294,7 +294,7 @@ pub fn register_user(
         .and(json_body_register_user())
         //.and_then(with_signature_partner)
         .and(with_db(db))
-        .and(with_hcap(hcap))
+        //.and(with_hcap(hcap))
         .and_then(handlers::register_user)
 }
 

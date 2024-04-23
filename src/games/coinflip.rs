@@ -1,9 +1,6 @@
-use crate::{
-    db::DB,
-    models::{
-        db_models::{Bet, GameResult},
-        json_requests::PropagatedBet,
-    },
+use crate::models::{
+    db_models::{Bet, GameResult},
+    json_requests::PropagatedBet,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

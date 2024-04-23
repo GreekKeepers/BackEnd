@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use rust_decimal::Decimal;
-use tracing::error;
 
 use crate::games::GameEng;
 

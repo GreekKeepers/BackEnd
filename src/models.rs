@@ -865,7 +865,7 @@ pub mod json_requests {
     pub struct RegisterUser {
         pub username: String,
         pub password: String,
-        pub h_captcha_response: String,
+        //pub h_captcha_response: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

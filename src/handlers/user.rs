@@ -34,16 +34,16 @@ use crate::oauth_providers;
 pub async fn register_user(
     data: json_requests::RegisterUser,
     db: DB,
-    hcap: hcaptcha::HCaptcha,
+    //hcap: hcaptcha::HCaptcha,
 ) -> Result<WarpResponse, warp::Rejection> {
-    let captcha_response = hcap
-        .verify(data.h_captcha_response)
-        .await
-        .map_err(|e| reject::custom(ApiError::HCaptchaError(e)))?;
+    //let captcha_response = hcap
+    //    .verify(data.h_captcha_response)
+    //    .await
+    //    .map_err(|e| reject::custom(ApiError::HCaptchaError(e)))?;
 
-    if !captcha_response.success {
-        return Err(reject::custom(ApiError::BadCaptcha));
-    }
+    //if !captcha_response.success {
+    //    return Err(reject::custom(ApiError::BadCaptcha));
+    //}
 
     let mut hasher = Blake2b512::new();
 
