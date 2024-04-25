@@ -471,11 +471,13 @@ pub async fn p2way_callback(
     data: p2way::models::CallbackResponse,
     db: DB,
 ) -> Result<WarpResponse, warp::Rejection> {
+    info!("P2Way callback {:?}", data);
     if !data
         .data
         .merchant_secret_key
-        .eq(&config::P2WAY_SECRETKEY.clone())
+        .eq(&config::P2WAY_SECRETKEY_HASH.clone())
     {
+        info!("P2Way callback rejected, bad api_key");
         return Err(reject::custom(ApiError::UpdateAmountsError));
     }
     match data.data.order_state {
