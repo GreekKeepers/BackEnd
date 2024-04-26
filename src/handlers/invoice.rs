@@ -470,8 +470,9 @@ pub async fn create_p2way_token(_: i64, p2way: P2Way) -> Result<WarpResponse, wa
 pub async fn p2way_callback(
     data: p2way::models::CallbackResponse,
     db: DB,
+    address: SocketAddr,
 ) -> Result<WarpResponse, warp::Rejection> {
-    info!("P2Way callback {:?}", data);
+    info!("P2Way callback {:?}, address: {:?}", data, address);
     if !data
         .data
         .merchant_secret_key

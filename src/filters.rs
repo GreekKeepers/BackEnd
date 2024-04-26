@@ -482,6 +482,7 @@ pub fn p2way_callback(
         .and(warp::post())
         .and(json_body_p2way_callback())
         .and(with_db(db))
+        .and(warp::header::header::<SocketAddr>("X-Forwarded-For"))
         .and_then(handlers::p2way_callback)
 }
 pub fn p2way_filter(
