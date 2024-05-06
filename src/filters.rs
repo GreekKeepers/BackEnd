@@ -22,6 +22,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use thedex::TheDex;
 use tracing::debug;
 use warp::filters::header::headers_cloned;
+use warp::filters::trace::Info;
 use warp::reject;
 
 use warp::Filter;
@@ -676,4 +677,11 @@ pub fn init_filters(
                     })
                 },
             ))
+        .with(warp::trace(|info: Info| {
+            tracing::debug_span!(
+                "request",
+                method = %info.method(),
+                path = %info.path(),
+            )
+        }))
 }

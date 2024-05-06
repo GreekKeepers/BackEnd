@@ -46,7 +46,8 @@ async fn main() {
     // load log config
     let env_filter = EnvFilter::from_default_env()
         .add_directive("backend=debug".parse().unwrap())
-        .add_directive("hyper=warn".parse().unwrap());
+        .add_directive("hyper=warn".parse().unwrap())
+        .add_directive("warp=warn".parse().unwrap());
     let collector = tracing_subscriber::registry().with(env_filter).with(
         fmt::Layer::new()
             .with_writer(io::stdout)
