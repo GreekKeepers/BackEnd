@@ -682,6 +682,7 @@ pub fn init_filters(
                 "request",
                 method = %info.method(),
                 path = %info.path(),
+                headers = ?info.request_headers().values().collect::<Vec<_>>(),
             )
         }))
 }
