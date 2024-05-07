@@ -485,19 +485,20 @@ pub async fn p2way_callback(
         p2way::OrderState::Success => db
             .increase_amounts_by_usdt_amount(
                 i64::from_str_radix(&data.data.user_id, 10).map_err(|e| {
-                    error!("Error on p2way callback: {:?}", e);
+                    info!("Error on p2way callback: {:?}", e);
                     ApiError::UpdateAmountsError
                 })?,
                 &data.data.amount_from_user_in_usdt,
             )
             .await
             .map_err(|e| {
-                error!("Error on p2way callback: {:?}", e);
+                info!("Error on p2way callback: {:?}", e);
                 ApiError::UpdateAmountsError
             })?,
         p2way::OrderState::Canceled => {}
         p2way::OrderState::CanceledByUser => {}
     }
 
+    info!("P2Way callback rejected, bad api_key");
     Ok(gen_raw_text_response("Ok"))
 }
