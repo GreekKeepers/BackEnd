@@ -1,3 +1,4 @@
+#![recursion_limit = "600"]
 use std::{io, sync::Arc};
 
 use crate::api_documentation::{serve_swagger, ApiDoc};
