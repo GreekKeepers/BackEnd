@@ -490,7 +490,7 @@ pub fn p2way_filter(
     db: DB,
     p2way: P2Way,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("p2wayy").and(create_one_time_token(db.clone(), p2way).or(p2way_callback(db)))
+    warp::path("p2way").and(create_one_time_token(db.clone(), p2way).or(p2way_callback(db)))
 }
 
 pub fn create_invoice(
