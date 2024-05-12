@@ -1,6 +1,6 @@
 use crate::games::{
-    Apples, CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, Roulette, Slots, StatefulGameEng,
-    StatefullTest, Wheel, RPS,
+    Apples, BigSlots, CoinFlip, Dice, Mines, Plinko, Poker, Race, Rocket, Roulette, Slots,
+    StatefulGameEng, StatefullTest, Wheel, RPS,
 };
 use crate::models::db_models::GameState;
 use crate::models::json_responses::BetExpanded;
@@ -128,6 +128,13 @@ pub fn parse_statefull_game(
             Ok(gm) => Ok(Some(Box::new(gm))),
             Err(e) => {
                 error!("Error deserializing Apples game: `{:?}`", e);
+                Err(e)
+            }
+        },
+        "BigSlots" => match serde_json::from_str::<BigSlots>(params) {
+            Ok(gm) => Ok(Some(Box::new(gm))),
+            Err(e) => {
+                error!("Error deserializing BigSlots game: `{:?}`", e);
                 Err(e)
             }
         },

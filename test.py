@@ -79,6 +79,19 @@ def main():
 def on_message(ws, message):
     print(message)
 
+    bet_data = {
+        "type": "MakeBet",
+        "game_id": 17,
+        "coin_id": 1,
+        "user_id": 0,
+        "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
+        "amount": "10000",
+        "stop_loss": 0,
+        "stop_win": 0,
+        "num_games": 1,
+    }
+    ws.send(json.dumps(bet_data))
+
 
 def on_error(ws, error):
     print(error)
@@ -89,11 +102,17 @@ def on_close(ws, close_status_code, close_msg):
 
 
 def on_open(ws):
+    res = requests.post(
+        "http://127.0.0.1:8282/user/login",
+        json={"login": "TestSewer", "password": "qweqwe"},
+    )
+    print(res.json())
+    access_token = res.json()['body']['access_token']
     print("Opened connection")
-    ws.send('{"type":"SubscribeBets", "payload":[15]}')
+    ws.send('{"type":"SubscribeBets", "payload":[17]}')
 
     ws.send(
-        '{"type":"Auth", "token":"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcxMDQyNzczMSwiYXVkIjoiIn0.ioWWihcI8wx2AAoIVJf1siTs2krU5gFXA1TQZME5f3w"}'
+        json.dumps({"type": "Auth", "token": access_token})
     )
 
     # creating user seed
@@ -104,198 +123,19 @@ def on_open(ws):
     seed_data = {"type": "NewServerSeed"}
     ws.send(json.dumps(seed_data))
 
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 1,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"is_heads":true}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 100,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # DICE bet
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 3,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"roll_over":true, "multiplier":"2.0204"}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 5,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # RPS bet
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 4,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"action":0}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 5,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # Race bet
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 5,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"car":0}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 100,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # Wheel bet
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 6,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"risk":2, "num_sectors":4}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 100,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # Plinko
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 12,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"num_rows":16, "risk":0}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 100,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # Slots
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 14,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": "{}",
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 100,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # Roulette
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 15,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"bets":[{"amount":"1","bet":{"type":"Zero"}},{"amount":"1","bet":{"type":"Color", "data":true}}]}',
-    #    "amount": "2",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 100,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # Apples bet
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 13,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"difficulty":1}',
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 1,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # for i in range(9):
-    #    bet_data = {
-    #        "type": "ContinueGame",
-    #        "game_id": 13,
-    #        "coin_id": 1,
-    #        "user_id": 0,
-    #        "data": '{"tile":1, "cashout":false}',
-    #    }
-    #    ws.send(json.dumps(bet_data))
-
-    # Mines bet
-
-    bet_data = {
-        "type": "GetState",
-        "game_id": 8,
-        "coin_id": 1,
-    }
-    ws.send(json.dumps(bet_data))
-
-    tiles = [False] * 25
-    tiles[0] = True
-    tiles[6] = True
-
+    # big slots bet
     bet_data = {
         "type": "MakeBet",
-        "game_id": 8,
+        "game_id": 17,
         "coin_id": 1,
         "user_id": 0,
-        "data": '{"num_mines":1, "cashout":true, "tiles": [false,false,false,false,true,false,false,false,false,false,false,false,false,true,false,false,false,false,false,false,false,false,false,false,false]}',
-        "amount": "1",
+        "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
+        "amount": "10000",
         "stop_loss": 0,
         "stop_win": 0,
-        "num_games": 100,
+        "num_games": 1,
     }
     ws.send(json.dumps(bet_data))
-
-    bet_data = {
-        "type": "ContinueGame",
-        "game_id": 8,
-        "coin_id": 1,
-        "user_id": 0,
-        "data": '{ "cashout":false, "tiles": [false,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}',
-    }
-    ws.send(json.dumps(bet_data))
-
-    # Poker bet
-    # bet_data = {
-    #    "type": "MakeBet",
-    #    "game_id": 11,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": "{}",  # always empty for poker
-    #    "amount": "1",
-    #    "stop_loss": 0,
-    #    "stop_win": 0,
-    #    "num_games": 1,
-    # }
-    # ws.send(json.dumps(bet_data))
-
-    # bet_data = {
-    #    "type": "ContinueGame",
-    #    "game_id": 11,
-    #    "coin_id": 1,
-    #    "user_id": 0,
-    #    "data": '{"to_replace":[false,false,true,false,false]}',
-    # }
-    # ws.send(json.dumps(bet_data))
 
 
 def web_sockets():
@@ -317,4 +157,4 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    main()
+    web_sockets()

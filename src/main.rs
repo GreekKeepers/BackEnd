@@ -26,7 +26,7 @@ mod db;
 mod errors;
 mod filters;
 mod game_engine;
-mod games;
+pub mod games;
 mod handlers;
 mod jwt;
 mod models;

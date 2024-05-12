@@ -37,6 +37,9 @@ pub use slots::*;
 mod roulette;
 pub use roulette::*;
 
+mod big_slots;
+pub use big_slots::*;
+
 use crate::{
     db::DB,
     models::{

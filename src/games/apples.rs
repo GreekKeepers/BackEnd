@@ -159,7 +159,7 @@ impl StatefulGameEng for Apples {
             outcomes[parsed_state.state.len() - 1] = 1;
             Some(GameResult {
                 total_profit: Decimal::ZERO,
-                outcomes: outcomes,
+                outcomes,
                 profits: vec![Decimal::ZERO],
                 num_games: 1,
                 data: serde_json::to_string(&parsed_state).unwrap(),

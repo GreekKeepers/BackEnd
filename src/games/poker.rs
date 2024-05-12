@@ -143,44 +143,38 @@ impl StatefulGameEng for Poker {
 }
 
 pub fn determine_payout(mut sorted_cards: [Card; 5]) -> (Decimal, u32) {
-    sorted_cards.sort_unstable_by(|card_left, card_right| {
-        match card_left.number.cmp(&card_right.number) {
-            std::cmp::Ordering::Less => std::cmp::Ordering::Greater,
-            std::cmp::Ordering::Equal => std::cmp::Ordering::Equal,
-            std::cmp::Ordering::Greater => std::cmp::Ordering::Less,
-        }
-    });
+    sorted_cards.sort_unstable_by(|card_left, card_right| card_left.number.cmp(&card_right.number));
 
     //check 4 of a kind
-    if (sorted_cards[1].number == sorted_cards[2].number
-        && sorted_cards[2].number == sorted_cards[3].number)
+    if sorted_cards[1].number == sorted_cards[2].number
+        && sorted_cards[2].number == sorted_cards[3].number
     {
-        if (sorted_cards[1].number == sorted_cards[0].number
-            || sorted_cards[3].number == sorted_cards[4].number)
+        if sorted_cards[1].number == sorted_cards[0].number
+            || sorted_cards[3].number == sorted_cards[4].number
         {
             return (Decimal::from(30), 7);
         }
     }
     //check full house -> 3 of a kind + pair
-    if (sorted_cards[1].number == sorted_cards[0].number
-        && sorted_cards[4].number == sorted_cards[3].number)
+    if sorted_cards[1].number == sorted_cards[0].number
+        && sorted_cards[4].number == sorted_cards[3].number
     {
-        if (sorted_cards[1].number == sorted_cards[2].number
-            || sorted_cards[3].number == sorted_cards[2].number)
+        if sorted_cards[1].number == sorted_cards[2].number
+            || sorted_cards[3].number == sorted_cards[2].number
         {
             return (Decimal::from(8), 6);
         }
     }
     //check royal flush + straight flush + flush
-    if (sorted_cards[0].suit == sorted_cards[1].suit
+    if sorted_cards[0].suit == sorted_cards[1].suit
         && sorted_cards[2].suit == sorted_cards[3].suit
         && sorted_cards[0].suit == sorted_cards[4].suit
-        && sorted_cards[2].suit == sorted_cards[1].suit)
+        && sorted_cards[2].suit == sorted_cards[1].suit
     {
-        if (sorted_cards[0].number == 1 && sorted_cards[4].number == 13) {
-            if (sorted_cards[2].number == sorted_cards[3].number - 1
+        if sorted_cards[0].number == 1 && sorted_cards[4].number == 13 {
+            if sorted_cards[2].number == sorted_cards[3].number - 1
                 && sorted_cards[3].number == sorted_cards[4].number - 1
-                && sorted_cards[1].number == sorted_cards[2].number - 1)
+                && sorted_cards[1].number == sorted_cards[2].number - 1
             {
                 return (Decimal::from(100), 9);
             }
