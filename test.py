@@ -79,18 +79,27 @@ def main():
 def on_message(ws, message):
     print(message)
 
+    # bet_data = {
+    #    "type": "MakeBet",
+    #    "game_id": 17,
+    #    "coin_id": 1,
+    #    "user_id": 0,
+    #    "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
+    #    "amount": "10000",
+    #    "stop_loss": 0,
+    #    "stop_win": 0,
+    #    "num_games": 1,
+    # }
+    # ws.send(json.dumps(bet_data))
+
     bet_data = {
-        "type": "MakeBet",
+        "type": "ContinueGame",
         "game_id": 17,
         "coin_id": 1,
-        "user_id": 0,
-        "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
-        "amount": "10000",
-        "stop_loss": 0,
-        "stop_win": 0,
-        "num_games": 1,
+        "data": "{\"buy_free_spins\": false, \"use_free_spins\": true}",
     }
     ws.send(json.dumps(bet_data))
+    input()
 
 
 def on_error(ws, error):
@@ -124,13 +133,26 @@ def on_open(ws):
     ws.send(json.dumps(seed_data))
 
     # big slots bet
+    # bet_data = {
+    # "type": "MakeBet",
+    # "game_id": 17,
+    # "coin_id": 1,
+    # "user_id": 0,
+    # "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
+    # "amount": "10000",
+    # "stop_loss": 0,
+    # "stop_win": 0,
+    # "num_games": 1,
+    # }
+    # ws.send(json.dumps(bet_data))
+
     bet_data = {
         "type": "MakeBet",
         "game_id": 17,
         "coin_id": 1,
         "user_id": 0,
-        "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
-        "amount": "10000",
+        "data": "{\"buy_free_spins\": true, \"use_free_spins\": false}",
+        "amount": "20000",
         "stop_loss": 0,
         "stop_win": 0,
         "num_games": 1,
