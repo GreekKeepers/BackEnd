@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                        SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users \n                        FROM connectedusers \n                        WHERE partner_id=$1\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connected_users",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "40dac25c6e92f4991fb283f8cabc44e7d596d21c7aef26d0487eb5b1266be60a"
+}

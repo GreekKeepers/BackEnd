@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users \n                FROM connectedusers \n                WHERE partner_id=$1 AND\n                    connectedusers.timestamp >= $2 AND\n                    connectedusers.timestamp <= $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connected_users",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "e4e33f671068a6a0473350495be804d21be964ad1b7d579bf91050d1277a95de"
+}

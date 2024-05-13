@@ -2,15 +2,18 @@ use crate::{
     config::DatabaseSettings,
     models::{
         db_models::{
-            Amount, Bet, BillineInvoice, BillineInvoiceStatus, Coin, Game, GameState, Invoice,
-            Leaderboard, OauthProvider, ReferalLink, RefreshToken, ServerSeed, TimeBoundaries,
-            Totals, User, UserSeed, UserTotals,
+            Amount, Bet, BillineInvoice, BillineInvoiceStatus, Coin, ConnectedWallet, Game,
+            GameState, Invoice, Leaderboard, OauthProvider, Partner, PartnerContact,
+            PartnerProgram, PartnerSite, RefClicks, ReferalLink, RefreshToken, ServerSeed,
+            SiteSubId, TimeBoundaries, Totals, User, UserSeed, UserTotals, Withdrawal,
         },
-        json_responses::BetExpanded,
+        json_requests::WithdrawRequest,
+        json_responses::{AmountConnectedWallets, BetExpanded},
     },
     tools::blake_hash,
 };
 
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::info;
@@ -1377,5 +1380,903 @@ impl DB {
                 .await
             }
         }
+    }
+
+    /// Partner functions
+    pub async fn create_partner(
+        &self,
+        partner: Partner,
+        contacts: &[(String, String)],
+    ) -> Result<i64, sqlx::Error> {
+        let res = sqlx::query!(
+            r#"
+            INSERT INTO Partner(
+                name,
+                country,
+                traffic_source,
+                users_amount_a_month,
+                program,
+                is_verified,
+                login,
+                password
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                FALSE,
+                $6,
+                $7
+            )
+            RETURNING id
+            "#,
+            partner.name,
+            partner.country,
+            partner.traffic_source,
+            partner.users_amount_a_month,
+            partner.program as PartnerProgram,
+            partner.login,
+            partner.password
+        )
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        self.add_partner_contacts(res.id, contacts).await?;
+
+        Ok(res.id)
+    }
+
+    pub async fn get_partner(&self, id: i64) -> Result<Partner, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * 
+            FROM Partner
+            WHERE id=$1
+            LIMIT 1
+            "#,
+            id
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_by_login(&self, login: &str) -> Result<Partner, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * 
+            FROM Partner
+            WHERE login=$1
+            LIMIT 1
+            "#,
+            login
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn create_withdraw_request(
+        &self,
+        partner_id: i64,
+        withdraw_request: &WithdrawRequest,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Withdrawal(
+                token,
+                network,
+                amount,
+                wallet_address,
+                partner_id
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+            )
+            "#,
+            withdraw_request.token,
+            withdraw_request.network,
+            withdraw_request.amount,
+            withdraw_request.wallet_address,
+            partner_id
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn get_partner_withdrawal_requests(
+        &self,
+        partner: i64,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<Vec<Withdrawal>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1 AND
+                        start_time > now() - interval '1 day'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1 AND
+                        start_time > now() - interval '1 week'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1 AND
+                        start_time > now() - interval '1 month'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    pub async fn login_partner(
+        &self,
+        login: &str,
+        password: &str,
+    ) -> Result<Option<Partner>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * 
+            FROM Partner
+            WHERE login=$1 AND password=$2
+            LIMIT 1
+            "#,
+            login,
+            password
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
+    //pub async fn submit_question(
+    //    &self,
+    //    name: &str,
+    //    email: &str,
+    //    message: &str,
+    //) -> Result<(), sqlx::Error> {
+    //    sqlx::query!(
+    //        r#"
+    //        INSERT INTO QuestionRequest(
+    //            name,
+    //            email,
+    //            message
+    //        ) VALUES (
+    //            $1,
+    //            $2,
+    //            $3
+    //        )
+    //        "#,
+    //        name,
+    //        email,
+    //        message
+    //    )
+    //    .execute(&self.db_pool)
+    //    .await
+    //    .map(|_| ())
+    //}
+
+    pub async fn partner_change_password(
+        &self,
+        partner_id: i64,
+        old_password: &str,
+        new_password: &str,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE Partner
+            SET password=$1
+            WHERE id=$2 AND password=$3
+            "#,
+            new_password,
+            partner_id,
+            old_password
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|r| (r.rows_affected() > 0))
+    }
+
+    pub async fn add_partner_contacts(
+        &self,
+        partner_id: i64,
+        contacts: &[(String, String)],
+    ) -> Result<(), sqlx::Error> {
+        for (name, url) in contacts {
+            sqlx::query!(
+                r#"
+                INSERT INTO PartnerContact(
+                    name,
+                    url,
+                    partner_id
+                ) VALUES (
+                    $1,
+                    $2,
+                    $3
+                )
+                "#,
+                name,
+                url,
+                partner_id
+            )
+            .execute(&self.db_pool)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete_partner_contacts(
+        &self,
+        partner_id: i64,
+        contact_ids: &[i64],
+    ) -> Result<(), sqlx::Error> {
+        for contact_id in contact_ids.iter() {
+            sqlx::query!(
+                r#"
+                DELETE FROM partnercontact where id = $1 AND partner_id = $2
+                "#,
+                contact_id,
+                partner_id
+            )
+            .execute(&self.db_pool)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn get_partner_contacts(
+        &self,
+        partner_id: i64,
+    ) -> Result<Vec<PartnerContact>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            PartnerContact,
+            r#"
+            SELECT * 
+            FROM PartnerContact
+            WHERE partner_id=$1
+            "#,
+            partner_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn add_partner_site(
+        &self,
+        partner_id: i64,
+        url: &str,
+        name: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO PartnerSite(
+                id,
+                name,
+                url,
+                partner_id
+            ) 
+            SELECT 
+                COALESCE(MAX(id)+1,0),
+                $1,
+                $2,
+                $3
+            FROM PartnerSite
+            WHERE partner_id=$3
+            "#,
+            name,
+            url,
+            partner_id
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn get_partner_sites(
+        &self,
+        partner_id: i64,
+    ) -> Result<Vec<PartnerSite>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            PartnerSite,
+            r#"
+            SELECT *
+            FROM PartnerSite
+            WHERE partner_id=$1
+            "#,
+            partner_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    // pub async fn get_partner_site(&self, wallet: &str) -> Result<PartnerSite, sqlx::Error> {
+    //     sqlx::query_as_unchecked!(
+    //         PartnerSite,
+    //         r#"
+    //         SELECT *
+    //         FROM PartnerSite
+    //         WHERE partner_id=$1
+    //         LIMIT 1
+    //         "#,
+    //         wallet
+    //     )
+    //     .fetch_one(&self.db_pool)
+    //     .await
+    // }
+
+    pub async fn add_partner_subid(
+        &self,
+        internal_site_id: i64,
+        patner_id: i64,
+        url: &str,
+        name: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO SiteSubId(
+                id,
+                name,
+                url,
+                site_id,
+                partner_id
+            ) 
+            SELECT 
+                COALESCE(MAX(id)+1,0),
+                $1,
+                $2,
+                $3,
+                $4
+            FROM SiteSubId
+            WHERE site_id=$3
+            "#,
+            name,
+            url,
+            internal_site_id,
+            patner_id
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn get_site_subids(
+        &self,
+        internal_site_id: i64,
+    ) -> Result<Vec<SiteSubId>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            SiteSubId,
+            r#"
+            SELECT *
+            FROM SiteSubId
+            WHERE site_id=$1
+            "#,
+            internal_site_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_subid(
+        &self,
+        partner_id: i64,
+        site_id: i64,
+        sub_id: i64,
+    ) -> Result<SiteSubId, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            SiteSubId,
+            r#"
+            SELECT 
+                sitesubid.internal_id,
+                sitesubid.id,
+                sitesubid.name,
+                sitesubid.url,
+                sitesubid.site_id,
+                sitesubid.partner_id
+            FROM partnersite 
+            INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id
+            WHERE partnersite.partner_id=$1 AND partnersite.id=$2 AND sitesubid.id=$3
+            "#,
+            partner_id,
+            site_id,
+            sub_id
+        ).fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_subid_clicks(
+        &self,
+        partner_id: i64,
+        site_id: i64,
+        sub_id: i64,
+    ) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+            SELECT 
+                COUNT(refclick.id) as clicks
+            FROM refclick
+            INNER JOIN (SELECT 
+                sitesubid.internal_id
+            FROM partnersite 
+            INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id
+            WHERE partnersite.partner_id=$1 
+                        AND partnersite.id=$2 
+                        AND sitesubid.id=$3) AS subids ON subids.internal_id=refclick.sub_id_internal;
+            "#,
+            partner_id,
+            site_id,
+            sub_id
+        ).fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_site_clicks(
+        &self,
+        partner_id: i64,
+        site_id: i64,
+    ) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+            SELECT 
+                COUNT(clicks.timestamp) as clicks
+            FROM partnersite
+            INNER JOIN (SELECT * FROM refclick
+                    INNER JOIN sitesubid ON sitesubid.internal_id=refclick.sub_id_internal
+                    WHERE refclick.partner_id=$1) as clicks
+            ON partnersite.internal_id=clicks.site_id
+            WHERE partnersite.id = $2;
+            "#,
+            partner_id,
+            site_id
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_clicks(&self, partner_id: i64) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+            SELECT 
+                COUNT(refclick.id) as clicks
+            FROM refclick
+            WHERE partner_id=$1
+            "#,
+            partner_id
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_connected_wallets_amount_exact_date(
+        &self,
+        partner_id: i64,
+        start: chrono::DateTime<chrono::Utc>,
+        end: chrono::DateTime<chrono::Utc>,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            AmountConnectedWallets,
+            r#"
+                SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users 
+                FROM connectedusers 
+                WHERE partner_id=$1 AND
+                    connectedusers.timestamp >= $2 AND
+                    connectedusers.timestamp <= $3
+            "#,
+            partner_id,
+            start,
+            end
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_connected_wallets_with_bets_amount_exact_date(
+        &self,
+        partner_id: i64,
+        start: chrono::DateTime<chrono::Utc>,
+        end: chrono::DateTime<chrono::Utc>,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            AmountConnectedWallets,
+            r#"
+                SELECT CAST(COUNT(DISTINCT connectedusers.user_id) as BIGINT) as connected_users 
+                FROM connectedusers
+                INNER JOIN bet ON connectedusers.user_id=bet.user_id
+                WHERE partner_id=$1 AND
+                    connectedusers.timestamp >= $2 AND
+                    connectedusers.timestamp <= $3
+            "#,
+            partner_id,
+            start,
+            end
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_clicks_exact_date(
+        &self,
+        partner_id: i64,
+        start: chrono::DateTime<chrono::Utc>,
+        end: chrono::DateTime<chrono::Utc>,
+    ) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+                SELECT CAST(COUNT(refclick.id) as BIGINT) as clicks 
+                FROM refclick 
+                WHERE partner_id=$1 AND
+                    refclick.timestamp >= $2 AND
+                    refclick.timestamp <= $3
+            "#,
+            partner_id,
+            start,
+            end
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_connected_wallets_info(
+        &self,
+        partner_id: i64,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<Vec<ConnectedWallet>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT 
+                        connectedusers.id,
+                        connectedusers.user_id,
+                        connectedusers.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedusers
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedusers.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedusers.partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 day'
+                    "#,
+                    partner_id
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT 
+                        connectedusers.id,
+                        connectedusers.user_id,
+                        connectedusers.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedusers
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedusers.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedusers.partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 week'
+                    "#,
+                    partner_id
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT 
+                        connectedusers.id,
+                        connectedusers.user_id,
+                        connectedusers.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedusers
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedusers.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedusers.partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 month'
+                    "#,
+                    partner_id
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT 
+                        connectedusers.id,
+                        connectedusers.user_id,
+                        connectedusers.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedusers
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedusers.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedusers.partner_id=$1
+                    "#,
+                    partner_id
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    // pub async fn partner_exists(&self, partner: &str) -> Result<bool, sqlx::Error> {
+    //     sqlx::query_as_unchecked!(
+    //         Partner,
+    //         r#"
+    //         SELECT * FROM partner where main_wallet=$1
+    //         "#,
+    //         partner
+    //     )
+    //     .fetch_optional(&self.db_pool)
+    //     .await
+    //     .map(|part| part.is_some())
+    // }
+
+    pub async fn get_partner_connected_wallets_with_deposits_amount(
+        &self,
+        partner_id: i64,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers
+                        INNER JOIN bet ON bet.user_id = connectedusers.user_id
+                    WHERE partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 day'
+                    "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers
+                        INNER JOIN bet ON bet.user_id = connectedusers.user_id
+                    WHERE partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 week'
+                "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers
+                        INNER JOIN bet ON bet.user_id = connectedusers.user_id
+                    WHERE partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 month'
+                    "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers
+                        INNER JOIN bet ON bet.user_id = connectedusers.user_id
+                    WHERE partner_id=$1
+                    "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    pub async fn get_partner_connected_wallets_amount(
+        &self,
+        partner_id: i64,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers 
+                        WHERE partner_id=$1 AND
+                            connectedusers.timestamp > now() - interval '1 day'
+                    "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers 
+                        WHERE partner_id=$1 AND
+                    connectedusers.timestamp > now() - interval '1 week'
+            "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers 
+                        WHERE partner_id=$1 AND
+                           connectedusers.timestamp > now() - interval '1 month'
+                    "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users 
+                        FROM connectedusers 
+                        WHERE partner_id=$1
+                    "#,
+                    partner_id
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    pub async fn add_click(&self, partner_id: i64, sub_id: i64) -> Result<(), sqlx::Error> {
+        // sqlx::query!(
+        //     r#"
+        //     INSERT INTO refclicks(
+        //         clicks,
+        //         sub_id_internal,
+        //         partner_id
+        //     )
+        //      VALUES (
+        //          1,
+        //          $1,
+        //          $2
+        //      )
+        //      ON CONFLICT(sub_id_internal,partner_id) DO UPDATE
+        //      SET clicks = refclicks.clicks+1;
+        //     "#,
+        //     sub_id,
+        //     partner
+        // )
+        // .execute(&self.db_pool)
+        // .await
+        // .map(|_| ())
+        sqlx::query!(
+            r#"
+            INSERT INTO refclick(
+                timestamp,
+                sub_id_internal,
+                partner_id
+            )
+             VALUES (
+                 NOW(), 
+                 $1,
+                 $2
+             )
+            "#,
+            sub_id,
+            partner_id
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn add_ref_wallet(
+        &self,
+        user_id: i64,
+        timestamp: DateTime<Utc>,
+        sub_id_internal: i64,
+        partner_id: i64,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO ConnectedUsers(
+                user_id,
+                timestamp,
+                sub_id_internal,
+                partner_id
+            ) VALUES(
+                $1,
+                $2,
+                $3,
+                $4
+            )
+            "#,
+            user_id,
+            timestamp.naive_utc(),
+            sub_id_internal,
+            partner_id
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
     }
 }

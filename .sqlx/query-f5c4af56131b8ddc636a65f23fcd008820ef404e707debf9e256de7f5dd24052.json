@@ -1,0 +1,97 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT * \n            FROM Partner\n            WHERE id=$1\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "country",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "traffic_source",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "users_amount_a_month",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "program",
+        "type_info": {
+          "Custom": {
+            "name": "partnerprogram",
+            "kind": {
+              "Enum": [
+                "firstMonth",
+                "novice",
+                "beginner",
+                "intermediate",
+                "advanced",
+                "pro",
+                "god"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "is_verified",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "login",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "password",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "registration_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "language",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "f5c4af56131b8ddc636a65f23fcd008820ef404e707debf9e256de7f5dd24052"
+}

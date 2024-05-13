@@ -167,6 +167,93 @@ CREATE TABLE IF NOT EXISTS Referals(
 );
 CREATE UNIQUE INDEX referals_unique_idx ON Referals(refer_to, referal);
 
+-- Partner
+CREATE TYPE PartnerProgram AS ENUM(
+    'firstMonth',
+    'novice',
+    'beginner',
+    'intermediate',
+    'advanced',
+    'pro',
+    'god'
+);
+
+CREATE TABLE IF NOT EXISTS Partner(
+    --id BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    country TEXT NOT NULL,
+    traffic_source TEXT NOT NULL,
+    users_amount_a_month BIGINT NOT NULL,
+    program PartnerProgram NOT NULL,
+    is_verified boolean NOT NULL,
+    login varchar(25) UNIQUE,
+    password char(128) NOT NULL,
+    registration_time TIMESTAMP DEFAULT Now(),
+    language TEXT
+);
+
+CREATE TABLE IF NOT EXISTS PartnerContact(
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    partner_id BIGSERIAL NOT NULL REFERENCES Partner(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS PartnerSite(
+    internal_id BIGSERIAL PRIMARY KEY, 
+    id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    
+    partner_id BIGSERIAL NOT NULL REFERENCES Partner(id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX partnersite_id_unique_idx ON PartnerSite(id, partner_id);
+
+CREATE TABLE IF NOT EXISTS SiteSubId(
+    internal_id BIGSERIAL PRIMARY KEY, 
+    id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT,
+    
+    site_id BIGINT NOT NULL REFERENCES PartnerSite(internal_id) ON DELETE CASCADE,
+    partner_id BIGSERIAL NOT NULL REFERENCES Partner(id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX subid_unique_idx ON SiteSubId(id, site_id);
+
+CREATE TABLE IF NOT EXISTS RefClick(
+    id BIGSERIAL PRIMARY KEY,
+    --clicks BIGINT NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    
+    --sub_id BIGINT NOT NULL,
+    sub_id_internal BIGINT NOT NULL REFERENCES SiteSubId(internal_id) ON DELETE CASCADE,
+    partner_id BIGSERIAL NOT NULL REFERENCES Partner(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ConnectedUsers(
+    id BIGSERIAL PRIMARY KEY,
+    timestamp TIMESTAMP NOT NULL,
+
+    --sub_id BIGINT NOT NULL,
+    sub_id_internal BIGINT NOT NULL REFERENCES SiteSubId(internal_id) ON DELETE CASCADE,
+    partner_id BIGSERIAL NOT NULL REFERENCES Partner(id) ON DELETE CASCADE,
+    user_id BIGSERIAL NOT NULL REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Withdrawal(
+    id BIGSERIAL PRIMARY KEY,
+    start_time TIMESTAMP DEFAULT NOW(),
+
+    token varchar(20) NOT NULL,
+    network varchar(30) NOT NULL,
+    wallet_address varchar(200) NOT NULL,
+    status TEXT DEFAULT 'waiting', --waiting/accepted/rejected,
+    amount TEXT NOT NULL,
+
+    partner_id BIGSERIAL NOT NULL REFERENCES Partner(id) ON DELETE CASCADE
+);
+
 -- DATA
 
 

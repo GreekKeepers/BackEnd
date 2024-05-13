@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Partner(\n                name,\n                country,\n                traffic_source,\n                users_amount_a_month,\n                program,\n                is_verified,\n                login,\n                password\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4,\n                $5,\n                FALSE,\n                $6,\n                $7\n            )\n            RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        {
+          "Custom": {
+            "name": "partnerprogram",
+            "kind": {
+              "Enum": [
+                "firstMonth",
+                "novice",
+                "beginner",
+                "intermediate",
+                "advanced",
+                "pro",
+                "god"
+              ]
+            }
+          }
+        },
+        "Varchar",
+        "Bpchar"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "22a5f561e73bc9119e9424aa9ce719aab5e62f32009aec2531708d330aef11a2"
+}

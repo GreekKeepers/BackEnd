@@ -9,6 +9,23 @@ import requests
 
 def main():
 
+    res = requests.post(
+        "https://rew.greekkeepers.io/api/user/login",
+        json={"login": "TestSewer", "password": "qweqwe"},
+    )
+    print(res.json())
+    access_token = res.json()['body']['access_token']
+
+    res = requests.patch(
+        "https://rew.greekkeepers.io/api/user/username",
+        json={
+            "nickname": "YeahNotSewerSide",
+        },
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+    )
+    print(res.content)
     # res = requests.post(
     #    "http://127.0.0.1:8282/api/game/CoinFlip",
     # )
@@ -23,21 +40,21 @@ def main():
     # )
     # print(res.content)
 
-    res = requests.post(
-        "http://127.0.0.1:8282/user/register",
-        json={
-            "username": "YeahNotSewerSide",
-            "password": "qw78as45QW&*AS$%!@#",
-        },
-    )
-    print(res.content)
+    # res = requests.post(
+    #    "http://127.0.0.1:8282/user/register",
+    #    json={
+    #        "username": "YeahNotSewerSide",
+    #        "password": "qw78as45QW&*AS$%!@#",
+    #    },
+    # )
+    # print(res.content)
 
-    res = requests.post(
-        "http://127.0.0.1:8282/user/login",
-        json={"login": "YeahNotSewerSide", "password": "qw78as45QW&*AS$%!@#"},
-    )
+    # res = requests.post(
+    #    "http://127.0.0.1:8282/user/login",
+    #    json={"login": "YeahNotSewerSide", "password": "qw78as45QW&*AS$%!@#"},
+    # )
 
-    print(res.content)
+    # print(res.content)
 
     # res = requests.get(
     #    "http://127.0.0.1:8282/user",
@@ -59,21 +76,21 @@ def main():
 
     #    print(res.content)
 
-    res = requests.post(
-        "https://game.greekkeepers.io/api/invoice/create",
-        headers={
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcxMDM1NjcxNywiYXVkIjoiIn0.AmtAwkj-RDX1jDnxghHr_va_86BvSbZYIlP7bMQlNyg"
-        },
-        json={"amount": 10, "currency": "BTC_BITCOIN"},
-    )
+    # res = requests.post(
+    #    "https://game.greekkeepers.io/api/invoice/create",
+    #    headers={
+    #        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOm51bGwsInN1YiI6MSwiZXhwIjoxMDAsImlhdCI6MTcxMDM1NjcxNywiYXVkIjoiIn0.AmtAwkj-RDX1jDnxghHr_va_86BvSbZYIlP7bMQlNyg"
+    #    },
+    #    json={"amount": 10, "currency": "BTC_BITCOIN"},
+    # )
 
-    print(res.content)
+    # print(res.content)
 
-    res = requests.get(
-        "http://127.0.0.1:8282/invoice/qr/79255f6b4ac72de420c01e265f161b3baf3179ac8894131e8a1a68a26515cd75cf02a3636e4e816ccbbbb4386c154ed45ce8fb37511ba540a83dca6638246ab3",
-    )
+    # res = requests.get(
+    #    "http://127.0.0.1:8282/invoice/qr/79255f6b4ac72de420c01e265f161b3baf3179ac8894131e8a1a68a26515cd75cf02a3636e4e816ccbbbb4386c154ed45ce8fb37511ba540a83dca6638246ab3",
+    # )
 
-    print(res.content)
+    # print(res.content)
 
 
 def on_message(ws, message):
@@ -98,8 +115,8 @@ def on_message(ws, message):
         "coin_id": 1,
         "data": "{\"buy_free_spins\": false, \"use_free_spins\": true}",
     }
-    ws.send(json.dumps(bet_data))
-    input()
+    # ws.send(json.dumps(bet_data))
+    # input()
 
 
 def on_error(ws, error):
@@ -133,30 +150,31 @@ def on_open(ws):
     ws.send(json.dumps(seed_data))
 
     # big slots bet
-    # bet_data = {
-    # "type": "MakeBet",
-    # "game_id": 17,
-    # "coin_id": 1,
-    # "user_id": 0,
-    # "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
-    # "amount": "10000",
-    # "stop_loss": 0,
-    # "stop_win": 0,
-    # "num_games": 1,
-    # }
-    # ws.send(json.dumps(bet_data))
 
     bet_data = {
         "type": "MakeBet",
         "game_id": 17,
         "coin_id": 1,
         "user_id": 0,
-        "data": "{\"buy_free_spins\": true, \"use_free_spins\": false}",
-        "amount": "20000",
+        "data": "{\"buy_free_spins\": false, \"use_free_spins\": false}",
+        "amount": "10000",
         "stop_loss": 0,
         "stop_win": 0,
         "num_games": 1,
     }
+    ws.send(json.dumps(bet_data))
+
+    # bet_data = {
+    #    "type": "MakeBet",
+    #    "game_id": 17,
+    #    "coin_id": 1,
+    #    "user_id": 0,
+    #    "data": "{\"buy_free_spins\": true, \"use_free_spins\": false}",
+    #    "amount": "20000",
+    #    "stop_loss": 0,
+    #    "stop_win": 0,
+    #    "num_games": 1,
+    # }
     ws.send(json.dumps(bet_data))
 
 
@@ -179,4 +197,5 @@ def web_sockets():
 
 
 if __name__ == "__main__":
-    web_sockets()
+    main()
+    # web_sockets()

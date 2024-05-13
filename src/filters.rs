@@ -27,6 +27,11 @@ use warp::reject;
 
 use warp::Filter;
 
+fn json_body_submit_withdrawal(
+) -> impl Filter<Extract = (json_requests::WithdrawRequest,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
@@ -151,6 +156,37 @@ fn with_auth(db: DB) -> impl Filter<Extract = (i64,), Error = warp::Rejection> +
         .and_then(auth_verified)
 }
 
+async fn auth_verified_partner(
+    headers: HeaderMap<HeaderValue>,
+    db: DB,
+) -> Result<i64, warp::Rejection> {
+    match extract_token(&headers) {
+        Ok((token, decoded)) => {
+            debug!("Token {:?}", decoded);
+            let user = db
+                .get_partner(decoded.sub)
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            let key = if decoded.iss.eq("Local") {
+                format!("{}{}{}", *PASSWORD_SALT, user.password, decoded.iat)
+            } else {
+                format!("{}{}", *PASSWORD_SALT, decoded.iat)
+            };
+            let _token_serialized = tools::serialize_token(&token, &key)
+                .map_err(|_| reject::custom(ApiError::MalformedToken))?;
+
+            Ok(user.id)
+        }
+        Err(e) => Err(reject::custom(e)),
+    }
+}
+fn with_auth_partner(db: DB) -> impl Filter<Extract = (i64,), Error = warp::Rejection> + Clone {
+    headers_cloned()
+        .map(|header| header)
+        .and(with_db(db))
+        .and_then(auth_verified_partner)
+}
+
 async fn dex(headers: HeaderMap<HeaderValue>, _: DB) -> Result<bool, warp::Rejection> {
     debug!("headers {:?}", headers);
     let rec_api_key = headers
@@ -210,7 +246,7 @@ fn json_body_create_billine_invoice(
 
 fn json_body_billine_callback(
 ) -> impl Filter<Extract = (billine::CallbackIframe,), Error = warp::Rejection> + Clone {
-    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    warp::body::content_length_limit(1024 * 16).and(warp::body::form())
 }
 
 fn json_body_p2way_callback(
@@ -231,7 +267,6 @@ pub fn coin(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 }
 
 // BETS
-
 pub fn get_user_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -654,6 +689,7 @@ pub fn init_filters(
         .or(coin(db.clone()))
         .or(general(dexs, db.clone()))
         .or(p2way_filter(db.clone(), p2way))
+        .or(partners::partners(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))
@@ -685,4 +721,420 @@ pub fn init_filters(
                 headers = ?info.request_headers().values().collect::<Vec<_>>(),
             )
         }))
+}
+
+pub mod partners {
+    use super::*;
+
+    fn json_body_add_partner_contacts(
+    ) -> impl Filter<Extract = (json_requests::AddPartnerContacts,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_add_partner_site(
+    ) -> impl Filter<Extract = (json_requests::AddPartnerSite,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_add_partner_subid(
+    ) -> impl Filter<Extract = (json_requests::AddPartnerSubid,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_delete_partner_contact(
+    ) -> impl Filter<Extract = (json_requests::DeletePartnerContacts,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_connect_wallet(
+    ) -> impl Filter<Extract = (json_requests::ConnectWallet,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_submit_error(
+    ) -> impl Filter<Extract = (json_requests::SubmitError,), Error = warp::Rejection> + Clone {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_submit_withdrawal(
+    ) -> impl Filter<Extract = (json_requests::WithdrawRequest,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_change_password(
+    ) -> impl Filter<Extract = (json_requests::ChangePasswordRequest,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    fn json_body_submit_question(
+    ) -> impl Filter<Extract = (json_requests::SubmitQuestion,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+    // PARTNERS REFERALS
+    pub fn submit_question(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("question")
+            .and(warp::post())
+            .and(json_body_submit_question())
+            .and(with_db(db))
+            .and_then(handlers::submit_question)
+    }
+
+    fn json_body_register_partner(
+    ) -> impl Filter<Extract = (json_requests::RegisterPartner,), Error = warp::Rejection> + Clone
+    {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    pub fn register_partner(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("register")
+            .and(warp::post())
+            .and(json_body_register_partner())
+            //.and_then(with_signature_partner)
+            .and(with_db(db))
+            .and_then(handlers::register_partner)
+    }
+
+    fn json_body_login_partner(
+    ) -> impl Filter<Extract = (json_requests::Login,), Error = warp::Rejection> + Clone {
+        warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+    }
+
+    pub fn login_partner(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("login")
+            .and(warp::post())
+            .and(json_body_login_partner())
+            .and(with_db(db))
+            .and_then(handlers::login_partner)
+    }
+
+    pub fn get_partner(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("get")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            // .and(warp::header::<String>("auth"))
+            // .and(warp::header::<u64>("timestamp"))
+            // .and(warp::header::<String>("wallet"))
+            //.and(with_db(db.clone()))
+            //.and_then(with_auth_partner)
+            .and(with_auth_partner(db.clone()))
+            .and(with_db(db))
+            .and_then(handlers::get_partner)
+    }
+
+    pub fn add_partner_contacts(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("add")
+            .and(warp::post())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(json_body_add_partner_contacts())
+            .and(with_db(db))
+            .and_then(handlers::add_contacts)
+    }
+
+    pub fn add_partner_site(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("add")
+            .and(warp::post())
+            .and(with_auth_partner(db.clone()))
+            .and(json_body_add_partner_site())
+            .and(with_db(db))
+            .and_then(handlers::add_partner_site)
+    }
+
+    pub fn get_partner_sites(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("get")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(with_db(db))
+            .and_then(handlers::get_partner_sites)
+    }
+
+    pub fn add_partner_subid(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("add")
+            .and(warp::post())
+            .and(with_auth_partner(db.clone()))
+            .and(json_body_add_partner_subid())
+            .and(with_db(db))
+            .and_then(handlers::add_partner_subid)
+    }
+
+    pub fn click_partner_subid(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("click" / i64 / i64 / i64)
+            .and(warp::post())
+            .and(with_db(db))
+            .and_then(handlers::click_partner_subid)
+    }
+
+    pub fn subid_get_clicks(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("clicks")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<i64>())
+            .and(warp::path::param::<i64>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_clicks)
+    }
+
+    pub fn site_get_clicks(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("clicks")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<i64>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_site_clicks)
+    }
+
+    pub fn partner_get_clicks(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("clicks")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(with_db(db))
+            .and_then(handlers::get_partner_clicks)
+    }
+
+    pub fn get_partner_clicks_exact_date(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("clicks")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<u64>())
+            .and(warp::path::param::<u64>())
+            .and(warp::path::param::<u64>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_partner_clicks_exact_date)
+    }
+
+    pub fn connect_wallet_subid(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("connect")
+            .and(warp::post())
+            .and(with_auth(db.clone()))
+            .and(json_body_connect_wallet())
+            .and(with_db(db))
+            .and_then(handlers::connect_wallet)
+    }
+
+    pub fn get_partner_contacts(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("get")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(with_db(db))
+            .and_then(handlers::get_partner_contacts)
+    }
+
+    pub fn delete_partner_contacts(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("delete")
+            .and(warp::post())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(json_body_delete_partner_contact())
+            .and(with_db(db))
+            .and_then(handlers::delete_partner_contacts)
+    }
+
+    pub fn get_partner_connected_wallets_with_deposits_amount(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("connected_betted")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<TimeBoundaries>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_partner_connected_wallets_with_deposits_amount)
+    }
+
+    pub fn get_partner_connected_wallets(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("connected")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<TimeBoundaries>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_partner_connected_wallets)
+    }
+
+    pub fn get_partner_connected_wallets_exact_date(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("connected")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<u64>())
+            .and(warp::path::param::<u64>())
+            .and(warp::path::param::<u64>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_partner_connected_wallets_exact_date)
+    }
+
+    pub fn get_partner_connected_wallets_betted_exact_date(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("connected_betted")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<u64>())
+            .and(warp::path::param::<u64>())
+            .and(warp::path::param::<u64>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_partner_connected_wallets_betted_exact_date)
+    }
+
+    pub fn get_conected_totals(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("connected" / "totals")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(with_db(db))
+            .and_then(handlers::get_connected_totals)
+    }
+
+    pub fn get_partner_connected_wallets_info(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("wallets")
+            .and(warp::get())
+            //.and(json_body_register_partner())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<TimeBoundaries>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_partner_connected_wallets_info)
+    }
+
+    pub fn submit_partner_withdraw_request(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("withdraw")
+            .and(warp::post())
+            .and(with_auth_partner(db.clone()))
+            .and(json_body_submit_withdrawal())
+            .and(with_db(db))
+            .and_then(handlers::submit_withdrawal)
+    }
+
+    pub fn partner_change_password(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path!("password")
+            .and(warp::put())
+            .and(with_auth_partner(db.clone()))
+            .and(json_body_change_password())
+            .and(with_db(db))
+            .and_then(handlers::partner_change_password)
+    }
+
+    pub fn partner_get_withdrawals(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("withdrawals")
+            .and(warp::get())
+            .and(with_auth_partner(db.clone()))
+            .and(warp::path::param::<TimeBoundaries>())
+            .and(warp::path::end())
+            .and(with_db(db))
+            .and_then(handlers::get_withdrawal_requests)
+    }
+
+    pub fn partner_change(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("change").and(partner_change_password(db.clone()))
+    }
+
+    pub fn partners(
+        db: DB,
+    ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+        warp::path("partner").and(
+            register_partner(db.clone())
+                .or(partner_get_withdrawals(db.clone()))
+                .or(submit_question(db.clone()))
+                .or(partner_change(db.clone()))
+                .or(submit_partner_withdraw_request(db.clone()))
+                .or(get_conected_totals(db.clone()))
+                .or(login_partner(db.clone()))
+                .or(get_partner_connected_wallets_info(db.clone()))
+                .or(get_partner_connected_wallets(db.clone()))
+                .or(get_partner_connected_wallets_exact_date(db.clone()))
+                .or(get_partner_connected_wallets_betted_exact_date(db.clone()))
+                .or(get_partner_connected_wallets_with_deposits_amount(
+                    db.clone(),
+                ))
+                .or(get_partner_clicks_exact_date(db.clone()))
+                .or(partner_get_clicks(db.clone()))
+                .or(get_partner(db.clone()))
+                .or(warp::path("contacts").and(
+                    get_partner_contacts(db.clone())
+                        .or(add_partner_contacts(db.clone()))
+                        .or(delete_partner_contacts(db.clone())),
+                ))
+                .or(warp::path("site").and(
+                    add_partner_site(db.clone())
+                        .or(site_get_clicks(db.clone()))
+                        .or(get_partner_sites(db.clone()))
+                        .or(warp::path("subid").and(
+                            add_partner_subid(db.clone())
+                                .or(click_partner_subid(db.clone()))
+                                .or(connect_wallet_subid(db.clone()))
+                                .or(subid_get_clicks(db.clone())),
+                        )),
+                )),
+        )
+    }
 }

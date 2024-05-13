@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                        SELECT CAST(COUNT(connectedusers.user_id) as BIGINT) as connected_users \n                        FROM connectedusers \n                        WHERE partner_id=$1 AND\n                           connectedusers.timestamp > now() - interval '1 month'\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connected_users",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b4dc7731ffc36c0cc31876ccf89d4463d6ad2ee2d9c05e303c2495d6c8d2f262"
+}

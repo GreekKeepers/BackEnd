@@ -19,6 +19,8 @@ use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 mod user;
 pub use user::*;
+mod partners;
+pub use partners::*;
 use warp::http::StatusCode;
 use warp::Reply;
 use warp::{http::Response as HttpResponse, reject, reply::Response as WarpResponse};

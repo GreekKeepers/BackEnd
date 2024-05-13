@@ -51,12 +51,31 @@ pub mod db_models {
             }
         }
     }
-
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct ConnectedWallet {
+        pub id: i64,
+        pub user_id: i64,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub site_id: i64,
+        pub sub_id: i64,
+    }
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct Leaderboard {
         pub user_id: i64,
         pub total: Decimal,
         pub username: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
+    pub struct PlayersTotals {
+        pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
+        pub total_wagered_sum: Option<f64>,
+        pub gross_profit: Option<f64>,
+        pub net_profit: Option<f64>,
+        pub highest_win: Option<f64>,
     }
 
     #[derive(Deserialize, Serialize, Clone, ToSchema, Debug, sqlx::Type, PartialEq, PartialOrd)]
@@ -264,16 +283,115 @@ pub mod db_models {
             }
         }
     }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct RefClicks {
+        //pub id: i64,
+        pub clicks: i64,
+        // pub sub_id_internal: i64,
+        // pub partner_id: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct PartnerSite {
+        pub internal_id: i64,
+        pub id: i64,
+        pub name: String,
+        pub url: String,
+        pub partner_id: i64,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct SiteSubId {
+        pub internal_id: i64,
+        pub id: i64,
+        pub name: String,
+        pub url: String,
+        pub site_id: i64,
+        pub partner_id: i64,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct PartnerContact {
+        pub id: i64,
+        pub name: String,
+        pub url: String,
+        pub partner_id: i64,
+    }
+    #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize, ToSchema)]
+    #[sqlx(type_name = "partnerprogram")]
+    #[allow(non_camel_case_types)]
+    pub enum PartnerProgram {
+        firstMonth,
+        novice,
+        beginner,
+        intermediate,
+        advanced,
+        pro,
+        god,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Partner {
+        //pub id: i64,
+        pub name: String,
+        pub country: String,
+        pub traffic_source: String,
+        pub users_amount_a_month: i64,
+        pub id: i64,
+        pub program: PartnerProgram,
+        pub is_verified: bool,
+        pub login: String,
+        pub password: String,
+        #[serde(with = "ts_seconds")]
+        pub registration_time: DateTime<Utc>,
+        pub language: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct PartnerSiteInfo {
+        pub basic: PartnerSite,
+        pub sub_ids: Vec<SiteSubId>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct PartnerInfo {
+        pub basic: Partner,
+        pub contacts: Vec<PartnerContact>,
+        pub sites: Vec<PartnerSiteInfo>,
+    }
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
+    pub struct PlayerTotals {
+        pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
+        pub total_wagered_sum: Option<f64>,
+        pub gross_profit: Option<f64>,
+        pub net_profit: Option<f64>,
+        pub highest_win: Option<f64>,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Withdrawal {
+        pub id: i64,
+        pub start_time: DateTime<Utc>,
+        pub token: String,
+        pub network: String,
+        pub wallet_address: String,
+        pub status: String,
+        pub partner_id: i64,
+        pub amount: String,
+    }
 }
 
 pub mod json_responses {
 
-    use std::sync::Arc;
-
     use crate::WsData;
 
     use self::db_models::{
-        Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, Totals, UserTotals,
+        Amount, Bet, Coin, Game, GameState, Invoice, Leaderboard, PartnerContact, PartnerInfo,
+        PartnerSite, PartnerSiteInfo, PlayerTotals, RefClicks, SiteSubId, Totals, UserTotals,
+        Withdrawal,
     };
 
     // use super::db_models::{
@@ -337,23 +455,54 @@ pub mod json_responses {
         Totals(Totals),
         LatestGames(LatestGames),
         OneTimeToken(OneTimeToken),
-        // PlayerTotals(PlayerTotals),
+        PlayerTotals(PlayerTotals),
         // TokenPrice(TokenPrice),
-        // PartnerInfo(PartnerInfo),
-        // PartnerContacts(Vec<PartnerContact>),
-        // PartnerSiteInfo(Vec<PartnerSiteInfo>),
+        PartnerInfo(PartnerInfo),
+        PartnerContacts(Vec<PartnerContact>),
+        PartnerSiteInfo(Vec<PartnerSiteInfo>),
         Leaderboard(LeaderboardResponse),
-        // Clicks(RefClicks),
-        // AmountConnectedWallets(AmountConnectedWallets),
-        // AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
-        // AmountClicksTimeMapped(ClicksTimeMapped),
-        // ConnectedWallets(Vec<ConnectedWalletInfo>),
+        Clicks(RefClicks),
+        AmountConnectedWallets(AmountConnectedWallets),
+        AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
+        AmountClicksTimeMapped(ClicksTimeMapped),
+        ConnectedWallets(Vec<ConnectedWalletInfo>),
         AccessToken(AccessToken),
         UserTotals(UserTotals),
         ChatMessage(PropagatedChatMessage),
         BillineCreateInvoice(BillineCreateInvoiceResponse), // Withdrawals(Vec<Withdrawal>),
+        Withdrawals(Vec<Withdrawal>),
         // TODO: idk, fix that
         PromTokens(PromTokens<'a>),
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct ClicksTimeMapped {
+        pub amount: Vec<i64>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct AmountConnectedWallets {
+        pub connected_users: i64,
+    }
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct ConnectedWalletsTimeMapped {
+        pub amount: Vec<i64>,
+    }
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct ConnectedWalletInfo {
+        pub id: i64,
+        pub user_id: i64,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub site_id: i64,
+        pub sub_id: i64,
+        pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
+        pub total_wagered_sum: Decimal,
+        pub gross_profit: Decimal,
+        pub net_profit: Decimal,
+        pub highest_win: Decimal,
     }
 
     #[derive(Serialize, Clone, ToSchema)]
@@ -900,11 +1049,9 @@ pub mod json_requests {
 
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct ConnectWallet {
-        pub partner_wallet: String,
-        pub user_wallet: String,
+        pub partner_id: i64,
         pub site_id: i64,
         pub sub_id: i64,
-        pub signature: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

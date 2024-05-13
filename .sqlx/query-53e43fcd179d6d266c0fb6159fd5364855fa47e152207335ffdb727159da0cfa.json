@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT CAST(COUNT(DISTINCT connectedusers.user_id) as BIGINT) as connected_users \n                FROM connectedusers\n                INNER JOIN bet ON connectedusers.user_id=bet.user_id\n                WHERE partner_id=$1 AND\n                    connectedusers.timestamp >= $2 AND\n                    connectedusers.timestamp <= $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connected_users",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "53e43fcd179d6d266c0fb6159fd5364855fa47e152207335ffdb727159da0cfa"
+}
