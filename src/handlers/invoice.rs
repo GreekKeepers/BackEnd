@@ -518,9 +518,18 @@ pub async fn create_payout_request(
     user_id: i64,
     db: DB,
 ) -> Result<WarpResponse, warp::Rejection> {
-    db.new_payout_request(user_id, data.amount, data.additional_data)
+    let amount = db
+        .fetch_amount(user_id, 2)
         .await
         .map_err(ApiError::DbError)?;
+
+    if let Some(amount) = amount {
+        if amount >= data.amount {
+            db.new_payout_request(user_id, data.amount, data.additional_data)
+                .await
+                .map_err(ApiError::DbError)?;
+        }
+    }
 
     Ok(gen_info_response("Request submitted"))
 }
