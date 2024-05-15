@@ -51,7 +51,8 @@ use warp::{
             handlers::change_password,
             handlers::login_google,
             handlers::billine_create_invoice,
-            handlers::get_prom_tokens
+            handlers::get_prom_tokens,
+            handlers::create_payout_request
         ),
         components(schemas(
             //json_requests::User,
@@ -72,6 +73,7 @@ use warp::{
             json_requests::InvoiceAmount,
             json_requests::CreateInvoice,
             json_requests::CreateBillineInvoice,
+            json_requests::PayoutRequest,
 
             json_responses::JsonResponse,
             json_responses::ResponseBody,

@@ -35,6 +35,33 @@ impl DB {
         Self { db_pool }
     }
 
+    pub async fn new_payout_request(
+        &self,
+        user_id: i64,
+        amount: Decimal,
+        additional_data: String,
+    ) -> Result<i64, sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Payout(
+                amount,
+                user_id,
+                additional_data
+            ) VALUES(
+                $1,
+                $2,
+                $3
+            ) RETURNING Payout.id
+            "#,
+            amount,
+            user_id,
+            additional_data
+        )
+        .fetch_one(&self.db_pool)
+        .await
+        .map(|r| r.id)
+    }
+
     pub async fn fetch_game_state(
         &self,
         game_id: i64,

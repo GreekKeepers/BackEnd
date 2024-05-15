@@ -67,6 +67,17 @@ pub mod db_models {
         pub username: String,
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Payout {
+        pub id: i64,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub amount: Decimal,
+        pub status: i32,
+        pub additional_data: String,
+        pub user_id: i64,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug)]
     pub struct PlayersTotals {
         pub bets_amount: i64,
@@ -891,6 +902,12 @@ pub mod json_requests {
         FiveHundred = 500,
         Thousand = 1000,
         TwoThousand = 2000,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Clone)]
+    pub struct PayoutRequest {
+        pub amount: Decimal,
+        pub additional_data: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Clone)]

@@ -32,6 +32,10 @@ fn json_body_submit_withdrawal(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+pub fn json_body_new_payout(
+) -> impl Filter<Extract = (json_requests::PayoutRequest,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
@@ -607,6 +611,17 @@ pub fn invoice_callback(
         .and_then(handlers::invoice_callback)
 }
 
+pub fn create_payout_request(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("payout" / "create")
+        .and(warp::post())
+        .and(json_body_new_payout())
+        .and(with_auth(db.clone()))
+        .and(with_db(db))
+        .and_then(handlers::create_payout_request)
+}
+
 pub fn invoice(
     db: DB,
     dex: TheDex,
@@ -690,6 +705,7 @@ pub fn init_filters(
         .or(general(dexs, db.clone()))
         .or(p2way_filter(db.clone(), p2way))
         .or(partners::partners(db.clone()))
+        .or(create_payout_request(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

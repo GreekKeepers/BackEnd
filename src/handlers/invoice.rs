@@ -16,7 +16,7 @@ use thedex::models::CreateQuickInvoice;
 use thedex::TheDex;
 use tracing::{debug, error, info, warn};
 
-use self::json_requests::CreateBillineInvoice;
+use self::json_requests::{CreateBillineInvoice, PayoutRequest};
 
 use super::*;
 
@@ -498,4 +498,29 @@ pub async fn p2way_callback(
 
     info!("P2Way callback rejected, bad api_key");
     Ok(gen_raw_text_response("Ok"))
+}
+
+/// Create a new payout request
+///
+/// Creates a new payout request
+#[utoipa::path(
+        tag="invoice",
+        post,
+        path = "/api/payout/create",
+        request_body = PayoutRequest,
+        responses(
+            (status = 200, description = "Request submitted", body = Invoice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+pub async fn create_payout_request(
+    data: PayoutRequest,
+    user_id: i64,
+    db: DB,
+) -> Result<WarpResponse, warp::Rejection> {
+    db.new_payout_request(user_id, data.amount, data.additional_data)
+        .await
+        .map_err(ApiError::DbError)?;
+
+    Ok(gen_info_response("Request submitted"))
 }
