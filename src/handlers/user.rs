@@ -604,6 +604,7 @@ pub async fn get_user(id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> 
             id: u.id,
             registration_time: u.registration_time,
             username: u.username,
+            user_level: u.user_level,
         })
         .ok_or(ApiError::UserDoesntExist)?;
 

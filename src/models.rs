@@ -588,6 +588,7 @@ pub mod json_responses {
         #[serde(with = "ts_seconds")]
         pub registration_time: DateTime<Utc>,
         pub username: String,
+        pub user_level: i64,
     }
 
     // #[derive(Serialize, Deserialize, Clone, ToSchema)]
