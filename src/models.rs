@@ -1007,6 +1007,8 @@ pub mod json_requests {
         ContinueGame(ContinueGame),
         GetState(GetState),
         GetUuid,
+        SubscribeChatRoom { room: i64 },
+        UnsubscribeChatRoom { room: i64 },
         NewMessage(ChatMessage),
     }
 

@@ -326,6 +326,12 @@ pub async fn websockets_handler(
                                     }
                                 }
 
+                                WebsocketsIncommingMessage::SubscribeChatRoom{room} => {
+                                    manager_writer.send(WsManagerEvent::SubscribeChannel { id: uuid.clone(), channel: ChannelType::ChatRoom(room) });
+                                }
+                                WebsocketsIncommingMessage::UnsubscribeChatRoom{room} => {
+                                }
+
                                 WebsocketsIncommingMessage::SubscribeInvoice => {
                                     if let Some(user_id) = user_id {
                                         if let Err(_) = manager_writer.send(
