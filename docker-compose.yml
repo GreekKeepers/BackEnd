@@ -31,18 +31,6 @@ services:
       - ./db-data/:/var/lib/postgresql/data
       - ./db_scheme/scheme.sql:/docker-entrypoint-initdb.d/create_tables.sql
 
-  nginx:
-    build: ./nginx/
-    image: bicas-nginx
-    container_name: bicas-nginx
-    # network_mode: "host"
-    ports:
-      - '8585:8585'
-    networks:
-      - greekkeepersnet
-    volumes:
-      - /home/yeahnotsewerside/Bicas/Casino/BicasCasino/public:/public
-
 
 networks:
   greekkeepersnet:
